@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { ladeEinstellungen } from '../lib/einstellungen'
 import { downloadArchiviertesPdf } from '../lib/dokumentService'
@@ -18,12 +18,15 @@ const TYP_LABEL = {
 
 export default function AnfrageDetail() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const [buchung, setBuchung] = useState<Buchung | null>(null)
   const [dokumente, setDokumente] = useState<Dokument[]>([])
   const [einstellungen, setEinstellungen] = useState<Einstellungen | null>(null)
   const [notizen, setNotizen] = useState('')
   const [dialog, setDialog] = useState<'angebot' | 'anzahlung' | 'storno' | null>(null)
   const [fehler, setFehler] = useState<string | null>(null)
+  const [loeschBestaetigung, setLoeschBestaetigung] = useState(false)
+  const [loescht, setLoescht] = useState(false)
 
   const laden = useCallback(async () => {
     if (!id) return
@@ -56,6 +59,25 @@ export default function AnfrageDetail() {
   async function notizenSpeichern() {
     await supabase.from('buchungen').update({ notizen: notizen.trim() || null }).eq('id', buchung!.id)
     laden()
+  }
+
+  async function anfrageLoeschen() {
+    setLoescht(true)
+    setFehler(null)
+    try {
+      // 1) archivierte PDFs aus dem Storage entfernen
+      const pfade = dokumente.map((d) => d.pdf_path).filter((p): p is string => !!p)
+      if (pfade.length) await supabase.storage.from('dokumente').remove(pfade)
+      // 2) Dokument-Datensätze (FK verhindert sonst das Löschen der Buchung)
+      await supabase.from('dokumente').delete().eq('buchung_id', buchung!.id)
+      // 3) die Buchung selbst
+      const { error } = await supabase.from('buchungen').delete().eq('id', buchung!.id)
+      if (error) throw error
+      navigate('/anfragen')
+    } catch (err) {
+      setFehler('Löschen fehlgeschlagen: ' + (err instanceof Error ? err.message : String(err)))
+      setLoescht(false)
+    }
   }
 
   const s = buchung.status
@@ -201,6 +223,32 @@ export default function AnfrageDetail() {
         <div style={{ marginTop: 10 }}>
           <button className="btn-klein" onClick={notizenSpeichern}>Notizen speichern</button>
         </div>
+      </div>
+
+      <div className="card" style={{ borderColor: '#f0d6d8' }}>
+        <h2>Anfrage löschen</h2>
+        {!loeschBestaetigung ? (
+          <>
+            <p style={{ fontSize: 13, color: 'var(--grau)', marginTop: 0 }}>
+              Löscht diese Anfrage samt aller erstellten Dokumente unwiderruflich. Zum Entfernen von Testdaten gedacht.
+            </p>
+            <button className="btn-gefahr" onClick={() => setLoeschBestaetigung(true)}>Anfrage löschen</button>
+          </>
+        ) : (
+          <>
+            <div className="warnung">
+              Wirklich <strong>{buchung.vorname} {buchung.nachname}</strong>
+              {dokumente.length > 0 && <> samt {dokumente.length} {dokumente.length === 1 ? 'Dokument' : 'Dokumenten'}</>}
+              {' '}endgültig löschen? Das kann nicht rückgängig gemacht werden.
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setLoeschBestaetigung(false)} disabled={loescht}>Abbrechen</button>
+              <button className="btn-gefahr" onClick={anfrageLoeschen} disabled={loescht}>
+                {loescht ? 'Wird gelöscht …' : 'Ja, endgültig löschen'}
+              </button>
+            </div>
+          </>
+        )}
       </div>
 
       {dialog === 'angebot' && einstellungen && (
