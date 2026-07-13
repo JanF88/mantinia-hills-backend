@@ -6,6 +6,8 @@ import Login from './pages/Login'
 import AnfragenListe from './pages/AnfragenListe'
 import AnfrageNeu from './pages/AnfrageNeu'
 import AnfrageDetail from './pages/AnfrageDetail'
+import Kalender from './pages/Kalender'
+import Auswertung from './pages/Auswertung'
 import Einstellungen from './pages/Einstellungen'
 
 export default function App() {
@@ -38,6 +40,12 @@ export default function App() {
           <NavLink to="/anfragen" className={({ isActive }) => (isActive ? 'aktiv' : '')}>
             Anfragen
           </NavLink>
+          <NavLink to="/kalender" className={({ isActive }) => (isActive ? 'aktiv' : '')}>
+            Kalender
+          </NavLink>
+          <NavLink to="/auswertung" className={({ isActive }) => (isActive ? 'aktiv' : '')}>
+            Auswertung
+          </NavLink>
           <NavLink to="/einstellungen" className={({ isActive }) => (isActive ? 'aktiv' : '')}>
             Einstellungen
           </NavLink>
@@ -50,6 +58,8 @@ export default function App() {
           <Route path="/anfragen" element={<AnfragenListe />} />
           <Route path="/anfragen/neu" element={<AnfrageNeu />} />
           <Route path="/anfragen/:id" element={<AnfrageDetail />} />
+          <Route path="/kalender" element={<Kalender />} />
+          <Route path="/auswertung" element={<Auswertung />} />
           <Route path="/einstellungen" element={<Einstellungen />} />
           <Route path="*" element={<Navigate to="/anfragen" replace />} />
         </Routes>

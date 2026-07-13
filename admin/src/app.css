@@ -131,6 +131,31 @@ td.rechts, th.rechts { text-align: right; }
 .meta-grid dt { font-size: 12px; color: var(--grau); margin-bottom: 2px; }
 .meta-grid dd { margin: 0; font-weight: 600; }
 
+/* Kalender */
+.kal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 4px; }
+.kal-wtag { font-size: 12px; color: var(--grau); text-align: center; padding: 4px 0; text-transform: uppercase; letter-spacing: .04em; }
+.kal-zelle { min-height: 78px; border: 1px solid var(--linie); border-radius: 8px; padding: 4px; background: var(--weiss); overflow: hidden; }
+.kal-leer { background: transparent; border-color: transparent; }
+.kal-heute { outline: 2px solid var(--brand); outline-offset: -1px; }
+.kal-tag { font-size: 12px; color: var(--grau); margin-bottom: 3px; }
+.kal-heute .kal-tag { color: var(--brand); font-weight: 700; }
+.kal-belegung { font-size: 11.5px; border-radius: 4px; padding: 2px 5px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+.kal-fest { background: var(--brand); color: #fff; }
+.kal-offen { background: #f0e2d6; color: #7a5230; border: 1px dashed #c9a883; }
+.kal-belegung:hover { opacity: .85; }
+.kal-legende { display: inline-block; width: 14px; height: 11px; border-radius: 3px; vertical-align: middle; margin-right: 4px; }
+span.kal-legende.kal-offen { border-style: dashed; }
+
+/* Auswertung */
+.kennzahlen { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 18px; }
+.kennzahl { margin-bottom: 0; }
+.kennzahl dt { font-size: 12px; color: var(--grau); margin-bottom: 4px; }
+.kennzahl dd { margin: 0; font-size: 24px; font-weight: 700; color: var(--brand); }
+.kennzahl span { font-size: 12px; color: var(--grau); }
+.auslastung-balken { background: var(--beige); border-radius: 999px; height: 10px; overflow: hidden; }
+.auslastung-balken > div { background: var(--brand); height: 100%; border-radius: 999px; }
+tfoot td { border-bottom: none; border-top: 2px solid var(--linie); }
+
 /* Login */
 .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
 .login-card { width: 100%; max-width: 380px; }
