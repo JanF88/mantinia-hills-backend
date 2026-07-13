@@ -15,10 +15,11 @@ automatischer Versand).
 3. Gast sagt zu → **Annahme bestätigen** → Status **Bestätigt**
 4. **Anzahlungsrechnung erstellen** (Standard 30 %, frei änderbar) → PDF `RE-JJJJ-NNN`.
    Wenn das Geld da ist: **Anzahlung eingegangen** → Status **Angezahlt**
-5. Nach dem Aufenthalt: **Abschließen** → Status **Abgeschlossen**
-6. Bei Absage: **Stornieren** — Gebühr laut Staffel (≥60 Tage 20 % · 59–30 Tage 50 %
-   · 29–7 Tage 80 % · <7 Tage 100 %), bereits gezahlte Anzahlung wird verrechnet
-   → PDF `RE-JJJJ-NNN` → Status **Storniert**
+5. Restzahlung auf dem Konto: **Restzahlung eingegangen** → Status **Komplett bezahlt**
+6. Nach dem Aufenthalt: **Abschließen** → Status **Abgeschlossen**
+7. Bei Absage: **Stornieren** — Gebühr laut Staffel (≥60 Tage 20 % · 59–30 Tage 50 %
+   · 29–7 Tage 80 % · <7 Tage 100 %); bereits Gezahltes (Anzahlung oder voller Betrag)
+   wird verrechnet → PDF `RE-JJJJ-NNN` → Status **Storniert**
 
 Alle PDFs werden zusätzlich im Supabase-Storage archiviert und sind in der
 Detailansicht jederzeit erneut herunterladbar.

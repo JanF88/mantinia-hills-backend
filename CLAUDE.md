@@ -12,8 +12,9 @@ form-encoded an einen Zapier-Webhook UND an unsere Supabase Edge Function.
 
 ## Workflow / Status-Maschine
 
-neu → angebot_erstellt → bestaetigt → angezahlt → abgeschlossen
-Seitenwege: abgelehnt (aus neu/angebot_erstellt), storniert (aus bestaetigt/angezahlt).
+neu → angebot_erstellt → bestaetigt → angezahlt → bezahlt → abgeschlossen
+Seitenwege: abgelehnt (aus neu/angebot_erstellt), storniert (aus bestaetigt/angezahlt/bezahlt —
+bei „bezahlt" wird der volle gezahlte Betrag in der Stornorechnung verrechnet).
 Statuswechsel werden in der UI erzwungen, nicht per DB-Trigger.
 
 ## Wichtige Konventionen

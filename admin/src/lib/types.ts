@@ -3,6 +3,7 @@ export type BuchungStatus =
   | 'angebot_erstellt'
   | 'bestaetigt'
   | 'angezahlt'
+  | 'bezahlt'
   | 'abgeschlossen'
   | 'storniert'
   | 'abgelehnt'
@@ -36,6 +37,7 @@ export interface Buchung {
   notizen: string | null
   angenommen_am: string | null
   anzahlung_eingegangen_am: string | null
+  restzahlung_eingegangen_am: string | null
   storniert_am: string | null
 }
 

@@ -28,8 +28,9 @@ export default function StornoDialog({ buchung, angebot, anzahlung, einstellunge
   const [laedt, setLaedt] = useState(false)
 
   const anzahlungEingegangen = buchung.anzahlung_eingegangen_am != null && anzahlung != null
+  const vollBezahlt = buchung.status === 'bezahlt' || buchung.restzahlung_eingegangen_am != null
   const gebuehr = Math.round(basis * prozent) / 100
-  const verrechnet = anzahlungEingegangen ? Number(anzahlung.gesamt) : 0
+  const verrechnet = vollBezahlt ? basis : anzahlungEingegangen ? Number(anzahlung.gesamt) : 0
   const rest = Math.round((gebuehr - verrechnet) * 100) / 100
 
   async function stornieren() {
@@ -46,7 +47,8 @@ export default function StornoDialog({ buchung, angebot, anzahlung, einstellunge
           gebuehr,
           verrechneteAnzahlung: verrechnet,
           restbetrag: rest,
-          anzahlungNummer: anzahlungEingegangen ? anzahlung.nummer : undefined,
+          anzahlungNummer: !vollBezahlt && anzahlungEingegangen ? anzahlung.nummer : undefined,
+          zahlungLabel: vollBezahlt ? 'Zahlungen' : undefined,
         }
         const bytes = await stornorechnungPdf(buchung, nummer, datumISO, angebot.nummer, storno, einstellungen)
         await speichereDokument({
@@ -106,9 +108,11 @@ export default function StornoDialog({ buchung, angebot, anzahlung, einstellunge
             <div style={{ padding: '9px 0', fontWeight: 700 }}>{eur(gebuehr)}</div>
           </div>
         </div>
-        {anzahlungEingegangen && !ohneRechnung && (
+        {verrechnet > 0 && !ohneRechnung && (
           <div className="hinweis">
-            Erhaltene Anzahlung ({anzahlung.nummer}): <strong>{eur(verrechnet)}</strong> wird verrechnet.{' '}
+            {vollBezahlt
+              ? <>Buchung ist komplett bezahlt: <strong>{eur(verrechnet)}</strong> wird verrechnet.</>
+              : <>Erhaltene Anzahlung ({anzahlung!.nummer}): <strong>{eur(verrechnet)}</strong> wird verrechnet.</>}{' '}
             {rest > 0
               ? <>Restforderung: <strong>{eur(rest)}</strong></>
               : <>Rückerstattung an den Gast: <strong>{eur(Math.abs(rest))}</strong></>}

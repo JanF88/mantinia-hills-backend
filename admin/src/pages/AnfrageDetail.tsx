@@ -64,8 +64,9 @@ export default function AnfrageDetail() {
   const kannAnnehmen = s === 'angebot_erstellt' && juengstesAngebot != null
   const kannAnzahlungsRechnung = s === 'bestaetigt' && juengstesAngebot != null && einstellungen != null
   const kannAnzahlungEingang = s === 'bestaetigt' && juengsteAnzahlung != null
-  const kannStorno = (s === 'bestaetigt' || s === 'angezahlt') && juengstesAngebot != null && einstellungen != null
-  const kannAbschliessen = s === 'angezahlt'
+  const kannRestzahlung = s === 'angezahlt'
+  const kannStorno = (s === 'bestaetigt' || s === 'angezahlt' || s === 'bezahlt') && juengstesAngebot != null && einstellungen != null
+  const kannAbschliessen = s === 'angezahlt' || s === 'bezahlt'
 
   return (
     <>
@@ -102,12 +103,13 @@ export default function AnfrageDetail() {
           </p>
         )}
 
-        {(buchung.angenommen_am || buchung.anzahlung_eingegangen_am || buchung.storniert_am) && (
+        {(buchung.angenommen_am || buchung.anzahlung_eingegangen_am || buchung.restzahlung_eingegangen_am || buchung.storniert_am) && (
           <>
             <h3>Verlauf</h3>
             <dl className="meta-grid">
               {buchung.angenommen_am && <div><dt>Angebot angenommen</dt><dd>{zeitpunktDE(buchung.angenommen_am)}</dd></div>}
               {buchung.anzahlung_eingegangen_am && <div><dt>Anzahlung eingegangen</dt><dd>{zeitpunktDE(buchung.anzahlung_eingegangen_am)}</dd></div>}
+              {buchung.restzahlung_eingegangen_am && <div><dt>Restzahlung eingegangen</dt><dd>{zeitpunktDE(buchung.restzahlung_eingegangen_am)}</dd></div>}
               {buchung.storniert_am && <div><dt>Storniert</dt><dd>{zeitpunktDE(buchung.storniert_am)}</dd></div>}
             </dl>
           </>
@@ -135,6 +137,11 @@ export default function AnfrageDetail() {
           {kannAnzahlungEingang && (
             <button onClick={() => statusSetzen({ status: 'angezahlt', anzahlung_eingegangen_am: new Date().toISOString() })}>
               Anzahlung eingegangen
+            </button>
+          )}
+          {kannRestzahlung && (
+            <button onClick={() => statusSetzen({ status: 'bezahlt', restzahlung_eingegangen_am: new Date().toISOString() })}>
+              Restzahlung eingegangen
             </button>
           )}
           {kannAbschliessen && (

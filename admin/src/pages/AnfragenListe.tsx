@@ -11,6 +11,7 @@ const FILTER: (BuchungStatus | 'alle')[] = [
   'angebot_erstellt',
   'bestaetigt',
   'angezahlt',
+  'bezahlt',
   'storniert',
   'abgeschlossen',
   'abgelehnt',

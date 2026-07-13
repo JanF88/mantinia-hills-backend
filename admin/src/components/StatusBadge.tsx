@@ -5,6 +5,7 @@ export const STATUS_LABEL: Record<BuchungStatus, string> = {
   angebot_erstellt: 'Angebot erstellt',
   bestaetigt: 'Bestätigt',
   angezahlt: 'Angezahlt',
+  bezahlt: 'Komplett bezahlt',
   abgeschlossen: 'Abgeschlossen',
   storniert: 'Storniert',
   abgelehnt: 'Abgelehnt',

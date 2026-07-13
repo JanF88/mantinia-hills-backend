@@ -89,6 +89,8 @@ export interface StornoDaten {
   /** gebuehr - verrechneteAnzahlung: positiv = Restforderung, negativ = Rückerstattung */
   restbetrag: number
   anzahlungNummer?: string
+  /** "Anzahlung" (Standard) oder "Zahlungen" bei komplett bezahlter Buchung */
+  zahlungLabel?: string
 }
 
 export async function stornorechnungPdf(
@@ -113,7 +115,7 @@ export async function stornorechnungPdf(
 
   if (storno.verrechneteAnzahlung > 0) {
     summen.push({
-      label: `abzüglich erhaltener Anzahlung${storno.anzahlungNummer ? ` (${storno.anzahlungNummer})` : ''}`,
+      label: `abzüglich erhaltener ${storno.zahlungLabel ?? 'Anzahlung'}${storno.anzahlungNummer ? ` (${storno.anzahlungNummer})` : ''}`,
       betrag: -storno.verrechneteAnzahlung,
       fett: false,
     })
