@@ -58,8 +58,8 @@ export default function AnfragenListe() {
               <th className="rechts">Pers.</th>
               <th className="rechts">Gesamtpreis</th>
               <th>Status</th>
-              <th>Quelle</th>
-              <th>Eingang</th>
+              <th className="nur-desktop">Quelle</th>
+              <th className="nur-desktop">Eingang</th>
             </tr>
           </thead>
           <tbody>
@@ -73,8 +73,8 @@ export default function AnfragenListe() {
                 <td className="rechts">{b.personen}</td>
                 <td className="rechts">{b.gesamtpreis_eur != null ? eur(b.gesamtpreis_eur) : '–'}</td>
                 <td><StatusBadge status={b.status} /></td>
-                <td style={{ fontSize: 13, color: 'var(--grau)' }}>{b.quelle === 'webhook' ? 'Website' : 'Manuell'}</td>
-                <td style={{ fontSize: 13, color: 'var(--grau)' }}>{zeitpunktDE(b.created_at)}</td>
+                <td className="nur-desktop" style={{ fontSize: 13, color: 'var(--grau)' }}>{b.quelle === 'webhook' ? 'Website' : 'Manuell'}</td>
+                <td className="nur-desktop" style={{ fontSize: 13, color: 'var(--grau)' }}>{zeitpunktDE(b.created_at)}</td>
               </tr>
             ))}
             {!laedt && buchungen.length === 0 && (

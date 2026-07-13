@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { MONATSNAMEN, belegungsArt, buchungenAmTag, tagISO } from '../lib/statistik'
+import { datumDE } from '../lib/format'
 import type { Buchung } from '../lib/types'
+import StatusBadge from '../components/StatusBadge'
 
 const WOCHENTAGE = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
 
@@ -47,6 +49,15 @@ export default function Kalender() {
 
   const heuteISO = tagISO(heute)
 
+  // Buchungen mit Nächten in diesem Monat, für die Liste unter dem Raster
+  const imMonat = useMemo(() => {
+    const monatStart = tagISO(new Date(jahr, monat0, 1))
+    const monatEnde = tagISO(new Date(jahr, monat0 + 1, 1))
+    return buchungen
+      .filter((b) => belegungsArt(b) !== null && b.anreise < monatEnde && b.abreise > monatStart)
+      .sort((a, b) => a.anreise.localeCompare(b.anreise))
+  }, [buchungen, jahr, monat0])
+
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
@@ -90,11 +101,27 @@ export default function Kalender() {
             })}
           </div>
         ))}
-        <div style={{ display: 'flex', gap: 18, marginTop: 12, fontSize: 13, color: 'var(--grau)' }}>
+        <div style={{ display: 'flex', gap: 18, marginTop: 12, fontSize: 13, color: 'var(--grau)', flexWrap: 'wrap' }}>
           <span><span className="kal-legende kal-fest" /> Fest gebucht (bestätigt bis abgeschlossen)</span>
           <span><span className="kal-legende kal-offen" /> Anfrage / Angebot offen</span>
           <span>▸ = Anreisetag · Abreisetag zählt nicht als belegt</span>
         </div>
+
+        {imMonat.length > 0 && (
+          <div className="kal-monatsliste">
+            {imMonat.map((b) => (
+              <Link key={b.id} to={`/anfragen/${b.id}`}>
+                <span>
+                  <span className={`kal-legende kal-${belegungsArt(b)}`} />
+                  <strong>{b.vorname} {b.nachname}</strong> · {b.personen} Pers.
+                </span>
+                <span>
+                  {datumDE(b.anreise)} – {datumDE(b.abreise)} <StatusBadge status={b.status} />
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </>
   )

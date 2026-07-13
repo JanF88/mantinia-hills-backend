@@ -78,9 +78,9 @@ export default function Auswertung() {
             <tr>
               <th>Monat</th>
               <th className="rechts">Einnahmen</th>
-              <th className="rechts">Belegte Nächte</th>
+              <th className="rechts nur-desktop">Belegte Nächte</th>
               <th className="rechts">Auslastung</th>
-              <th style={{ width: '28%' }} />
+              <th className="nur-desktop" style={{ width: '28%' }} />
             </tr>
           </thead>
           <tbody>
@@ -90,9 +90,9 @@ export default function Auswertung() {
                 <tr key={m.monat0} style={istAktuell ? { background: 'var(--beige)' } : undefined}>
                   <td>{istAktuell ? <strong>{MONATSNAMEN[m.monat0]}</strong> : MONATSNAMEN[m.monat0]}</td>
                   <td className="rechts">{m.einnahmen > 0 ? eur(m.einnahmen) : '–'}</td>
-                  <td className="rechts">{m.belegteNaechte > 0 ? `${m.belegteNaechte} / ${m.tageImMonat}` : '–'}</td>
+                  <td className="rechts nur-desktop">{m.belegteNaechte > 0 ? `${m.belegteNaechte} / ${m.tageImMonat}` : '–'}</td>
                   <td className="rechts">{m.belegteNaechte > 0 ? prozent(m.auslastung) : '–'}</td>
-                  <td>
+                  <td className="nur-desktop">
                     <div className="auslastung-balken">
                       <div style={{ width: `${Math.min(100, m.auslastung * 100)}%` }} />
                     </div>
@@ -105,9 +105,9 @@ export default function Auswertung() {
             <tr>
               <td><strong>Gesamt {jahr}</strong></td>
               <td className="rechts"><strong>{eur(auswertung.einnahmenGesamt)}</strong></td>
-              <td className="rechts"><strong>{auswertung.belegteNaechteGesamt} / {auswertung.tageGesamt}</strong></td>
+              <td className="rechts nur-desktop"><strong>{auswertung.belegteNaechteGesamt} / {auswertung.tageGesamt}</strong></td>
               <td className="rechts"><strong>{prozent(auswertung.auslastungGesamt)}</strong></td>
-              <td />
+              <td className="nur-desktop" />
             </tr>
           </tfoot>
         </table>
