@@ -14,7 +14,9 @@ create type dokument_typ as enum ('angebot', 'anzahlungsrechnung', 'stornorechnu
 create type anfrage_quelle as enum ('webhook', 'manuell');
 
 create or replace function set_updated_at() returns trigger
-language plpgsql as $$
+language plpgsql
+set search_path = public
+as $$
 begin
   new.updated_at := now();
   return new;
