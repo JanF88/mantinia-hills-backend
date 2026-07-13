@@ -1,0 +1,59 @@
+import { useEffect, useState } from 'react'
+import { NavLink, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
+import type { Session } from '@supabase/supabase-js'
+import { supabase } from './lib/supabase'
+import Login from './pages/Login'
+import AnfragenListe from './pages/AnfragenListe'
+import AnfrageNeu from './pages/AnfrageNeu'
+import AnfrageDetail from './pages/AnfrageDetail'
+import Einstellungen from './pages/Einstellungen'
+
+export default function App() {
+  const [session, setSession] = useState<Session | null>(null)
+  const [laedt, setLaedt] = useState(true)
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session)
+      setLaedt(false)
+    })
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => setSession(s))
+    return () => sub.subscription.unsubscribe()
+  }, [])
+
+  if (laedt) return null
+  if (!session) return <Login />
+
+  async function abmelden() {
+    await supabase.auth.signOut()
+    navigate('/')
+  }
+
+  return (
+    <>
+      <header className="topbar">
+        <h1>Mantinia Hills</h1>
+        <nav>
+          <NavLink to="/anfragen" className={({ isActive }) => (isActive ? 'aktiv' : '')}>
+            Anfragen
+          </NavLink>
+          <NavLink to="/einstellungen" className={({ isActive }) => (isActive ? 'aktiv' : '')}>
+            Einstellungen
+          </NavLink>
+        </nav>
+        <button className="btn-klein" onClick={abmelden}>Abmelden</button>
+      </header>
+      <main className="container">
+        <Routes>
+          <Route path="/" element={<Navigate to="/anfragen" replace />} />
+          <Route path="/anfragen" element={<AnfragenListe />} />
+          <Route path="/anfragen/neu" element={<AnfrageNeu />} />
+          <Route path="/anfragen/:id" element={<AnfrageDetail />} />
+          <Route path="/einstellungen" element={<Einstellungen />} />
+          <Route path="*" element={<Navigate to="/anfragen" replace />} />
+        </Routes>
+      </main>
+    </>
+  )
+}
