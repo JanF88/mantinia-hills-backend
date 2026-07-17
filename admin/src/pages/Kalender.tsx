@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { MONATSNAMEN, belegungsArt, buchungenAmTag, tagISO } from '../lib/statistik'
-import { datumDE } from '../lib/format'
+import { MONATSNAMEN, belegungsArt, buchungenAmTag, findeAbstandsKonflikte, tagISO } from '../lib/statistik'
+import { datumDE, eur } from '../lib/format'
 import type { Buchung } from '../lib/types'
 import StatusBadge from '../components/StatusBadge'
 
@@ -58,6 +58,9 @@ export default function Kalender() {
       .sort((a, b) => a.anreise.localeCompare(b.anreise))
   }, [buchungen, jahr, monat0])
 
+  // Verstöße gegen die Regel „mind. 1 freier Tag zwischen Buchungen"
+  const konflikte = useMemo(() => findeAbstandsKonflikte(buchungen), [buchungen])
+
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
@@ -69,6 +72,20 @@ export default function Kalender() {
           <button className="btn-klein" onClick={() => { setJahr(heute.getFullYear()); setMonat0(heute.getMonth()) }}>Heute</button>
         </div>
       </div>
+
+      {konflikte.length > 0 && (
+        <div className="warnung">
+          <strong>Zu wenig Abstand zwischen Buchungen</strong> — zwischen zwei Buchungen sollte mindestens 1 freier Tag liegen:
+          <ul style={{ margin: '8px 0 0', paddingLeft: 18 }}>
+            {konflikte.map((k, i) => (
+              <li key={i}>
+                {k.frueher.nachname} (bis {datumDE(k.frueher.abreise)}) → {k.spaeter.nachname} (ab {datumDE(k.spaeter.anreise)}):{' '}
+                {k.freieTage < 0 ? 'Überschneidung' : k.freieTage === 0 ? 'kein freier Tag' : `${k.freieTage} freie Tage`}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="card" style={{ padding: 12 }}>
         <div className="kal-grid kal-kopf">
@@ -113,10 +130,10 @@ export default function Kalender() {
               <Link key={b.id} to={`/anfragen/${b.id}`}>
                 <span>
                   <span className={`kal-legende kal-${belegungsArt(b)}`} />
-                  <strong>{b.vorname} {b.nachname}</strong> · {b.personen} Pers.
+                  <strong>{b.vorname} {b.nachname}</strong> · {b.personen} Pers. · {b.naechte} {b.naechte === 1 ? 'Nacht' : 'Nächte'}
                 </span>
                 <span>
-                  {datumDE(b.anreise)} – {datumDE(b.abreise)} <StatusBadge status={b.status} />
+                  {b.gesamtpreis_eur != null ? eur(b.gesamtpreis_eur) : '–'} <StatusBadge status={b.status} />
                 </span>
               </Link>
             ))}

@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { ladeEinstellungen } from '../lib/einstellungen'
 import { berechneAufenthalt } from '../lib/preisberechnung'
-import { eur } from '../lib/format'
-import type { Einstellungen } from '../lib/types'
+import { pruefeZeitraum } from '../lib/statistik'
+import { datumDE, eur } from '../lib/format'
+import type { Buchung, Einstellungen } from '../lib/types'
 
 export default function AnfrageNeu() {
   const [e, setE] = useState<Einstellungen | null>(null)
@@ -18,18 +19,26 @@ export default function AnfrageNeu() {
   const [transferIdx, setTransferIdx] = useState(0)
   const [fahrzeug, setFahrzeug] = useState('Nein')
   const [notizen, setNotizen] = useState('')
+  const [buchungen, setBuchungen] = useState<Buchung[]>([])
   const [fehler, setFehler] = useState<string | null>(null)
   const [laedt, setLaedt] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
     ladeEinstellungen().then(setE).catch(() => setFehler('Einstellungen konnten nicht geladen werden.'))
+    supabase.from('buchungen').select('*').then(({ data }) => setBuchungen((data as Buchung[]) ?? []))
   }, [])
 
   const kalk = useMemo(() => {
     if (!e || !anreise || !abreise) return null
     return berechneAufenthalt(anreise, abreise, personen, e)
   }, [e, anreise, abreise, personen])
+
+  // Kollision mit festen Buchungen (inkl. Regel „1 freier Tag")
+  const kollisionen = useMemo(() => {
+    if (!anreise || !abreise || abreise <= anreise) return []
+    return pruefeZeitraum(buchungen, anreise, abreise)
+  }, [buchungen, anreise, abreise])
 
   const transfer = e?.transfer_optionen[transferIdx] ?? null
   const gesamt = kalk && e ? kalk.uebernachtungGesamt + e.endreinigung_eur + (transfer?.eur ?? 0) : null
@@ -137,6 +146,17 @@ export default function AnfrageNeu() {
         <label htmlFor="notizen">Notizen</label>
         <textarea id="notizen" rows={3} value={notizen} onChange={(e) => setNotizen(e.target.value)} />
       </div>
+
+      {kollisionen.length > 0 && (
+        <div className="warnung">
+          <strong>Achtung – zu wenig Abstand zu einer festen Buchung</strong> (mind. 1 freier Tag nötig):
+          <ul style={{ margin: '6px 0 0', paddingLeft: 18 }}>
+            {kollisionen.map((b) => (
+              <li key={b.id}>{b.vorname} {b.nachname}: {datumDE(b.anreise)} – {datumDE(b.abreise)}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {kalk && e && (
         <div className="card">

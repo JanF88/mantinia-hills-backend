@@ -32,6 +32,62 @@ export function buchungenAmTag(buchungen: Buchung[], iso: string): Buchung[] {
   return buchungen.filter((b) => belegungsArt(b) !== null && b.anreise <= iso && iso < b.abreise)
 }
 
+/** Ganze Tage zwischen zwei ISO-Daten (isoB - isoA). */
+export function tageZwischen(isoA: string, isoB: string): number {
+  return Math.round(
+    (new Date(isoB + 'T00:00:00').getTime() - new Date(isoA + 'T00:00:00').getTime()) / 86_400_000,
+  )
+}
+
+export interface AbstandsKonflikt {
+  frueher: Buchung
+  spaeter: Buchung
+  freieTage: number
+}
+
+/**
+ * Regel: zwischen zwei Buchungen muss mindestens 1 freier Tag liegen
+ * (freie Nächte = anreise_spaeter − abreise_frueher). Gemeldet werden Paare,
+ * bei denen mindestens eine Buchung fest gebucht ist.
+ */
+export function findeAbstandsKonflikte(buchungen: Buchung[], mindestFreieTage = 1): AbstandsKonflikt[] {
+  const relevant = buchungen
+    .filter((b) => belegungsArt(b) !== null)
+    .sort((a, b) => a.anreise.localeCompare(b.anreise))
+  const konflikte: AbstandsKonflikt[] = []
+  for (let i = 0; i < relevant.length; i++) {
+    for (let j = i + 1; j < relevant.length; j++) {
+      const frueher = relevant[i]
+      const spaeter = relevant[j]
+      if (belegungsArt(frueher) !== 'fest' && belegungsArt(spaeter) !== 'fest') continue
+      const freieTage = tageZwischen(frueher.abreise, spaeter.anreise)
+      if (freieTage < mindestFreieTage) konflikte.push({ frueher, spaeter, freieTage })
+    }
+  }
+  return konflikte
+}
+
+/**
+ * Prüft, ob ein Zeitraum mit bestehenden festen Buchungen kollidiert
+ * (inkl. Pufferregel). `ignoriereId` schließt die eigene Buchung aus.
+ */
+export function pruefeZeitraum(
+  buchungen: Buchung[],
+  anreiseISO: string,
+  abreiseISO: string,
+  ignoriereId?: string,
+  mindestFreieTage = 1,
+): Buchung[] {
+  return buchungen.filter((b) => {
+    if (b.id === ignoriereId) return false
+    if (belegungsArt(b) !== 'fest') return false
+    // genug Abstand, wenn der neue Zeitraum komplett vor oder nach b liegt
+    const genugDavor = tageZwischen(abreiseISO, b.anreise) >= mindestFreieTage
+    const genugDanach = tageZwischen(b.abreise, anreiseISO) >= mindestFreieTage
+    return !(genugDavor || genugDanach)
+  })
+}
+
 /** Anzahl der Nächte einer Buchung, die in den Monat (jahr, monat0) fallen. */
 export function naechteImMonat(b: Buchung, jahr: number, monat0: number): number {
   const monatStart = new Date(jahr, monat0, 1)
