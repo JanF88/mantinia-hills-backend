@@ -39,6 +39,7 @@ export interface Buchung {
   anzahlung_eingegangen_am: string | null
   restzahlung_eingegangen_am: string | null
   storniert_am: string | null
+  annahme_token: string | null
 }
 
 export interface Position {

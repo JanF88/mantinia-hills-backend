@@ -54,11 +54,16 @@ export default function AngebotDialog({ buchung, einstellungen, onFertig, onAbbr
         meta: { gueltig_bis: gueltigBis },
         pdfBytes: bytes,
       })
-      const { error } = await supabase.from('buchungen').update({ status: 'angebot_erstellt' }).eq('id', buchung.id)
+      const token = crypto.randomUUID()
+      const { error } = await supabase.from('buchungen').update({ status: 'angebot_erstellt', annahme_token: token }).eq('id', buchung.id)
       if (error) throw error
       downloadPdf(bytes, `${nummer}_Mantinia_Hills.pdf`)
 
       if (senden) {
+        const annahmeUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/angebot-annehmen?token=${token}`
+        const annahmeButton = `<table cellpadding="0" cellspacing="0" border="0" style="margin:22px 0"><tr><td style="border-radius:8px;background:#681318">
+<a href="${annahmeUrl}" target="_blank" style="display:inline-block;padding:14px 28px;color:#fff;font-weight:bold;font-size:15px;text-decoration:none;font-family:Arial,Helvetica,sans-serif">Angebot annehmen</a>
+</td></tr></table>`
         try {
           await sendeMail({
             an: buchung.email,
@@ -66,7 +71,10 @@ export default function AngebotDialog({ buchung, einstellungen, onFertig, onAbbr
             html: mailRahmen(
               `<p>Guten Tag ${buchung.vorname} ${buchung.nachname},</p>
 <p>vielen Dank für Ihre Anfrage. Im Anhang finden Sie Ihr persönliches Angebot für Ihren Aufenthalt vom <strong>${datumDE(buchung.anreise)}</strong> bis <strong>${datumDE(buchung.abreise)}</strong>.</p>
-<p>Das Angebot ist gültig bis ${datumDE(gueltigBis)}. Zur Annahme genügt eine kurze Bestätigung per E-Mail. Bei Fragen sind wir jederzeit gern für Sie da.</p>
+<p>Das Angebot ist gültig bis ${datumDE(gueltigBis)}. Mit einem Klick auf den Button nehmen Sie das Angebot verbindlich an – Sie erhalten dann umgehend die Anzahlungsrechnung per E-Mail.</p>
+${annahmeButton}
+<p style="font-size:13px;color:#666">Falls der Button nicht funktioniert, kopieren Sie bitte diesen Link in Ihren Browser:<br><a href="${annahmeUrl}">${annahmeUrl}</a></p>
+<p>Bei Fragen sind wir jederzeit gern für Sie da.</p>
 <p>Herzliche Grüße<br>Ihr Team vom Ferienhaus Mantinia Hills</p>`,
               einstellungen.anbieter,
             ),
