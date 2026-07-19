@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ladeEinstellungen, speichereEinstellung } from '../lib/einstellungen'
 import PasswortAendern from '../components/PasswortAendern'
+import MailTest from '../components/MailTest'
 import type { Einstellungen as EinstellungenTyp } from '../lib/types'
 
 export default function Einstellungen() {
@@ -163,6 +164,7 @@ export default function Einstellungen() {
       </button>
 
       <div style={{ marginTop: 28 }}>
+        <MailTest />
         <PasswortAendern />
       </div>
     </>
