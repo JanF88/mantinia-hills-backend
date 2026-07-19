@@ -4,6 +4,7 @@ import type { Session } from '@supabase/supabase-js'
 import { supabase } from './lib/supabase'
 import Login from './pages/Login'
 import PasswortNeu from './pages/PasswortNeu'
+import AngebotAngenommen from './pages/AngebotAngenommen'
 import AnfragenListe from './pages/AnfragenListe'
 import AnfrageNeu from './pages/AnfrageNeu'
 import AnfrageDetail from './pages/AnfrageDetail'
@@ -28,6 +29,9 @@ export default function App() {
     })
     return () => sub.subscription.unsubscribe()
   }, [])
+
+  // Öffentliche Dankesseite (Gast ohne Login, nach „Angebot annehmen")
+  if (window.location.pathname === '/angebot-angenommen') return <AngebotAngenommen />
 
   if (laedt) return null
   if (passwortReset) {

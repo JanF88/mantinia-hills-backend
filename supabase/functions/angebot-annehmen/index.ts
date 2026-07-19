@@ -7,15 +7,12 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 import { anzahlungInhalt, datumDE, erzeugePdf, eurPdf, type Anbieter } from "./pdf.ts";
 
-function seite(titel: string, text: string, ok = true): Response {
-  const farbe = ok ? "#681318" : "#b00020";
-  const html = `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${titel}</title>
-<style>body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f7f5f2;color:#2c2c2a;display:flex;min-height:100vh;align-items:center;justify-content:center}
-.box{background:#fff;border:1px solid #e2ddd6;border-radius:14px;padding:36px;max-width:460px;text-align:center;margin:20px}
-h1{color:${farbe};font-size:22px;margin:0 0 12px}p{line-height:1.6;font-size:15px}</style></head>
-<body><div class="box"><h1>${titel}</h1><p>${text}</p></div></body></html>`;
-  return new Response(html, { status: ok ? 200 : 400, headers: { "Content-Type": "text/html; charset=utf-8" } });
+// Supabase erlaubt kein gerendertes HTML direkt von der Funktions-URL
+// (Anti-Phishing: text/plain + Sandbox). Daher leiten wir auf eine
+// Dankesseite auf der eigenen Domain weiter.
+const DANKE_URL = "https://clients.mantinia-hills.com/angebot-angenommen";
+function weiter(status: string, extra = ""): Response {
+  return new Response(null, { status: 303, headers: { Location: `${DANKE_URL}?status=${status}${extra}` } });
 }
 
 function bytesZuBase64(bytes: Uint8Array): string {
@@ -28,21 +25,21 @@ function bytesZuBase64(bytes: Uint8Array): string {
 Deno.serve(async (req) => {
   const url = new URL(req.url);
   const token = url.searchParams.get("token");
-  if (!token) return seite("Link ungültig", "Diesem Link fehlt die Kennung. Bitte nutzen Sie den Button aus Ihrer Angebots-E-Mail.", false);
+  if (!token) return weiter("fehler");
 
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
   const { data: buchung } = await supabase.from("buchungen").select("*").eq("annahme_token", token).maybeSingle();
-  if (!buchung) return seite("Link ungültig oder abgelaufen", "Wir konnten kein passendes Angebot finden. Bitte kontaktieren Sie uns direkt.", false);
+  if (!buchung) return weiter("fehler");
   if (buchung.status !== "angebot_erstellt") {
-    return seite("Bereits bearbeitet", "Dieses Angebot wurde bereits angenommen oder ist nicht mehr offen. Bei Fragen melden Sie sich gern bei uns.");
+    return weiter("bereits");
   }
 
   // Jüngstes Angebot laden (Basis für die Anzahlung)
   const { data: angebote } = await supabase.from("dokumente").select("*")
     .eq("buchung_id", buchung.id).eq("typ", "angebot").order("created_at", { ascending: false }).limit(1);
   const angebot = angebote?.[0];
-  if (!angebot) return seite("Kein Angebot gefunden", "Zu dieser Buchung liegt kein Angebot vor. Bitte kontaktieren Sie uns.", false);
+  if (!angebot) return weiter("fehler");
 
   // Einstellungen
   const { data: eRows } = await supabase.from("einstellungen").select("key,value")
@@ -59,7 +56,7 @@ Deno.serve(async (req) => {
 
   // Rechnungsnummer + PDF
   const { data: nummer, error: nrErr } = await supabase.rpc("naechste_dokument_nummer", { p_sequenz: "RE" });
-  if (nrErr || !nummer) return seite("Fehler", "Die Rechnung konnte nicht erstellt werden. Bitte kontaktieren Sie uns – wir kümmern uns umgehend.", false);
+  if (nrErr || !nummer) return weiter("fehler");
 
   const inhalt = anzahlungInhalt({
     gastName: `${buchung.vorname} ${buchung.nachname}`, gastEmail: buchung.email,
@@ -111,10 +108,9 @@ Deno.serve(async (req) => {
       await client.close();
     } catch (err) {
       console.error("Mailversand fehlgeschlagen:", err instanceof Error ? err.message : String(err));
-      return seite("Buchung bestätigt", "Vielen Dank! Ihre Buchung ist bestätigt. Die Anzahlungsrechnung senden wir Ihnen in Kürze per E-Mail zu.");
+      return weiter("ok_nomail");
     }
   }
 
-  return seite("Vielen Dank – Buchung bestätigt!",
-    `Ihre Annahme ist bei uns eingegangen und Ihre Buchung ist bestätigt. Die Anzahlungsrechnung über ${eurPdf(betrag)} haben wir Ihnen soeben per E-Mail geschickt. Wir freuen uns auf Ihren Aufenthalt!`);
+  return weiter("ok", `&betrag=${betrag}`);
 });
