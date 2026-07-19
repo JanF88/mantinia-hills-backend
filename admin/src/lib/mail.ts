@@ -46,15 +46,25 @@ export async function sendeMail(opts: {
   }
 }
 
-/** Gemeinsamer HTML-Rahmen mit Anbieter-Fußzeile. */
+const LOGO_URL = 'https://clients.mantinia-hills.com/logo-email.png'
+
+/** Gemeinsamer HTML-Rahmen mit gebrandeter Signatur-Fußzeile (Logo + Kontakt). */
 export function mailRahmen(inhaltHtml: string, a: Anbieter): string {
   return `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#2c2c2a;line-height:1.55">
 ${inhaltHtml}
-<hr style="border:none;border-top:1px solid #e2ddd6;margin:20px 0">
-<p style="font-size:12px;color:#888;margin:0">
-${a.name} · ${a.inhaber}<br>
-${a.strasse}, ${a.ort}, ${a.land}<br>
-${a.telefon} · ${a.email} · ${a.web}
-</p>
+<table cellpadding="0" cellspacing="0" border="0" style="margin-top:24px;border-top:1px solid #e2ddd6;padding-top:16px;font-family:Arial,Helvetica,sans-serif;">
+  <tr><td style="padding:0 0 8px 0;">
+    <a href="https://${a.web.replace(/^https?:\/\//, '')}" target="_blank" style="text-decoration:none;">
+      <img src="${LOGO_URL}" width="200" height="50" alt="${a.name}" style="display:block;border:0;">
+    </a>
+  </td></tr>
+  <tr><td style="font-size:13px;color:#2c2c2a;">
+    <span style="font-weight:bold;color:#681318;">${a.name}</span><br>
+    <span style="color:#666;font-size:12px;">${a.inhaber} · ${a.strasse}, ${a.ort}, ${a.land}</span><br>
+    <span style="color:#681318;font-weight:bold;">T</span> ${a.telefon}
+    &nbsp;·&nbsp; <span style="color:#681318;font-weight:bold;">M</span> <a href="mailto:${a.email}" style="color:#2c2c2a;text-decoration:none;">${a.email}</a>
+    &nbsp;·&nbsp; <a href="https://${a.web.replace(/^https?:\/\//, '')}" style="color:#681318;">${a.web}</a>
+  </td></tr>
+</table>
 </div>`
 }
