@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { datumDE, eur, zeitpunktDE } from '../lib/format'
@@ -17,34 +17,81 @@ const FILTER: (BuchungStatus | 'alle')[] = [
   'abgelehnt',
 ]
 
+type Sortierung = 'eingang' | 'anreise' | 'preis' | 'name'
+
 export default function AnfragenListe() {
-  const [buchungen, setBuchungen] = useState<Buchung[]>([])
+  const [alle, setAlle] = useState<Buchung[]>([])
   const [filter, setFilter] = useState<BuchungStatus | 'alle'>('alle')
+  const [suche, setSuche] = useState('')
+  const [sortierung, setSortierung] = useState<Sortierung>('eingang')
   const [laedt, setLaedt] = useState(true)
   const navigate = useNavigate()
 
   useEffect(() => {
-    let query = supabase.from('buchungen').select('*').order('created_at', { ascending: false })
-    if (filter !== 'alle') query = query.eq('status', filter)
-    query.then(({ data }) => {
-      setBuchungen((data as Buchung[]) ?? [])
+    supabase.from('buchungen').select('*').then(({ data }) => {
+      setAlle((data as Buchung[]) ?? [])
       setLaedt(false)
     })
-  }, [filter])
+  }, [])
+
+  const buchungen = useMemo(() => {
+    const q = suche.trim().toLowerCase()
+    let liste = alle.filter((b) => {
+      if (filter !== 'alle' && b.status !== filter) return false
+      if (q) {
+        const heu = `${b.vorname} ${b.nachname} ${b.email}`.toLowerCase()
+        if (!heu.includes(q)) return false
+      }
+      return true
+    })
+    liste = [...liste].sort((a, b) => {
+      switch (sortierung) {
+        case 'anreise': return a.anreise.localeCompare(b.anreise)
+        case 'preis': return (Number(b.gesamtpreis_eur) || 0) - (Number(a.gesamtpreis_eur) || 0)
+        case 'name': return `${a.nachname}`.localeCompare(`${b.nachname}`)
+        default: return b.created_at.localeCompare(a.created_at)
+      }
+    })
+    return liste
+  }, [alle, filter, suche, sortierung])
+
+  // Anzahl je Status für die Tab-Zähler
+  const anzahl = useMemo(() => {
+    const m: Record<string, number> = { alle: alle.length }
+    for (const b of alle) m[b.status] = (m[b.status] ?? 0) + 1
+    return m
+  }, [alle])
 
   return (
     <>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, gap: 10, flexWrap: 'wrap' }}>
         <h2 style={{ margin: 0 }}>Buchungsanfragen</h2>
         <button className="btn-primary" onClick={() => navigate('/anfragen/neu')}>
           + Anfrage manuell erfassen
         </button>
       </div>
 
+      <div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
+        <input
+          type="search"
+          placeholder="Suche nach Name oder E-Mail …"
+          value={suche}
+          onChange={(e) => setSuche(e.target.value)}
+          style={{ flex: 1, minWidth: 220 }}
+        />
+        <select value={sortierung} onChange={(e) => setSortierung(e.target.value as Sortierung)} style={{ maxWidth: 220 }}>
+          <option value="eingang">Sortieren: Eingang (neueste)</option>
+          <option value="anreise">Sortieren: Anreisedatum</option>
+          <option value="preis">Sortieren: Preis (höchster)</option>
+          <option value="name">Sortieren: Nachname (A–Z)</option>
+        </select>
+      </div>
+
       <div className="tabs">
         {FILTER.map((f) => (
           <button key={f} className={filter === f ? 'aktiv' : ''} onClick={() => setFilter(f)}>
             {f === 'alle' ? 'Alle' : STATUS_LABEL[f]}
+            {anzahl[f] ? <span style={{ opacity: 0.6 }}> ({anzahl[f]})</span> : null}
           </button>
         ))}
       </div>
@@ -78,11 +125,16 @@ export default function AnfragenListe() {
               </tr>
             ))}
             {!laedt && buchungen.length === 0 && (
-              <tr><td colSpan={7} className="leer">Keine Anfragen in dieser Ansicht.</td></tr>
+              <tr><td colSpan={7} className="leer">Keine Anfragen gefunden.</td></tr>
             )}
           </tbody>
         </table>
       </div>
+      {!laedt && (
+        <p style={{ fontSize: 13, color: 'var(--grau)', marginTop: 10 }}>
+          {buchungen.length} von {alle.length} Anfragen angezeigt
+        </p>
+      )}
     </>
   )
 }
