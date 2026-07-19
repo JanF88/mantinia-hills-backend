@@ -4,3 +4,8 @@
 # Öffentlicher Webhook — das Website-Widget sendet ohne Auth-Header.
 # Schutz erfolgt über den ?key=-Shared-Secret in der Function selbst.
 verify_jwt = false
+
+[functions.sende-mail]
+# Nur der eingeloggte Admin darf Mails auslösen.
+# Benötigt Secret SMTP_PASS (optional SMTP_HOST/PORT/USER/FROM/FROM_NAME).
+verify_jwt = true
