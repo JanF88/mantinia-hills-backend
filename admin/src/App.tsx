@@ -3,6 +3,7 @@ import { NavLink, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './lib/supabase'
 import Login from './pages/Login'
+import PasswortNeu from './pages/PasswortNeu'
 import AnfragenListe from './pages/AnfragenListe'
 import AnfrageNeu from './pages/AnfrageNeu'
 import AnfrageDetail from './pages/AnfrageDetail'
@@ -12,6 +13,7 @@ import Einstellungen from './pages/Einstellungen'
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null)
+  const [passwortReset, setPasswortReset] = useState(false)
   const [laedt, setLaedt] = useState(true)
   const navigate = useNavigate()
 
@@ -20,11 +22,17 @@ export default function App() {
       setSession(data.session)
       setLaedt(false)
     })
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => setSession(s))
+    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
+      if (event === 'PASSWORD_RECOVERY') setPasswortReset(true)
+      setSession(s)
+    })
     return () => sub.subscription.unsubscribe()
   }, [])
 
   if (laedt) return null
+  if (passwortReset) {
+    return <PasswortNeu onFertig={() => { setPasswortReset(false); navigate('/anfragen') }} />
+  }
   if (!session) return <Login />
 
   async function abmelden() {
