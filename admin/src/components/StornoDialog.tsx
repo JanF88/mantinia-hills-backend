@@ -3,7 +3,8 @@ import { supabase } from '../lib/supabase'
 import { stornorechnungPdf } from '../pdf/dokumente'
 import { downloadPdf, naechsteNummer, speichereDokument } from '../lib/dokumentService'
 import { stornoProzent, tageVorAnreise } from '../lib/storno'
-import { eur, heuteISO } from '../lib/format'
+import { sendeMail, mailRahmen } from '../lib/mail'
+import { datumDE, eur, heuteISO } from '../lib/format'
 import type { Buchung, Dokument, Einstellungen } from '../lib/types'
 
 interface Props {
@@ -24,7 +25,9 @@ export default function StornoDialog({ buchung, angebot, anzahlung, einstellunge
 
   const [prozent, setProzent] = useState(vorschlag)
   const [ohneRechnung, setOhneRechnung] = useState(false)
+  const [senden, setSenden] = useState(true)
   const [fehler, setFehler] = useState<string | null>(null)
+  const [versandHinweis, setVersandHinweis] = useState<string | null>(null)
   const [laedt, setLaedt] = useState(false)
 
   const anzahlungEingegangen = buchung.anzahlung_eingegangen_am != null && anzahlung != null
@@ -74,6 +77,34 @@ export default function StornoDialog({ buchung, angebot, anzahlung, einstellunge
           pdfBytes: bytes,
         })
         downloadPdf(bytes, `${nummer}_Storno_Mantinia_Hills.pdf`)
+
+        if (senden) {
+          try {
+            await sendeMail({
+              an: buchung.email,
+              betreff: `Stornierung Ihrer Buchung ${nummer} – Ferienhaus Mantinia Hills`,
+              html: mailRahmen(
+                `<p>Guten Tag ${buchung.vorname} ${buchung.nachname},</p>
+<p>hiermit bestätigen wir die Stornierung Ihrer Buchung für den Zeitraum <strong>${datumDE(buchung.anreise)}</strong> bis <strong>${datumDE(buchung.abreise)}</strong>. Die Einzelheiten entnehmen Sie bitte der Stornorechnung im Anhang.</p>
+<p>Wir bedauern, dass Ihr Aufenthalt nicht zustande kommt, und würden uns freuen, Sie zu einem anderen Zeitpunkt begrüßen zu dürfen.</p>
+<p>Herzliche Grüße<br>Ihr Team vom Ferienhaus Mantinia Hills</p>`,
+                einstellungen.anbieter,
+              ),
+              anhangBytes: bytes,
+              anhangName: `${nummer}_Stornorechnung_Mantinia_Hills.pdf`,
+              kopieAnMich: true,
+            })
+          } catch (mailErr) {
+            await supabase.from('buchungen').update({ status: 'storniert', storniert_am: new Date().toISOString() }).eq('id', buchung.id)
+            setVersandHinweis(
+              'Die Buchung wurde storniert und die Stornorechnung erstellt, aber der E-Mail-Versand schlug fehl: ' +
+              (mailErr instanceof Error ? mailErr.message : String(mailErr)) +
+              ' — bitte das PDF manuell versenden.',
+            )
+            setLaedt(false)
+            return
+          }
+        }
       }
       const { error } = await supabase
         .from('buchungen')
@@ -85,6 +116,20 @@ export default function StornoDialog({ buchung, angebot, anzahlung, einstellunge
       setFehler('Fehler beim Stornieren: ' + (err instanceof Error ? err.message : String(err)))
       setLaedt(false)
     }
+  }
+
+  if (versandHinweis) {
+    return (
+      <div className="dialog-hintergrund">
+        <div className="dialog" style={{ maxWidth: 480 }}>
+          <h2>Storniert</h2>
+          <div className="warnung">{versandHinweis}</div>
+          <div className="dialog-aktionen">
+            <button className="btn-primary" onClick={onFertig}>Schließen</button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -122,11 +167,17 @@ export default function StornoDialog({ buchung, angebot, anzahlung, einstellunge
           <input type="checkbox" style={{ width: 'auto' }} checked={ohneRechnung} onChange={(e) => setOhneRechnung(e.target.checked)} />
           Ohne Stornorechnung stornieren (Kulanz)
         </label>
+        {!ohneRechnung && (
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+            <input type="checkbox" style={{ width: 'auto' }} checked={senden} onChange={(e) => setSenden(e.target.checked)} />
+            Stornorechnung per E-Mail an <strong>{buchung.email}</strong> senden (Kopie an dich)
+          </label>
+        )}
         {fehler && <p className="fehler">{fehler}</p>}
         <div className="dialog-aktionen">
           <button onClick={onAbbrechen} disabled={laedt}>Abbrechen</button>
           <button className="btn-gefahr" onClick={stornieren} disabled={laedt}>
-            {laedt ? 'Wird storniert …' : ohneRechnung ? 'Stornieren' : 'Stornieren + Rechnungs-PDF'}
+            {laedt ? 'Wird verarbeitet …' : ohneRechnung ? 'Stornieren' : senden ? 'Stornieren & senden' : 'Stornieren + PDF'}
           </button>
         </div>
       </div>

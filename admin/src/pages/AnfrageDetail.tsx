@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { ladeEinstellungen } from '../lib/einstellungen'
 import { downloadArchiviertesPdf } from '../lib/dokumentService'
+import { restzahlungFaellig } from '../lib/statistik'
 import { datumDE, eur, zeitpunktDE } from '../lib/format'
 import type { Buchung, Dokument, Einstellungen } from '../lib/types'
 import StatusBadge from '../components/StatusBadge'
@@ -97,6 +98,14 @@ export default function AnfrageDetail() {
         <h2 style={{ margin: 0 }}>{buchung.vorname} {buchung.nachname}</h2>
         <StatusBadge status={s} />
       </div>
+
+      {restzahlungFaellig(buchung) && (
+        <div className="warnung">
+          <strong>Restzahlung fällig:</strong> Die Anreise ({datumDE(buchung.anreise)}) ist in 7 Tagen oder weniger.
+          Der volle Betrag sollte spätestens 7 Tage vor Anreise bezahlt sein. Sobald die Zahlung da ist:
+          {s === 'bestaetigt' ? ' „Anzahlung eingegangen" bzw. ' : ' '}„Restzahlung eingegangen" klicken.
+        </div>
+      )}
 
       <div className="card">
         <h2>Anfrage</h2>

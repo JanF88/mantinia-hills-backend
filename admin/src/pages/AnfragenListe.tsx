@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { datumDE, eur, zeitpunktDE } from '../lib/format'
+import { restzahlungFaellig } from '../lib/statistik'
 import type { Buchung, BuchungStatus } from '../lib/types'
 import StatusBadge, { STATUS_LABEL } from '../components/StatusBadge'
 
@@ -62,6 +63,8 @@ export default function AnfragenListe() {
     return m
   }, [alle])
 
+  const faellig = useMemo(() => alle.filter((b) => restzahlungFaellig(b)), [alle])
+
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, gap: 10, flexWrap: 'wrap' }}>
@@ -70,6 +73,14 @@ export default function AnfragenListe() {
           + Anfrage manuell erfassen
         </button>
       </div>
+
+      {faellig.length > 0 && (
+        <div className="warnung">
+          <strong>Restzahlung fällig</strong> — bei {faellig.length} {faellig.length === 1 ? 'Buchung ist' : 'Buchungen ist'} die
+          Anreise in 7 Tagen oder weniger und die Restzahlung noch nicht als eingegangen markiert:{' '}
+          {faellig.map((b) => `${b.nachname} (${datumDE(b.anreise)})`).join(', ')}.
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
         <input
@@ -119,7 +130,12 @@ export default function AnfragenListe() {
                 <td>{datumDE(b.anreise)} – {datumDE(b.abreise)}<div style={{ fontSize: 12, color: 'var(--grau)' }}>{b.naechte} Nächte</div></td>
                 <td className="rechts">{b.personen}</td>
                 <td className="rechts">{b.gesamtpreis_eur != null ? eur(b.gesamtpreis_eur) : '–'}</td>
-                <td><StatusBadge status={b.status} /></td>
+                <td>
+                  <StatusBadge status={b.status} />
+                  {restzahlungFaellig(b) && (
+                    <div style={{ fontSize: 11, color: 'var(--rot)', fontWeight: 600, marginTop: 4 }}>⚠ Restzahlung fällig</div>
+                  )}
+                </td>
                 <td className="nur-desktop" style={{ fontSize: 13, color: 'var(--grau)' }}>{b.quelle === 'webhook' ? 'Website' : 'Manuell'}</td>
                 <td className="nur-desktop" style={{ fontSize: 13, color: 'var(--grau)' }}>{zeitpunktDE(b.created_at)}</td>
               </tr>

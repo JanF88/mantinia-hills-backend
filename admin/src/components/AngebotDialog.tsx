@@ -2,8 +2,9 @@ import { useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { angebotsPositionen, berechneAufenthalt, positionenSumme } from '../lib/preisberechnung'
 import { downloadPdf, naechsteNummer, speichereDokument } from '../lib/dokumentService'
+import { sendeMail, mailRahmen } from '../lib/mail'
 import { angebotPdf } from '../pdf/dokumente'
-import { heuteISO } from '../lib/format'
+import { datumDE, heuteISO } from '../lib/format'
 import PositionenEditor from './PositionenEditor'
 import type { Buchung, Einstellungen, Position } from '../lib/types'
 
@@ -27,7 +28,9 @@ export default function AngebotDialog({ buchung, einstellungen, onFertig, onAbbr
     d.setDate(d.getDate() + einstellungen.angebot_gueltig_tage)
     return d.toISOString().slice(0, 10)
   })
+  const [senden, setSenden] = useState(true)
   const [fehler, setFehler] = useState<string | null>(null)
+  const [versandHinweis, setVersandHinweis] = useState<string | null>(null)
   const [laedt, setLaedt] = useState(false)
 
   async function erstellen() {
@@ -51,17 +54,55 @@ export default function AngebotDialog({ buchung, einstellungen, onFertig, onAbbr
         meta: { gueltig_bis: gueltigBis },
         pdfBytes: bytes,
       })
-      const { error } = await supabase
-        .from('buchungen')
-        .update({ status: 'angebot_erstellt' })
-        .eq('id', buchung.id)
+      const { error } = await supabase.from('buchungen').update({ status: 'angebot_erstellt' }).eq('id', buchung.id)
       if (error) throw error
       downloadPdf(bytes, `${nummer}_Mantinia_Hills.pdf`)
+
+      if (senden) {
+        try {
+          await sendeMail({
+            an: buchung.email,
+            betreff: `Ihr Angebot ${nummer} – Ferienhaus Mantinia Hills`,
+            html: mailRahmen(
+              `<p>Guten Tag ${buchung.vorname} ${buchung.nachname},</p>
+<p>vielen Dank für Ihre Anfrage. Im Anhang finden Sie Ihr persönliches Angebot für Ihren Aufenthalt vom <strong>${datumDE(buchung.anreise)}</strong> bis <strong>${datumDE(buchung.abreise)}</strong>.</p>
+<p>Das Angebot ist gültig bis ${datumDE(gueltigBis)}. Zur Annahme genügt eine kurze Bestätigung per E-Mail. Bei Fragen sind wir jederzeit gern für Sie da.</p>
+<p>Herzliche Grüße<br>Ihr Team vom Ferienhaus Mantinia Hills</p>`,
+              einstellungen.anbieter,
+            ),
+            anhangBytes: bytes,
+            anhangName: `${nummer}_Angebot_Mantinia_Hills.pdf`,
+            kopieAnMich: true,
+          })
+        } catch (mailErr) {
+          setVersandHinweis(
+            'Das Angebot wurde erstellt und heruntergeladen, aber der E-Mail-Versand schlug fehl: ' +
+            (mailErr instanceof Error ? mailErr.message : String(mailErr)) +
+            ' — bitte das PDF manuell versenden.',
+          )
+          setLaedt(false)
+          return
+        }
+      }
       onFertig()
     } catch (err) {
       setFehler('Fehler beim Erstellen: ' + (err instanceof Error ? err.message : String(err)))
       setLaedt(false)
     }
+  }
+
+  if (versandHinweis) {
+    return (
+      <div className="dialog-hintergrund">
+        <div className="dialog" style={{ maxWidth: 480 }}>
+          <h2>Angebot erstellt</h2>
+          <div className="warnung">{versandHinweis}</div>
+          <div className="dialog-aktionen">
+            <button className="btn-primary" onClick={onFertig}>Schließen</button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -74,11 +115,15 @@ export default function AngebotDialog({ buchung, einstellungen, onFertig, onAbbr
         <PositionenEditor positionen={positionen} onChange={setPositionen} />
         <label htmlFor="gueltig">Angebot gültig bis</label>
         <input id="gueltig" type="date" style={{ maxWidth: 200 }} value={gueltigBis} onChange={(e) => setGueltigBis(e.target.value)} />
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16 }}>
+          <input type="checkbox" style={{ width: 'auto' }} checked={senden} onChange={(e) => setSenden(e.target.checked)} />
+          Angebot per E-Mail an <strong>{buchung.email}</strong> senden (Kopie an dich)
+        </label>
         {fehler && <p className="fehler">{fehler}</p>}
         <div className="dialog-aktionen">
           <button onClick={onAbbrechen} disabled={laedt}>Abbrechen</button>
           <button className="btn-primary" onClick={erstellen} disabled={laedt}>
-            {laedt ? 'Wird erstellt …' : 'Angebots-PDF erstellen'}
+            {laedt ? 'Wird verarbeitet …' : senden ? 'Erstellen & senden' : 'Nur erstellen'}
           </button>
         </div>
       </div>

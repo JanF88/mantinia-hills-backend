@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { anzahlungsrechnungPdf } from '../pdf/dokumente'
 import { downloadPdf, naechsteNummer, speichereDokument } from '../lib/dokumentService'
-import { eur, heuteISO } from '../lib/format'
+import { sendeMail, mailRahmen } from '../lib/mail'
+import { datumDE, eur, heuteISO } from '../lib/format'
 import type { Buchung, Dokument, Einstellungen } from '../lib/types'
 
 interface Props {
@@ -19,7 +20,9 @@ export default function AnzahlungDialog({ buchung, angebot, einstellungen, onFer
   const [betrag, setBetrag] = useState(() =>
     Math.round(basis * einstellungen.anzahlung_prozent_default) / 100,
   )
+  const [senden, setSenden] = useState(true)
   const [fehler, setFehler] = useState<string | null>(null)
+  const [versandHinweis, setVersandHinweis] = useState<string | null>(null)
   const [laedt, setLaedt] = useState(false)
 
   function prozentAendern(wert: string) {
@@ -65,11 +68,52 @@ export default function AnzahlungDialog({ buchung, angebot, einstellungen, onFer
         pdfBytes: bytes,
       })
       downloadPdf(bytes, `${nummer}_Anzahlung_Mantinia_Hills.pdf`)
+
+      if (senden) {
+        try {
+          await sendeMail({
+            an: buchung.email,
+            betreff: `Anzahlungsrechnung ${nummer} – Ferienhaus Mantinia Hills`,
+            html: mailRahmen(
+              `<p>Guten Tag ${buchung.vorname} ${buchung.nachname},</p>
+<p>vielen Dank für die Annahme unseres Angebots. Zur verbindlichen Reservierung Ihres Aufenthalts vom <strong>${datumDE(buchung.anreise)}</strong> bis <strong>${datumDE(buchung.abreise)}</strong> erhalten Sie im Anhang die Anzahlungsrechnung über <strong>${eur(betrag)}</strong>.</p>
+<p>Bitte überweisen Sie den Betrag unter Angabe der Rechnungsnummer ${nummer}. Sobald die Anzahlung bei uns eingegangen ist, ist Ihre Buchung fest reserviert.</p>
+<p>Herzliche Grüße<br>Ihr Team vom Ferienhaus Mantinia Hills</p>`,
+              einstellungen.anbieter,
+            ),
+            anhangBytes: bytes,
+            anhangName: `${nummer}_Anzahlung_Mantinia_Hills.pdf`,
+            kopieAnMich: true,
+          })
+        } catch (mailErr) {
+          setVersandHinweis(
+            'Die Rechnung wurde erstellt und heruntergeladen, aber der E-Mail-Versand schlug fehl: ' +
+            (mailErr instanceof Error ? mailErr.message : String(mailErr)) +
+            ' — bitte das PDF manuell versenden.',
+          )
+          setLaedt(false)
+          return
+        }
+      }
       onFertig()
     } catch (err) {
       setFehler('Fehler beim Erstellen: ' + (err instanceof Error ? err.message : String(err)))
       setLaedt(false)
     }
+  }
+
+  if (versandHinweis) {
+    return (
+      <div className="dialog-hintergrund">
+        <div className="dialog" style={{ maxWidth: 480 }}>
+          <h2>Rechnung erstellt</h2>
+          <div className="warnung">{versandHinweis}</div>
+          <div className="dialog-aktionen">
+            <button className="btn-primary" onClick={onFertig}>Schließen</button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -95,11 +139,15 @@ export default function AnzahlungDialog({ buchung, angebot, einstellungen, onFer
             Bitte in den Einstellungen ergänzen.
           </div>
         )}
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16 }}>
+          <input type="checkbox" style={{ width: 'auto' }} checked={senden} onChange={(e) => setSenden(e.target.checked)} />
+          Rechnung per E-Mail an <strong>{buchung.email}</strong> senden (Kopie an dich)
+        </label>
         {fehler && <p className="fehler">{fehler}</p>}
         <div className="dialog-aktionen">
           <button onClick={onAbbrechen} disabled={laedt}>Abbrechen</button>
           <button className="btn-primary" onClick={erstellen} disabled={laedt}>
-            {laedt ? 'Wird erstellt …' : 'Rechnungs-PDF erstellen'}
+            {laedt ? 'Wird verarbeitet …' : senden ? 'Erstellen & senden' : 'Nur erstellen'}
           </button>
         </div>
       </div>

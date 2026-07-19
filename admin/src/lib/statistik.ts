@@ -32,6 +32,20 @@ export function buchungenAmTag(buchungen: Buchung[], iso: string): Buchung[] {
   return buchungen.filter((b) => belegungsArt(b) !== null && b.anreise <= iso && iso < b.abreise)
 }
 
+/**
+ * Restzahlung fällig: Buchung ist bestätigt oder angezahlt (noch nicht komplett
+ * bezahlt), und die Anreise ist höchstens `tageVorher` Tage entfernt (inkl. bereits
+ * überfälliger, in der Vergangenheit liegender Anreisen).
+ */
+export function restzahlungFaellig(b: Buchung, tageVorher = 7): boolean {
+  if (b.status !== 'bestaetigt' && b.status !== 'angezahlt') return false
+  const heute = new Date()
+  heute.setHours(0, 0, 0, 0)
+  const grenze = new Date(b.anreise + 'T00:00:00')
+  grenze.setDate(grenze.getDate() - tageVorher)
+  return heute >= grenze
+}
+
 /** Ganze Tage zwischen zwei ISO-Daten (isoB - isoA). */
 export function tageZwischen(isoA: string, isoB: string): number {
   return Math.round(
