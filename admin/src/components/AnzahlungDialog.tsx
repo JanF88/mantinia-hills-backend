@@ -73,7 +73,7 @@ export default function AnzahlungDialog({ buchung, angebot, einstellungen, onFer
         try {
           await sendeMail({
             an: buchung.email,
-            betreff: `Anzahlungsrechnung ${nummer} – Ferienhaus Mantinia Hills`,
+            betreff: `Anzahlungsrechnung ${nummer} - Ferienhaus Mantinia Hills`,
             html: mailRahmen(
               `<p>Guten Tag ${buchung.vorname} ${buchung.nachname},</p>
 <p>vielen Dank für die Annahme unseres Angebots. Zur verbindlichen Reservierung Ihres Aufenthalts vom <strong>${datumDE(buchung.anreise)}</strong> bis <strong>${datumDE(buchung.abreise)}</strong> erhalten Sie im Anhang die Anzahlungsrechnung über <strong>${eur(betrag)}</strong>.</p>

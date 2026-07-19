@@ -67,7 +67,7 @@ export default function AngebotDialog({ buchung, einstellungen, onFertig, onAbbr
         try {
           await sendeMail({
             an: buchung.email,
-            betreff: `Ihr Angebot ${nummer} – Ferienhaus Mantinia Hills`,
+            betreff: `Ihr Angebot ${nummer} - Ferienhaus Mantinia Hills`,
             html: mailRahmen(
               `<p>Guten Tag ${buchung.vorname} ${buchung.nachname},</p>
 <p>vielen Dank für Ihre Anfrage. Im Anhang finden Sie Ihr persönliches Angebot für Ihren Aufenthalt vom <strong>${datumDE(buchung.anreise)}</strong> bis <strong>${datumDE(buchung.abreise)}</strong>.</p>

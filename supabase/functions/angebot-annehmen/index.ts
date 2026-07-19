@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
       });
       await client.send({
         from: `${fromName} <${from}>`, to: buchung.email, bcc: from,
-        subject: `Buchungsbestätigung & Anzahlungsrechnung ${nummer} – Ferienhaus Mantinia Hills`,
+        subject: `Buchungsbestaetigung und Anzahlungsrechnung ${nummer}`,
         html,
         attachments: [{ filename: `${nummer}_Anzahlung_Mantinia_Hills.pdf`, encoding: "base64", content: bytesZuBase64(pdfBytes), contentType: "application/pdf" }],
       });

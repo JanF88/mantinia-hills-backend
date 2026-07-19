@@ -14,7 +14,7 @@ export default function MailTest() {
     const { data, error } = await supabase.functions.invoke('sende-mail', {
       body: {
         an,
-        betreff: 'Testmail – Mantinia Hills Buchungsverwaltung',
+        betreff: 'Testmail Mantinia Hills Buchungsverwaltung',
         html: '<p>Diese Test-E-Mail bestätigt, dass der Mailversand über das Hostinger-Postfach funktioniert.</p>',
       },
     })

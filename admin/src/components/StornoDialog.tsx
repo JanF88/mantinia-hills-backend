@@ -82,7 +82,7 @@ export default function StornoDialog({ buchung, angebot, anzahlung, einstellunge
           try {
             await sendeMail({
               an: buchung.email,
-              betreff: `Stornierung Ihrer Buchung ${nummer} – Ferienhaus Mantinia Hills`,
+              betreff: `Stornierung Ihrer Buchung ${nummer} - Ferienhaus Mantinia Hills`,
               html: mailRahmen(
                 `<p>Guten Tag ${buchung.vorname} ${buchung.nachname},</p>
 <p>hiermit bestätigen wir die Stornierung Ihrer Buchung für den Zeitraum <strong>${datumDE(buchung.anreise)}</strong> bis <strong>${datumDE(buchung.abreise)}</strong>. Die Einzelheiten entnehmen Sie bitte der Stornorechnung im Anhang.</p>
