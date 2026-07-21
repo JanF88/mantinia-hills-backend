@@ -34,8 +34,7 @@ export default function PasswortAendern() {
   }
 
   return (
-    <form className="card" onSubmit={speichern}>
-      <h2>Passwort ändern</h2>
+    <form onSubmit={speichern}>
       <div className="zeile">
         <div>
           <label htmlFor="np1">Neues Passwort (mind. 8 Zeichen)</label>

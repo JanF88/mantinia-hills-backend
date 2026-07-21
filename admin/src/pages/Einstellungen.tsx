@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ladeEinstellungen, speichereEinstellung } from '../lib/einstellungen'
 import PasswortAendern from '../components/PasswortAendern'
-import MailTest from '../components/MailTest'
 import type { Einstellungen as EinstellungenTyp } from '../lib/types'
 
 export default function Einstellungen() {
@@ -56,12 +55,21 @@ export default function Einstellungen() {
     set('anbieter', { ...e!.anbieter, [feld]: wert })
   }
 
+  const ibanFehlt = !e.anbieter.iban
+
   return (
     <>
-      <h2>Einstellungen</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, gap: 10, flexWrap: 'wrap' }}>
+        <h2 style={{ margin: 0 }}>Einstellungen</h2>
+        <button className="btn-primary" onClick={speichern} disabled={laedt}>
+          {laedt ? 'Wird gespeichert …' : 'Alle Einstellungen speichern'}
+        </button>
+      </div>
+      {meldung && <p style={{ color: 'var(--gruen)', fontWeight: 600 }}>{meldung}</p>}
+      {fehler && <p className="fehler">{fehler}</p>}
 
-      <div className="card">
-        <h2>Saisonpreise (€ pro Person und Nacht)</h2>
+      <details className="card akkordeon">
+        <summary>Saisonpreise (€ pro Person und Nacht)</summary>
         <table style={{ maxWidth: 560 }}>
           <thead>
             <tr>
@@ -80,10 +88,10 @@ export default function Einstellungen() {
             ))}
           </tbody>
         </table>
-      </div>
+      </details>
 
-      <div className="card">
-        <h2>Nebenkosten &amp; Vorgaben</h2>
+      <details className="card akkordeon">
+        <summary>Nebenkosten &amp; Fristen</summary>
         <div className="zeile">
           <div>
             <label>Endreinigung €</label>
@@ -116,10 +124,10 @@ export default function Einstellungen() {
         <p style={{ fontSize: 13, color: 'var(--grau)', marginBottom: 0 }}>
           14 / 7 heißt: Die Abschlussrechnung wird 14 Tage vor Anreise fällig (Erinnerung), das Zahlungsziel liegt 7 Tage vor Anreise.
         </p>
-      </div>
+      </details>
 
-      <div className="card">
-        <h2>Storno-Staffel</h2>
+      <details className="card akkordeon">
+        <summary>Storno-Staffel</summary>
         <table style={{ maxWidth: 460 }}>
           <thead>
             <tr><th>Ab Tagen vor Anreise</th><th className="rechts">Gebühr %</th></tr>
@@ -137,14 +145,12 @@ export default function Einstellungen() {
           Gelesen von oben nach unten: Es gilt die erste Stufe, deren „ab Tagen" erreicht ist.
           Beispiel: 60 → 20 % heißt „60 Tage oder mehr vor Anreise: 20 %".
         </p>
-      </div>
+      </details>
 
-      <div className="card">
-        <h2>Anbieterdaten (erscheinen auf allen PDFs)</h2>
-        {!e.anbieter.iban && (
-          <div className="warnung">
-            Noch keine IBAN hinterlegt — Rechnungen werden ohne Bankverbindung erstellt!
-          </div>
+      <details className="card akkordeon">
+        <summary>Anbieterdaten (erscheinen auf allen PDFs){ibanFehlt ? ' — ⚠ IBAN fehlt' : ''}</summary>
+        {ibanFehlt && (
+          <div className="warnung">Noch keine IBAN hinterlegt — Rechnungen werden ohne Bankverbindung erstellt!</div>
         )}
         <div className="zeile">
           <div><label>Objektname</label><input value={e.anbieter.name} onChange={(ev) => anbieterAendern('name', ev.target.value)} /></div>
@@ -165,23 +171,17 @@ export default function Einstellungen() {
           <div><label>IBAN</label><input value={e.anbieter.iban} onChange={(ev) => anbieterAendern('iban', ev.target.value)} /></div>
           <div><label>BIC</label><input value={e.anbieter.bic} onChange={(ev) => anbieterAendern('bic', ev.target.value)} /></div>
         </div>
-      </div>
+      </details>
 
-      <div className="card">
-        <h2>PDF-Fußzeile</h2>
+      <details className="card akkordeon">
+        <summary>PDF-Fußzeile</summary>
         <textarea rows={2} value={e.pdf_fusszeile} onChange={(ev) => set('pdf_fusszeile', ev.target.value)} />
-      </div>
+      </details>
 
-      {meldung && <p style={{ color: 'var(--gruen)', fontWeight: 600 }}>{meldung}</p>}
-      {fehler && <p className="fehler">{fehler}</p>}
-      <button className="btn-primary" onClick={speichern} disabled={laedt}>
-        {laedt ? 'Wird gespeichert …' : 'Alle Einstellungen speichern'}
-      </button>
-
-      <div style={{ marginTop: 28 }}>
-        <MailTest />
+      <details className="card akkordeon">
+        <summary>Passwort ändern</summary>
         <PasswortAendern />
-      </div>
+      </details>
     </>
   )
 }
