@@ -66,7 +66,8 @@ Deno.serve(async (req) => {
       to: input.an,
       bcc: input.kopie_an_absender ? from : undefined,
       subject: input.betreff,
-      content: input.text ?? undefined,
+      // "auto" erzeugt einen reinen Text-Teil aus dem HTML → bessere Zustellbarkeit
+      content: input.text ?? "auto",
       html: input.html ?? undefined,
       attachments: input.anhang
         ? [{
