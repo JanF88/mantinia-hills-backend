@@ -18,7 +18,6 @@ export default function AnfrageNeu() {
   const [abreise, setAbreise] = useState('')
   const [transferIdx, setTransferIdx] = useState(0)
   const [fahrzeug, setFahrzeug] = useState('Nein')
-  const [notizen, setNotizen] = useState('')
   const [buchungen, setBuchungen] = useState<Buchung[]>([])
   const [fehler, setFehler] = useState<string | null>(null)
   const [laedt, setLaedt] = useState(false)
@@ -75,7 +74,6 @@ export default function AnfrageNeu() {
         saison_aufschluesselung: aufschluesselung,
         fahrzeug_interesse: fahrzeug,
         anfrage_zeitpunkt: new Date().toISOString(),
-        notizen: notizen.trim() || null,
       })
       .select('id')
       .single()
@@ -143,8 +141,6 @@ export default function AnfrageNeu() {
             </select>
           </div>
         </div>
-        <label htmlFor="notizen">Notizen</label>
-        <textarea id="notizen" rows={3} value={notizen} onChange={(e) => setNotizen(e.target.value)} />
       </div>
 
       {kollisionen.length > 0 && (

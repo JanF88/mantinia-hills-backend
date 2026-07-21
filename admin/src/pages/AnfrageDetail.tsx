@@ -25,7 +25,6 @@ export default function AnfrageDetail() {
   const [buchung, setBuchung] = useState<Buchung | null>(null)
   const [dokumente, setDokumente] = useState<Dokument[]>([])
   const [einstellungen, setEinstellungen] = useState<Einstellungen | null>(null)
-  const [notizen, setNotizen] = useState('')
   const [dialog, setDialog] = useState<'angebot' | 'anzahlung' | 'abschluss' | 'storno' | null>(null)
   const [fehler, setFehler] = useState<string | null>(null)
   const [loeschBestaetigung, setLoeschBestaetigung] = useState(false)
@@ -38,7 +37,6 @@ export default function AnfrageDetail() {
       supabase.from('dokumente').select('*').eq('buchung_id', id).order('created_at', { ascending: false }),
     ])
     setBuchung(b as Buchung)
-    setNotizen((b as Buchung)?.notizen ?? '')
     setDokumente((d as Dokument[]) ?? [])
   }, [id])
 
@@ -58,11 +56,6 @@ export default function AnfrageDetail() {
     const { error } = await supabase.from('buchungen').update(update).eq('id', buchung!.id)
     if (error) setFehler(error.message)
     else laden()
-  }
-
-  async function notizenSpeichern() {
-    await supabase.from('buchungen').update({ notizen: notizen.trim() || null }).eq('id', buchung!.id)
-    laden()
   }
 
   async function anfrageLoeschen() {
@@ -243,14 +236,6 @@ export default function AnfrageDetail() {
             </tbody>
           </table>
         )}
-      </div>
-
-      <div className="card">
-        <h2>Notizen</h2>
-        <textarea rows={4} value={notizen} onChange={(e) => setNotizen(e.target.value)} placeholder="Interne Notizen zu dieser Anfrage …" />
-        <div style={{ marginTop: 10 }}>
-          <button className="btn-klein" onClick={notizenSpeichern}>Notizen speichern</button>
-        </div>
       </div>
 
       <div className="card" style={{ borderColor: '#f0d6d8' }}>
