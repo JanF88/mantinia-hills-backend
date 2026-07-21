@@ -102,11 +102,12 @@ export default function Kalender() {
                   <div className="kal-tag">{tag.getDate()}</div>
                   {belegt.map((b) => {
                     const art = belegungsArt(b)!
+                    const artLabel = art === 'gebucht' ? 'Gebucht' : art === 'reserviert' ? 'Reserviert' : 'Anfrage'
                     return (
                       <div
                         key={b.id}
                         className={`kal-belegung kal-${art}`}
-                        title={`${b.vorname} ${b.nachname} · ${b.personen} Pers. · ${art === 'fest' ? 'gebucht' : 'Anfrage/Angebot'}`}
+                        title={`${b.vorname} ${b.nachname} · ${b.personen} Pers. · ${artLabel}`}
                         onClick={() => navigate(`/anfragen/${b.id}`)}
                       >
                         {b.anreise === iso ? '▸ ' : ''}{b.nachname}
@@ -119,8 +120,9 @@ export default function Kalender() {
           </div>
         ))}
         <div style={{ display: 'flex', gap: 18, marginTop: 12, fontSize: 13, color: 'var(--grau)', flexWrap: 'wrap' }}>
-          <span><span className="kal-legende kal-fest" /> Fest gebucht (bestätigt bis abgeschlossen)</span>
-          <span><span className="kal-legende kal-offen" /> Anfrage / Angebot offen</span>
+          <span><span className="kal-legende kal-gebucht" /> Gebucht (Anzahlung getätigt)</span>
+          <span><span className="kal-legende kal-reserviert" /> Reserviert (Angebot versendet)</span>
+          <span><span className="kal-legende kal-anfrage" /> Anfrage</span>
           <span>▸ = Anreisetag · Abreisetag zählt nicht als belegt</span>
         </div>
 

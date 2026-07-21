@@ -1,7 +1,9 @@
 // Gemeinsame Logik für Kalender und Auswertung.
 //
 // Belegung: Nächte [anreise, abreise) — der Abreisetag zählt nicht als belegt.
-// „Fest" = bestätigt/angezahlt/bezahlt/abgeschlossen, „offen" = neu/Angebot erstellt.
+// Kalender-Stufen: „Anfrage" = neu, „Reserviert" = Angebot versendet/angenommen,
+// „Gebucht" = Anzahlung getätigt (angezahlt/bezahlt/abgeschlossen).
+// Für Einnahmen und Kollisionsregeln zählt eine Buchung ab Bestätigung als verbindlich.
 //
 // Einnahmen: Betrag einer festen Buchung = Gesamt des jüngsten Angebots
 // (Fallback: Preis-Snapshot der Anfrage), anteilig nach Nächten auf die
@@ -10,15 +12,21 @@
 
 import type { Buchung, Dokument } from './types'
 
-export type BelegungsArt = 'fest' | 'offen'
+export type BelegungsArt = 'anfrage' | 'reserviert' | 'gebucht'
 
-const FEST: Buchung['status'][] = ['bestaetigt', 'angezahlt', 'bezahlt', 'abgeschlossen']
-const OFFEN: Buchung['status'][] = ['neu', 'angebot_erstellt']
+const GEBUCHT: Buchung['status'][] = ['angezahlt', 'bezahlt', 'abgeschlossen']
+const RESERVIERT: Buchung['status'][] = ['angebot_erstellt', 'bestaetigt']
 
 export function belegungsArt(b: Buchung): BelegungsArt | null {
-  if (FEST.includes(b.status)) return 'fest'
-  if (OFFEN.includes(b.status)) return 'offen'
+  if (GEBUCHT.includes(b.status)) return 'gebucht'
+  if (RESERVIERT.includes(b.status)) return 'reserviert'
+  if (b.status === 'neu') return 'anfrage'
   return null
+}
+
+/** Verbindlich (blockiert den Zeitraum, zählt als Einnahme): ab Bestätigung. */
+export function istVerbindlich(b: Buchung): boolean {
+  return b.status === 'bestaetigt' || GEBUCHT.includes(b.status)
 }
 
 export function tagISO(d: Date): string {
@@ -63,7 +71,7 @@ export interface AbstandsKonflikt {
 /**
  * Regel: zwischen zwei Buchungen muss mindestens 1 freier Tag liegen
  * (freie Nächte = anreise_spaeter − abreise_frueher). Gemeldet werden Paare,
- * bei denen mindestens eine Buchung fest gebucht ist.
+ * bei denen mindestens eine Buchung verbindlich ist.
  */
 export function findeAbstandsKonflikte(buchungen: Buchung[], mindestFreieTage = 1): AbstandsKonflikt[] {
   const relevant = buchungen
@@ -74,7 +82,7 @@ export function findeAbstandsKonflikte(buchungen: Buchung[], mindestFreieTage = 
     for (let j = i + 1; j < relevant.length; j++) {
       const frueher = relevant[i]
       const spaeter = relevant[j]
-      if (belegungsArt(frueher) !== 'fest' && belegungsArt(spaeter) !== 'fest') continue
+      if (!istVerbindlich(frueher) && !istVerbindlich(spaeter)) continue
       const freieTage = tageZwischen(frueher.abreise, spaeter.anreise)
       if (freieTage < mindestFreieTage) konflikte.push({ frueher, spaeter, freieTage })
     }
@@ -83,7 +91,7 @@ export function findeAbstandsKonflikte(buchungen: Buchung[], mindestFreieTage = 
 }
 
 /**
- * Prüft, ob ein Zeitraum mit bestehenden festen Buchungen kollidiert
+ * Prüft, ob ein Zeitraum mit bestehenden verbindlichen Buchungen kollidiert
  * (inkl. Pufferregel). `ignoriereId` schließt die eigene Buchung aus.
  */
 export function pruefeZeitraum(
@@ -95,7 +103,7 @@ export function pruefeZeitraum(
 ): Buchung[] {
   return buchungen.filter((b) => {
     if (b.id === ignoriereId) return false
-    if (belegungsArt(b) !== 'fest') return false
+    if (!istVerbindlich(b)) return false
     // genug Abstand, wenn der neue Zeitraum komplett vor oder nach b liegt
     const genugDavor = tageZwischen(abreiseISO, b.anreise) >= mindestFreieTage
     const genugDanach = tageZwischen(b.abreise, anreiseISO) >= mindestFreieTage
@@ -129,7 +137,7 @@ export interface JahresAuswertung {
   auslastungGesamt: number
 }
 
-/** Betrag, der für eine feste Buchung als Einnahme zählt. */
+/** Betrag, der für eine verbindliche Buchung als Einnahme zählt. */
 export function buchungsBetrag(b: Buchung, angebotProBuchung: Map<string, Dokument>): number {
   const angebot = angebotProBuchung.get(b.id)
   if (angebot) return Number(angebot.gesamt)
@@ -158,7 +166,7 @@ export function jahresAuswertung(
     let belegteNaechte = 0
 
     for (const b of buchungen) {
-      if (belegungsArt(b) === 'fest') {
+      if (istVerbindlich(b)) {
         const anteil = naechteImMonat(b, jahr, m)
         if (anteil > 0) {
           belegteNaechte += anteil

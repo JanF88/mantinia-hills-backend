@@ -140,11 +140,12 @@ td.rechts, th.rechts { text-align: right; }
 .kal-tag { font-size: 12px; color: var(--grau); margin-bottom: 3px; }
 .kal-heute .kal-tag { color: var(--brand); font-weight: 700; }
 .kal-belegung { font-size: 11.5px; border-radius: 4px; padding: 2px 5px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
-.kal-fest { background: var(--brand); color: #fff; }
-.kal-offen { background: #f0e2d6; color: #7a5230; border: 1px dashed #c9a883; }
+.kal-gebucht { background: var(--brand); color: #fff; }
+.kal-reserviert { background: #f0e2d6; color: #7a5230; border: 1px solid #c9a883; }
+.kal-anfrage { background: #f2f0eb; color: #6b6b6b; border: 1px dashed #b8b3a8; }
 .kal-belegung:hover { opacity: .85; }
 .kal-legende { display: inline-block; width: 14px; height: 11px; border-radius: 3px; vertical-align: middle; margin-right: 4px; }
-span.kal-legende.kal-offen { border-style: dashed; }
+span.kal-legende.kal-anfrage { border-style: dashed; }
 
 /* Auswertung */
 .kennzahlen { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 18px; }
