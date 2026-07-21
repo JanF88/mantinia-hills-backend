@@ -36,7 +36,6 @@ export async function angebotPdf(
       'Zur Annahme genügt eine kurze Bestätigung per E-Mail. Nach Annahme erhalten Sie eine Anzahlungsrechnung; mit Eingang der Anzahlung ist Ihre Buchung verbindlich reserviert.',
     ],
     anbieter: e.anbieter,
-    fusszeile: e.pdf_fusszeile,
   })
 }
 
@@ -76,7 +75,6 @@ export async function anzahlungsrechnungPdf(
       `Der Restbetrag von ${eurPdf(restbetrag)} wird vor Anreise fällig.`,
     ],
     anbieter: e.anbieter,
-    fusszeile: e.pdf_fusszeile,
   })
 }
 
@@ -120,7 +118,6 @@ export async function abschlussrechnungPdf(
       'Wir freuen uns sehr auf Ihren Aufenthalt!',
     ],
     anbieter: e.anbieter,
-    fusszeile: e.pdf_fusszeile,
   })
 }
 
@@ -198,6 +195,5 @@ export async function stornorechnungPdf(
     summen,
     hinweise,
     anbieter: e.anbieter,
-    fusszeile: e.pdf_fusszeile,
   })
 }

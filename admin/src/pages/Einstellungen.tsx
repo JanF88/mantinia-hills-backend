@@ -174,11 +174,6 @@ export default function Einstellungen() {
       </details>
 
       <details className="card akkordeon">
-        <summary>PDF-Fußzeile</summary>
-        <textarea rows={2} value={e.pdf_fusszeile} onChange={(ev) => set('pdf_fusszeile', ev.target.value)} />
-      </details>
-
-      <details className="card akkordeon">
         <summary>Passwort ändern</summary>
         <PasswortAendern />
       </details>

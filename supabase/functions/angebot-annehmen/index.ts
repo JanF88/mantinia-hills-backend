@@ -43,12 +43,11 @@ Deno.serve(async (req) => {
 
   // Einstellungen
   const { data: eRows } = await supabase.from("einstellungen").select("key,value")
-    .in("key", ["anbieter", "anzahlung_prozent_default", "pdf_fusszeile"]);
+    .in("key", ["anbieter", "anzahlung_prozent_default"]);
   const emap: Record<string, unknown> = {};
   for (const r of eRows ?? []) emap[r.key] = r.value;
   const anbieter = emap.anbieter as Anbieter;
   const prozent = Number(emap.anzahlung_prozent_default ?? 30);
-  const fusszeile = String(emap.pdf_fusszeile ?? "");
 
   const gesamt = Number(angebot.gesamt);
   const betrag = Math.round(gesamt * prozent) / 100;
@@ -62,7 +61,7 @@ Deno.serve(async (req) => {
     gastName: `${buchung.vorname} ${buchung.nachname}`, gastEmail: buchung.email,
     nummer: nummer as string, datumISO: heute, angebotNummer: angebot.nummer,
     angebotGesamt: gesamt, anzahlungBetrag: betrag, anzahlungProzent: prozent,
-    anreiseISO: buchung.anreise, abreiseISO: buchung.abreise, anbieter, fusszeile,
+    anreiseISO: buchung.anreise, abreiseISO: buchung.abreise, anbieter,
   });
   const pdfBytes = await erzeugePdf(inhalt);
   const pfad = `${buchung.id}/${nummer}.pdf`;

@@ -29,7 +29,7 @@ export interface DokumentInhalt {
   titel: string; nummer: string; datumDE: string;
   empfaenger: { name: string; email: string };
   intro: string[]; positionen: Position[]; summen: SummenZeile[];
-  hinweise: string[]; anbieter: Anbieter; fusszeile: string;
+  hinweise: string[]; anbieter: Anbieter;
 }
 
 function zeilenUmbruch(text: string, font: PDFFont, groesse: number, maxBreite: number): string[] {
@@ -132,10 +132,6 @@ export async function erzeugePdf(inhalt: DokumentInhalt): Promise<Uint8Array> {
   fy -= 11;
   const bank = a.iban ? `Bankverbindung: ${a.bank ? a.bank + " · " : ""}IBAN ${a.iban}${a.bic ? " · BIC " + a.bic : ""}` : "";
   if (bank) { page.drawText(bank, { x: RAND, y: fy, size: 8, font: normal, color: GRAU }); fy -= 11; }
-  for (const teil of zeilenUmbruch(inhalt.fusszeile, normal, 8, rechts - RAND)) {
-    page.drawText(teil, { x: RAND, y: fy, size: 8, font: normal, color: GRAU });
-    fy -= 11;
-  }
 
   return await doc.save();
 }
@@ -144,7 +140,7 @@ export async function erzeugePdf(inhalt: DokumentInhalt): Promise<Uint8Array> {
 export function anzahlungInhalt(opts: {
   gastName: string; gastEmail: string; nummer: string; datumISO: string;
   angebotNummer: string; angebotGesamt: number; anzahlungBetrag: number; anzahlungProzent: number;
-  anreiseISO: string; abreiseISO: string; anbieter: Anbieter; fusszeile: string;
+  anreiseISO: string; abreiseISO: string; anbieter: Anbieter;
 }): DokumentInhalt {
   const restbetrag = opts.angebotGesamt - opts.anzahlungBetrag;
   const zeitraum = `${datumDE(opts.anreiseISO)} – ${datumDE(opts.abreiseISO)}`;
@@ -168,6 +164,5 @@ export function anzahlungInhalt(opts: {
       `Der Restbetrag von ${eurPdf(restbetrag)} wird vor Anreise fällig.`,
     ],
     anbieter: opts.anbieter,
-    fusszeile: opts.fusszeile,
   };
 }

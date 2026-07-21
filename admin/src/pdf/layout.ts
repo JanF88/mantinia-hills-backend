@@ -40,7 +40,6 @@ export interface DokumentInhalt {
   /** Hinweiszeilen unter der Summe (Zahlungsinfo, Gültigkeit, …) */
   hinweise: string[]
   anbieter: Anbieter
-  fusszeile: string
 }
 
 function zeilenUmbruch(text: string, font: PDFFont, groesse: number, maxBreite: number): string[] {
@@ -163,10 +162,6 @@ export async function erzeugePdf(inhalt: DokumentInhalt): Promise<Uint8Array> {
     : ''
   if (bank) {
     page.drawText(bank, { x: RAND, y: fy, size: 8, font: normal, color: GRAU })
-    fy -= 11
-  }
-  for (const teil of zeilenUmbruch(inhalt.fusszeile, normal, 8, rechts - RAND)) {
-    page.drawText(teil, { x: RAND, y: fy, size: 8, font: normal, color: GRAU })
     fy -= 11
   }
 
