@@ -84,16 +84,18 @@ export default function AnfrageDetail() {
     }
   }
 
+  // Pro Status genau eine Hauptaktion; Dokumente sind unveränderlich,
+  // daher verschwindet jeder Erstellen-Button, sobald das Dokument existiert.
   const s = buchung.status
-  const kannAngebot = (s === 'neu' || s === 'angebot_erstellt') && einstellungen != null
+  const kannAngebot = s === 'neu' && einstellungen != null
   const kannAblehnen = s === 'neu' || s === 'angebot_erstellt'
   const kannAnnehmen = s === 'angebot_erstellt' && juengstesAngebot != null
-  const kannAnzahlungsRechnung = s === 'bestaetigt' && juengstesAngebot != null && einstellungen != null
+  const kannAnzahlungsRechnung = s === 'bestaetigt' && juengsteAnzahlung == null && juengstesAngebot != null && einstellungen != null
   const kannAnzahlungEingang = s === 'bestaetigt' && juengsteAnzahlung != null
-  const kannAbschlussrechnung = s === 'angezahlt' && juengstesAngebot != null && einstellungen != null
-  const kannRestzahlung = s === 'angezahlt'
+  const kannAbschlussrechnung = s === 'angezahlt' && juengsteAbschluss == null && juengstesAngebot != null && einstellungen != null
+  const kannRestzahlung = s === 'angezahlt' && juengsteAbschluss != null
   const kannStorno = (s === 'bestaetigt' || s === 'angezahlt' || s === 'bezahlt') && juengstesAngebot != null && einstellungen != null
-  const kannAbschliessen = s === 'angezahlt' || s === 'bezahlt'
+  const kannAbschliessen = s === 'bezahlt'
 
   return (
     <>
@@ -159,7 +161,7 @@ export default function AnfrageDetail() {
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           {kannAngebot && (
             <button className="btn-primary" onClick={() => setDialog('angebot')}>
-              {s === 'neu' ? 'Angebot erstellen' : 'Neues Angebot erstellen'}
+              Angebot erstellen
             </button>
           )}
           {kannAnnehmen && (
@@ -173,22 +175,22 @@ export default function AnfrageDetail() {
             </button>
           )}
           {kannAnzahlungEingang && (
-            <button onClick={() => statusSetzen({ status: 'angezahlt', anzahlung_eingegangen_am: new Date().toISOString() })}>
+            <button className="btn-primary" onClick={() => statusSetzen({ status: 'angezahlt', anzahlung_eingegangen_am: new Date().toISOString() })}>
               Anzahlung eingegangen
             </button>
           )}
           {kannAbschlussrechnung && (
             <button className="btn-primary" onClick={() => setDialog('abschluss')}>
-              {juengsteAbschluss ? 'Neue Abschlussrechnung' : 'Abschlussrechnung erstellen'}
+              Abschlussrechnung erstellen
             </button>
           )}
           {kannRestzahlung && (
-            <button onClick={() => statusSetzen({ status: 'bezahlt', restzahlung_eingegangen_am: new Date().toISOString() })}>
+            <button className="btn-primary" onClick={() => statusSetzen({ status: 'bezahlt', restzahlung_eingegangen_am: new Date().toISOString() })}>
               Restzahlung eingegangen
             </button>
           )}
           {kannAbschliessen && (
-            <button onClick={() => statusSetzen({ status: 'abgeschlossen' })}>Abschließen</button>
+            <button className="btn-primary" onClick={() => statusSetzen({ status: 'abgeschlossen' })}>Abschließen</button>
           )}
           {kannStorno && (
             <button className="btn-gefahr" onClick={() => setDialog('storno')}>Stornieren</button>
@@ -205,6 +207,11 @@ export default function AnfrageDetail() {
         {kannAnzahlungEingang && (
           <p style={{ fontSize: 13, color: 'var(--grau)', marginBottom: 0 }}>
             „Anzahlung eingegangen" erst klicken, wenn die Zahlung zu {juengsteAnzahlung!.nummer} tatsächlich auf dem Konto ist.
+          </p>
+        )}
+        {kannRestzahlung && (
+          <p style={{ fontSize: 13, color: 'var(--grau)', marginBottom: 0 }}>
+            „Restzahlung eingegangen" erst klicken, wenn die Zahlung zu {juengsteAbschluss!.nummer} tatsächlich auf dem Konto ist.
           </p>
         )}
         {fehler && <p className="fehler">{fehler}</p>}
