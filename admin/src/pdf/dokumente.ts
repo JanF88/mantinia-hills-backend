@@ -2,13 +2,25 @@
 // Jede Funktion liefert die PDF-Bytes; Nummernvergabe, Upload und DB-Insert
 // übernimmt lib/dokumentService.ts.
 
-import { erzeugePdf, eurPdf } from './layout'
+import { erzeugePdf, eurPdf, type Girocode } from './layout'
 import { datumDE } from '../lib/format'
 import { positionenSumme } from '../lib/preisberechnung'
 import type { Buchung, Einstellungen, Position } from '../lib/types'
 
 function empfaenger(b: Buchung) {
   return { name: `${b.vorname} ${b.nachname}`, email: b.email }
+}
+
+/** Giro-Code für den zu zahlenden Betrag; Empfänger = Kontoinhaber (Namensabgleich der Banken). */
+function girocode(e: Einstellungen, betrag: number, nummer: string): Girocode | undefined {
+  if (!e.anbieter.iban || betrag <= 0) return undefined
+  return {
+    iban: e.anbieter.iban,
+    bic: e.anbieter.bic,
+    empfaenger: e.anbieter.inhaber || e.anbieter.name,
+    betrag,
+    verwendungszweck: nummer,
+  }
 }
 
 export async function angebotPdf(
@@ -74,6 +86,7 @@ export async function anzahlungsrechnungPdf(
         : `Bitte überweisen Sie den Betrag unter Angabe der Rechnungsnummer ${nummer}.`,
       `Der Restbetrag von ${eurPdf(restbetrag)} wird vor Anreise fällig.`,
     ],
+    girocode: girocode(e, anzahlungBetrag, nummer),
     anbieter: e.anbieter,
   })
 }
@@ -117,6 +130,7 @@ export async function abschlussrechnungPdf(
         : `Bitte überweisen Sie den Restbetrag bis spätestens ${datumDE(faelligBisISO)} unter Angabe der Rechnungsnummer ${nummer}.`,
       'Wir freuen uns sehr auf Ihren Aufenthalt!',
     ],
+    girocode: girocode(e, restbetrag, nummer),
     anbieter: e.anbieter,
   })
 }
@@ -183,6 +197,9 @@ export async function stornorechnungPdf(
   }
   hinweise.push('Wir bedauern, dass Ihr Aufenthalt nicht zustande kommt, und würden uns freuen, Sie zu einem anderen Zeitpunkt begrüßen zu dürfen.')
 
+  // Zu zahlender Betrag: Restforderung nach Verrechnung, sonst die volle Gebühr; bei Guthaben kein QR
+  const offenerBetrag = storno.verrechneteAnzahlung > 0 ? storno.restbetrag : storno.gebuehr
+
   return erzeugePdf({
     titel: `Stornorechnung ${nummer}`,
     nummer: `Rechnung ${nummer}`,
@@ -194,6 +211,7 @@ export async function stornorechnungPdf(
     positionen,
     summen,
     hinweise,
+    girocode: girocode(e, offenerBetrag, nummer),
     anbieter: e.anbieter,
   })
 }

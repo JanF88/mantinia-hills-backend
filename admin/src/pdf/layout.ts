@@ -2,6 +2,7 @@
 // pdf-lib mit Standard-Helvetica (WinAnsi): deckt Umlaute, ß, € und – ab.
 
 import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from 'pdf-lib'
+import QRCode from 'qrcode'
 import type { Anbieter, Position } from '../lib/types'
 
 const BRAND = rgb(0x68 / 255, 0x13 / 255, 0x18 / 255)
@@ -28,6 +29,32 @@ export interface SummenZeile {
   fett?: boolean
 }
 
+export interface Girocode {
+  iban: string
+  bic: string
+  /** Kontoinhaber — muss wegen des Empfänger-Namensabgleichs der Banken exakt stimmen. */
+  empfaenger: string
+  betrag: number
+  verwendungszweck: string
+}
+
+/** Payload nach EPC069-12 v2 („Giro-Code") — Zeilen LF-getrennt, Zeichensatz UTF-8. */
+function epcPayload(g: Girocode): string {
+  return [
+    'BCD',
+    '002',
+    '1',
+    'SCT',
+    g.bic.replace(/\s+/g, ''),
+    g.empfaenger.slice(0, 70),
+    g.iban.replace(/\s+/g, ''),
+    'EUR' + g.betrag.toFixed(2),
+    '',
+    '',
+    g.verwendungszweck.slice(0, 140),
+  ].join('\n')
+}
+
 export interface DokumentInhalt {
   titel: string
   nummer: string
@@ -39,6 +66,8 @@ export interface DokumentInhalt {
   summen: SummenZeile[]
   /** Hinweiszeilen unter der Summe (Zahlungsinfo, Gültigkeit, …) */
   hinweise: string[]
+  /** Wenn gesetzt, wird ein EPC-QR-Code (Giro-Code) zum Bezahlen gedruckt. */
+  girocode?: Girocode
   anbieter: Anbieter
 }
 
@@ -149,6 +178,39 @@ export async function erzeugePdf(inhalt: DokumentInhalt): Promise<Uint8Array> {
       y -= 13
     }
     y -= 3
+  }
+
+  // Giro-Code (EPC-QR) — nur wenn genug Platz über der Fußzeile bleibt
+  const QR_GROESSE = 84
+  if (inhalt.girocode && y - QR_GROESSE > 130) {
+    y -= 10
+    const qr = QRCode.create(epcPayload(inhalt.girocode), { errorCorrectionLevel: 'M' })
+    const module = qr.modules.size
+    const px = QR_GROESSE / module
+    for (let zeile = 0; zeile < module; zeile++) {
+      for (let spalte = 0; spalte < module; spalte++) {
+        if (!qr.modules.data[zeile * module + spalte]) continue
+        page.drawRectangle({
+          x: RAND + spalte * px,
+          y: y - (zeile + 1) * px,
+          width: px + 0.15,
+          height: px + 0.15,
+          color: rgb(0, 0, 0),
+        })
+      }
+    }
+    let ty = y - 14
+    const tx = RAND + QR_GROESSE + 16
+    page.drawText('Bequem zahlen per Banking-App', { x: tx, y: ty, size: 10, font: fett, color: SCHWARZ })
+    ty -= 14
+    for (const teil of zeilenUmbruch(
+      'Giro-Code mit Ihrer Banking-App scannen — Empfänger, IBAN, Betrag und Verwendungszweck werden automatisch übernommen.',
+      normal, 9, rechts - tx,
+    )) {
+      page.drawText(teil, { x: tx, y: ty, size: 9, font: normal, color: GRAU })
+      ty -= 12
+    }
+    y -= QR_GROESSE
   }
 
   // Fußzeile
