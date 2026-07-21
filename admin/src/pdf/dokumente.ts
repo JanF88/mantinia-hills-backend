@@ -80,6 +80,50 @@ export async function anzahlungsrechnungPdf(
   })
 }
 
+export async function abschlussrechnungPdf(
+  b: Buchung,
+  nummer: string,
+  datumISO: string,
+  angebotNummer: string,
+  angebotGesamt: number,
+  anzahlungBetrag: number,
+  restbetrag: number,
+  faelligBisISO: string,
+  e: Einstellungen,
+): Promise<Uint8Array> {
+  const positionen: Position[] = [
+    {
+      bezeichnung: `Restbetrag für Aufenthalt ${datumDE(b.anreise)} – ${datumDE(b.abreise)} (gemäß Angebot ${angebotNummer}, Gesamtbetrag ${eurPdf(angebotGesamt)}, abzüglich Anzahlung ${eurPdf(anzahlungBetrag)})`,
+      menge: 1,
+      einzelpreis: restbetrag,
+      betrag: restbetrag,
+    },
+  ]
+  return erzeugePdf({
+    titel: `Abschlussrechnung ${nummer}`,
+    nummer: `Rechnung ${nummer}`,
+    datumDE: datumDE(datumISO),
+    empfaenger: empfaenger(b),
+    intro: [
+      `Ihr Aufenthalt vom ${datumDE(b.anreise)} bis ${datumDE(b.abreise)} steht bevor. Hiermit stellen wir Ihnen den noch offenen Restbetrag in Rechnung:`,
+    ],
+    positionen,
+    summen: [
+      { label: 'Gesamtbetrag Aufenthalt', betrag: angebotGesamt },
+      { label: 'bereits gezahlte Anzahlung', betrag: -anzahlungBetrag },
+      { label: 'Zu zahlender Restbetrag', betrag: restbetrag, fett: true },
+    ],
+    hinweise: [
+      e.anbieter.iban
+        ? `Bitte überweisen Sie den Restbetrag bis spätestens ${datumDE(faelligBisISO)} auf das unten angegebene Konto (IBAN ${e.anbieter.iban}) unter Angabe der Rechnungsnummer ${nummer}.`
+        : `Bitte überweisen Sie den Restbetrag bis spätestens ${datumDE(faelligBisISO)} unter Angabe der Rechnungsnummer ${nummer}.`,
+      'Wir freuen uns sehr auf Ihren Aufenthalt!',
+    ],
+    anbieter: e.anbieter,
+    fusszeile: e.pdf_fusszeile,
+  })
+}
+
 export interface StornoDaten {
   prozent: number
   tageVorAnreise: number

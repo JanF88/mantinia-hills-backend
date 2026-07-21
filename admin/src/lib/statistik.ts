@@ -33,11 +33,12 @@ export function buchungenAmTag(buchungen: Buchung[], iso: string): Buchung[] {
 }
 
 /**
- * Restzahlung fällig: Buchung ist bestätigt oder angezahlt (noch nicht komplett
- * bezahlt), und die Anreise ist höchstens `tageVorher` Tage entfernt (inkl. bereits
- * überfälliger, in der Vergangenheit liegender Anreisen).
+ * Abschlussrechnung/Restzahlung fällig: Buchung ist bestätigt oder angezahlt
+ * (noch nicht komplett bezahlt), und die Anreise ist höchstens `tageVorher` Tage
+ * entfernt (Standard 14 — dann sollte die Abschlussrechnung raus, damit der Gast
+ * bis zum Zahlungsziel zahlen kann). Inkl. bereits überfälliger Anreisen.
  */
-export function restzahlungFaellig(b: Buchung, tageVorher = 7): boolean {
+export function restzahlungFaellig(b: Buchung, tageVorher = 14): boolean {
   if (b.status !== 'bestaetigt' && b.status !== 'angezahlt') return false
   const heute = new Date()
   heute.setHours(0, 0, 0, 0)

@@ -9,11 +9,13 @@ import type { Buchung, Dokument, Einstellungen } from '../lib/types'
 import StatusBadge from '../components/StatusBadge'
 import AngebotDialog from '../components/AngebotDialog'
 import AnzahlungDialog from '../components/AnzahlungDialog'
+import AbschlussDialog from '../components/AbschlussDialog'
 import StornoDialog from '../components/StornoDialog'
 
 const TYP_LABEL = {
   angebot: 'Angebot',
   anzahlungsrechnung: 'Anzahlungsrechnung',
+  abschlussrechnung: 'Abschlussrechnung',
   stornorechnung: 'Stornorechnung',
 } as const
 
@@ -24,7 +26,7 @@ export default function AnfrageDetail() {
   const [dokumente, setDokumente] = useState<Dokument[]>([])
   const [einstellungen, setEinstellungen] = useState<Einstellungen | null>(null)
   const [notizen, setNotizen] = useState('')
-  const [dialog, setDialog] = useState<'angebot' | 'anzahlung' | 'storno' | null>(null)
+  const [dialog, setDialog] = useState<'angebot' | 'anzahlung' | 'abschluss' | 'storno' | null>(null)
   const [fehler, setFehler] = useState<string | null>(null)
   const [loeschBestaetigung, setLoeschBestaetigung] = useState(false)
   const [loescht, setLoescht] = useState(false)
@@ -49,6 +51,7 @@ export default function AnfrageDetail() {
 
   const juengstesAngebot = dokumente.find((d) => d.typ === 'angebot') ?? null
   const juengsteAnzahlung = dokumente.find((d) => d.typ === 'anzahlungsrechnung') ?? null
+  const juengsteAbschluss = dokumente.find((d) => d.typ === 'abschlussrechnung') ?? null
 
   async function statusSetzen(update: Partial<Buchung>) {
     setFehler(null)
@@ -87,6 +90,7 @@ export default function AnfrageDetail() {
   const kannAnnehmen = s === 'angebot_erstellt' && juengstesAngebot != null
   const kannAnzahlungsRechnung = s === 'bestaetigt' && juengstesAngebot != null && einstellungen != null
   const kannAnzahlungEingang = s === 'bestaetigt' && juengsteAnzahlung != null
+  const kannAbschlussrechnung = s === 'angezahlt' && juengstesAngebot != null && einstellungen != null
   const kannRestzahlung = s === 'angezahlt'
   const kannStorno = (s === 'bestaetigt' || s === 'angezahlt' || s === 'bezahlt') && juengstesAngebot != null && einstellungen != null
   const kannAbschliessen = s === 'angezahlt' || s === 'bezahlt'
@@ -101,9 +105,12 @@ export default function AnfrageDetail() {
 
       {restzahlungFaellig(buchung) && (
         <div className="warnung">
-          <strong>Restzahlung fällig:</strong> Die Anreise ({datumDE(buchung.anreise)}) ist in 7 Tagen oder weniger.
-          Der volle Betrag sollte spätestens 7 Tage vor Anreise bezahlt sein. Sobald die Zahlung da ist:
-          {s === 'bestaetigt' ? ' „Anzahlung eingegangen" bzw. ' : ' '}„Restzahlung eingegangen" klicken.
+          <strong>Abschlussrechnung / Restzahlung fällig:</strong> Die Anreise ({datumDE(buchung.anreise)}) rückt näher.
+          {s === 'angezahlt'
+            ? ' Bitte jetzt die Abschlussrechnung erstellen & senden. Sobald der Restbetrag da ist: „Restzahlung eingegangen" klicken.'
+            : s === 'bestaetigt'
+              ? ' Die Anzahlung ist noch nicht als eingegangen markiert — bitte prüfen.'
+              : ''}
         </div>
       )}
 
@@ -168,6 +175,11 @@ export default function AnfrageDetail() {
           {kannAnzahlungEingang && (
             <button onClick={() => statusSetzen({ status: 'angezahlt', anzahlung_eingegangen_am: new Date().toISOString() })}>
               Anzahlung eingegangen
+            </button>
+          )}
+          {kannAbschlussrechnung && (
+            <button className="btn-primary" onClick={() => setDialog('abschluss')}>
+              {juengsteAbschluss ? 'Neue Abschlussrechnung' : 'Abschlussrechnung erstellen'}
             </button>
           )}
           {kannRestzahlung && (
@@ -272,6 +284,16 @@ export default function AnfrageDetail() {
         <AnzahlungDialog
           buchung={buchung}
           angebot={juengstesAngebot}
+          einstellungen={einstellungen}
+          onFertig={() => { setDialog(null); laden() }}
+          onAbbrechen={() => setDialog(null)}
+        />
+      )}
+      {dialog === 'abschluss' && einstellungen && juengstesAngebot && (
+        <AbschlussDialog
+          buchung={buchung}
+          angebot={juengstesAngebot}
+          anzahlung={juengsteAnzahlung}
           einstellungen={einstellungen}
           onFertig={() => { setDialog(null); laden() }}
           onAbbrechen={() => setDialog(null)}

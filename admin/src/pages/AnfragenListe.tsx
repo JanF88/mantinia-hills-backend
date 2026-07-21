@@ -76,8 +76,8 @@ export default function AnfragenListe() {
 
       {faellig.length > 0 && (
         <div className="warnung">
-          <strong>Restzahlung fällig</strong> — bei {faellig.length} {faellig.length === 1 ? 'Buchung ist' : 'Buchungen ist'} die
-          Anreise in 7 Tagen oder weniger und die Restzahlung noch nicht als eingegangen markiert:{' '}
+          <strong>Abschlussrechnung / Restzahlung fällig</strong> — bei {faellig.length} {faellig.length === 1 ? 'Buchung' : 'Buchungen'} ist
+          die Anreise in 14 Tagen oder weniger und der Restbetrag noch nicht als bezahlt markiert:{' '}
           {faellig.map((b) => `${b.nachname} (${datumDE(b.anreise)})`).join(', ')}.
         </div>
       )}
@@ -133,7 +133,7 @@ export default function AnfragenListe() {
                 <td>
                   <StatusBadge status={b.status} />
                   {restzahlungFaellig(b) && (
-                    <div style={{ fontSize: 11, color: 'var(--rot)', fontWeight: 600, marginTop: 4 }}>⚠ Restzahlung fällig</div>
+                    <div style={{ fontSize: 11, color: 'var(--rot)', fontWeight: 600, marginTop: 4 }}>⚠ Abschlussrechnung fällig</div>
                   )}
                 </td>
                 <td className="nur-desktop" style={{ fontSize: 13, color: 'var(--grau)' }}>{b.quelle === 'webhook' ? 'Website' : 'Manuell'}</td>

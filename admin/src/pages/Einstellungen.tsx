@@ -101,6 +101,21 @@ export default function Einstellungen() {
               onChange={(ev) => { const z = parseInt(ev.target.value, 10); if (!isNaN(z)) set('angebot_gueltig_tage', z) }} />
           </div>
         </div>
+        <div className="zeile">
+          <div>
+            <label>Abschlussrechnung fällig (Tage vor Anreise)</label>
+            <input type="number" step="1" value={e.abschlussrechnung_tage_vorher}
+              onChange={(ev) => { const z = parseInt(ev.target.value, 10); if (!isNaN(z)) set('abschlussrechnung_tage_vorher', z) }} />
+          </div>
+          <div>
+            <label>Restzahlung fällig (Tage vor Anreise)</label>
+            <input type="number" step="1" value={e.restzahlung_faellig_tage}
+              onChange={(ev) => { const z = parseInt(ev.target.value, 10); if (!isNaN(z)) set('restzahlung_faellig_tage', z) }} />
+          </div>
+        </div>
+        <p style={{ fontSize: 13, color: 'var(--grau)', marginBottom: 0 }}>
+          14 / 7 heißt: Die Abschlussrechnung wird 14 Tage vor Anreise fällig (Erinnerung), das Zahlungsziel liegt 7 Tage vor Anreise.
+        </p>
       </div>
 
       <div className="card">

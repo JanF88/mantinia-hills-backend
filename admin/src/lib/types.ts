@@ -8,7 +8,7 @@ export type BuchungStatus =
   | 'storniert'
   | 'abgelehnt'
 
-export type DokumentTyp = 'angebot' | 'anzahlungsrechnung' | 'stornorechnung'
+export type DokumentTyp = 'angebot' | 'anzahlungsrechnung' | 'abschlussrechnung' | 'stornorechnung'
 export type AnfrageQuelle = 'webhook' | 'manuell'
 
 export interface Buchung {
@@ -96,6 +96,8 @@ export interface Einstellungen {
   transfer_optionen: TransferOption[]
   anzahlung_prozent_default: number
   angebot_gueltig_tage: number
+  abschlussrechnung_tage_vorher: number
+  restzahlung_faellig_tage: number
   storno_stufen: StornoStufe[]
   anbieter: Anbieter
   pdf_fusszeile: string
