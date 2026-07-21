@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { abschlussrechnungPdf } from '../pdf/dokumente'
 import { downloadPdf, naechsteNummer, speichereDokument } from '../lib/dokumentService'
 import { sendeMail, mailRahmen } from '../lib/mail'
+import { renderMailVorlage } from '../lib/mailVorlagen'
 import { datumDE, eur, heuteISO } from '../lib/format'
 import type { Buchung, Dokument, Einstellungen } from '../lib/types'
 
@@ -58,17 +59,20 @@ export default function AbschlussDialog({ buchung, angebot, anzahlung, einstellu
       downloadPdf(bytes, `${nummer}_Abschluss_Mantinia_Hills.pdf`)
 
       if (senden) {
+        const { betreff, html } = renderMailVorlage(einstellungen.mail_vorlagen.abschluss, {
+          vorname: buchung.vorname,
+          nachname: buchung.nachname,
+          anreise: datumDE(buchung.anreise),
+          abreise: datumDE(buchung.abreise),
+          nummer,
+          betrag: eur(restbetrag),
+          faellig_bis: datumDE(faelligBis),
+        })
         try {
           await sendeMail({
             an: buchung.email,
-            betreff: `Abschlussrechnung ${nummer} - Ferienhaus Mantinia Hills`,
-            html: mailRahmen(
-              `<p>Guten Tag ${buchung.vorname} ${buchung.nachname},</p>
-<p>Ihr Aufenthalt vom <strong>${datumDE(buchung.anreise)}</strong> bis <strong>${datumDE(buchung.abreise)}</strong> steht bevor. Im Anhang finden Sie die Abschlussrechnung über den offenen Restbetrag von <strong>${eur(restbetrag)}</strong>.</p>
-<p>Bitte überweisen Sie den Betrag bis spätestens <strong>${datumDE(faelligBis)}</strong>. Wir freuen uns sehr auf Ihren Besuch!</p>
-<p>Herzliche Grüße<br>Ihr Team vom Ferienhaus Mantinia Hills</p>`,
-              einstellungen.anbieter,
-            ),
+            betreff,
+            html: mailRahmen(html, einstellungen.anbieter),
             anhangBytes: bytes,
             anhangName: `${nummer}_Abschluss_Mantinia_Hills.pdf`,
             kopieAnMich: true,

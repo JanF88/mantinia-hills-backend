@@ -4,6 +4,7 @@ import { stornorechnungPdf } from '../pdf/dokumente'
 import { downloadPdf, naechsteNummer, speichereDokument } from '../lib/dokumentService'
 import { stornoProzent, tageVorAnreise } from '../lib/storno'
 import { sendeMail, mailRahmen } from '../lib/mail'
+import { renderMailVorlage } from '../lib/mailVorlagen'
 import { datumDE, eur, heuteISO } from '../lib/format'
 import type { Buchung, Dokument, Einstellungen } from '../lib/types'
 
@@ -79,17 +80,18 @@ export default function StornoDialog({ buchung, angebot, anzahlung, einstellunge
         downloadPdf(bytes, `${nummer}_Storno_Mantinia_Hills.pdf`)
 
         if (senden) {
+          const { betreff, html } = renderMailVorlage(einstellungen.mail_vorlagen.storno, {
+            vorname: buchung.vorname,
+            nachname: buchung.nachname,
+            anreise: datumDE(buchung.anreise),
+            abreise: datumDE(buchung.abreise),
+            nummer,
+          })
           try {
             await sendeMail({
               an: buchung.email,
-              betreff: `Stornierung Ihrer Buchung ${nummer} - Ferienhaus Mantinia Hills`,
-              html: mailRahmen(
-                `<p>Guten Tag ${buchung.vorname} ${buchung.nachname},</p>
-<p>hiermit bestätigen wir die Stornierung Ihrer Buchung für den Zeitraum <strong>${datumDE(buchung.anreise)}</strong> bis <strong>${datumDE(buchung.abreise)}</strong>. Die Einzelheiten entnehmen Sie bitte der Stornorechnung im Anhang.</p>
-<p>Wir bedauern, dass Ihr Aufenthalt nicht zustande kommt, und würden uns freuen, Sie zu einem anderen Zeitpunkt begrüßen zu dürfen.</p>
-<p>Herzliche Grüße<br>Ihr Team vom Ferienhaus Mantinia Hills</p>`,
-                einstellungen.anbieter,
-              ),
+              betreff,
+              html: mailRahmen(html, einstellungen.anbieter),
               anhangBytes: bytes,
               anhangName: `${nummer}_Stornorechnung_Mantinia_Hills.pdf`,
               kopieAnMich: true,

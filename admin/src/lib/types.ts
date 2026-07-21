@@ -100,4 +100,5 @@ export interface Einstellungen {
   restzahlung_faellig_tage: number
   storno_stufen: StornoStufe[]
   anbieter: Anbieter
+  mail_vorlagen: import('./mailVorlagen').MailVorlagen
 }

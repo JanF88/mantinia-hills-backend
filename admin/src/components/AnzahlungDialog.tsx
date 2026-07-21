@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { anzahlungsrechnungPdf } from '../pdf/dokumente'
 import { downloadPdf, naechsteNummer, speichereDokument } from '../lib/dokumentService'
 import { sendeMail, mailRahmen } from '../lib/mail'
+import { renderMailVorlage } from '../lib/mailVorlagen'
 import { datumDE, eur, heuteISO } from '../lib/format'
 import type { Buchung, Dokument, Einstellungen } from '../lib/types'
 
@@ -70,17 +71,19 @@ export default function AnzahlungDialog({ buchung, angebot, einstellungen, onFer
       downloadPdf(bytes, `${nummer}_Anzahlung_Mantinia_Hills.pdf`)
 
       if (senden) {
+        const { betreff, html } = renderMailVorlage(einstellungen.mail_vorlagen.anzahlung, {
+          vorname: buchung.vorname,
+          nachname: buchung.nachname,
+          anreise: datumDE(buchung.anreise),
+          abreise: datumDE(buchung.abreise),
+          nummer,
+          betrag: eur(betrag),
+        })
         try {
           await sendeMail({
             an: buchung.email,
-            betreff: `Anzahlungsrechnung ${nummer} - Ferienhaus Mantinia Hills`,
-            html: mailRahmen(
-              `<p>Guten Tag ${buchung.vorname} ${buchung.nachname},</p>
-<p>vielen Dank für die Annahme unseres Angebots. Zur verbindlichen Reservierung Ihres Aufenthalts vom <strong>${datumDE(buchung.anreise)}</strong> bis <strong>${datumDE(buchung.abreise)}</strong> erhalten Sie im Anhang die Anzahlungsrechnung über <strong>${eur(betrag)}</strong>.</p>
-<p>Bitte überweisen Sie den Betrag unter Angabe der Rechnungsnummer ${nummer}. Sobald die Anzahlung bei uns eingegangen ist, ist Ihre Buchung fest reserviert.</p>
-<p>Herzliche Grüße<br>Ihr Team vom Ferienhaus Mantinia Hills</p>`,
-              einstellungen.anbieter,
-            ),
+            betreff,
+            html: mailRahmen(html, einstellungen.anbieter),
             anhangBytes: bytes,
             anhangName: `${nummer}_Anzahlung_Mantinia_Hills.pdf`,
             kopieAnMich: true,

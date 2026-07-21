@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { ladeEinstellungen, speichereEinstellung } from '../lib/einstellungen'
+import { MAIL_VORLAGEN_INFO } from '../lib/mailVorlagen'
 import PasswortAendern from '../components/PasswortAendern'
 import type { Einstellungen as EinstellungenTyp } from '../lib/types'
+import type { MailVorlagen } from '../lib/mailVorlagen'
 
 export default function Einstellungen() {
   const [e, setE] = useState<EinstellungenTyp | null>(null)
@@ -53,6 +55,13 @@ export default function Einstellungen() {
 
   function anbieterAendern(feld: keyof EinstellungenTyp['anbieter'], wert: string) {
     set('anbieter', { ...e!.anbieter, [feld]: wert })
+  }
+
+  function vorlageAendern(key: keyof MailVorlagen, feld: 'betreff' | 'text', wert: string) {
+    set('mail_vorlagen', {
+      ...e!.mail_vorlagen,
+      [key]: { ...e!.mail_vorlagen[key], [feld]: wert },
+    })
   }
 
   const ibanFehlt = !e.anbieter.iban
@@ -171,6 +180,30 @@ export default function Einstellungen() {
           <div><label>IBAN</label><input value={e.anbieter.iban} onChange={(ev) => anbieterAendern('iban', ev.target.value)} /></div>
           <div><label>BIC</label><input value={e.anbieter.bic} onChange={(ev) => anbieterAendern('bic', ev.target.value)} /></div>
         </div>
+      </details>
+
+      <details className="card akkordeon">
+        <summary>E-Mail-Texte</summary>
+        <p style={{ fontSize: 13, color: 'var(--grau)', marginTop: 0 }}>
+          Platzhalter in geschweiften Klammern werden beim Versand automatisch ersetzt.
+          <strong> **Text**</strong> wird fett dargestellt, eine Leerzeile beginnt einen neuen Absatz.
+          Anrede und Grußformel gehören mit in den Text; die Signatur (Logo &amp; Kontaktdaten) wird automatisch angehängt.
+        </p>
+        {(Object.keys(MAIL_VORLAGEN_INFO) as (keyof MailVorlagen)[]).map((key) => {
+          const info = MAIL_VORLAGEN_INFO[key]
+          return (
+            <div key={key} style={{ marginBottom: 22 }}>
+              <h3 style={{ marginBottom: 2 }}>{info.label}</h3>
+              <p style={{ fontSize: 12.5, color: 'var(--grau)', margin: '0 0 8px' }}>
+                Wird versendet {info.wann}. Platzhalter: {info.platzhalter.map((p) => `{${p}}`).join(' · ')}
+              </p>
+              <label>Betreff</label>
+              <input value={e.mail_vorlagen[key].betreff} onChange={(ev) => vorlageAendern(key, 'betreff', ev.target.value)} />
+              <label style={{ marginTop: 8 }}>Text</label>
+              <textarea rows={9} value={e.mail_vorlagen[key].text} onChange={(ev) => vorlageAendern(key, 'text', ev.target.value)} />
+            </div>
+          )
+        })}
       </details>
 
       <details className="card akkordeon">

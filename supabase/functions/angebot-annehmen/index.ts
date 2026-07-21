@@ -22,6 +22,50 @@ function bytesZuBase64(bytes: Uint8Array): string {
   return btoa(bin);
 }
 
+// --- Mail-Vorlage (Default identisch zu admin/src/lib/mailVorlagen.ts, Key `annahme`) ---
+
+const VORLAGE_DEFAULT = {
+  betreff: "Buchungsbestätigung und Anzahlungsrechnung {nummer}",
+  text: `Guten Tag {vorname} {nachname},
+
+vielen Dank – wir haben Ihre Annahme des Angebots {angebot_nummer} erhalten. Ihre Buchung für den Zeitraum **{anreise}** bis **{abreise}** ist damit bestätigt.
+
+Im Anhang finden Sie die Anzahlungsrechnung über **{betrag}**. Mit Eingang der Anzahlung ist Ihr Aufenthalt fest reserviert.
+
+Herzliche Grüße
+Ihr Team vom Ferienhaus Mantinia Hills`,
+};
+
+function ersetzePlatzhalter(text: string, werte: Record<string, string>): string {
+  return text.replace(/\{(\w+)\}/g, (voll, name) => (name in werte ? werte[name] : voll));
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function textZuMailHtml(text: string): string {
+  return text
+    .replace(/\r\n/g, "\n")
+    .split(/\n{2,}/)
+    .map((absatz) =>
+      `<p>${escapeHtml(absatz.trim())
+        .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+        .replace(/\n/g, "<br>")}</p>`)
+    .join("\n");
+}
+
+/** Betreff ASCII-sicher (Umlaute im SMTP-Betreff kamen als Rohtext an). */
+function betreffAsciiSicher(s: string): string {
+  return s
+    .replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue")
+    .replace(/Ä/g, "Ae").replace(/Ö/g, "Oe").replace(/Ü/g, "Ue")
+    .replace(/ß/g, "ss")
+    .replace(/[–—]/g, "-")
+    .replace(/[„“”‚‘’]/g, "'")
+    .replace(/[^\x20-\x7E]/g, "");
+}
+
 Deno.serve(async (req) => {
   const url = new URL(req.url);
   const token = url.searchParams.get("token");
@@ -43,11 +87,13 @@ Deno.serve(async (req) => {
 
   // Einstellungen
   const { data: eRows } = await supabase.from("einstellungen").select("key,value")
-    .in("key", ["anbieter", "anzahlung_prozent_default"]);
+    .in("key", ["anbieter", "anzahlung_prozent_default", "mail_vorlagen"]);
   const emap: Record<string, unknown> = {};
   for (const r of eRows ?? []) emap[r.key] = r.value;
   const anbieter = emap.anbieter as Anbieter;
   const prozent = Number(emap.anzahlung_prozent_default ?? 30);
+  const vorlagen = emap.mail_vorlagen as { annahme?: { betreff?: string; text?: string } } | undefined;
+  const vorlage = { ...VORLAGE_DEFAULT, ...vorlagen?.annahme };
 
   const gesamt = Number(angebot.gesamt);
   const betrag = Math.round(gesamt * prozent) / 100;
@@ -83,11 +129,18 @@ Deno.serve(async (req) => {
     const from = Deno.env.get("SMTP_FROM") ?? user;
     const fromName = Deno.env.get("SMTP_FROM_NAME") ?? "Ferienhaus Mantinia Hills";
     const logo = "https://clients.mantinia-hills.com/logo-email.png";
+    const werte = {
+      vorname: buchung.vorname,
+      nachname: buchung.nachname,
+      anreise: datumDE(buchung.anreise),
+      abreise: datumDE(buchung.abreise),
+      angebot_nummer: angebot.nummer,
+      nummer: nummer as string,
+      betrag: eurPdf(betrag),
+    };
+    const betreff = betreffAsciiSicher(ersetzePlatzhalter(vorlage.betreff, werte));
     const html = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#2c2c2a;line-height:1.55">
-<p>Guten Tag ${buchung.vorname} ${buchung.nachname},</p>
-<p>vielen Dank – wir haben Ihre Annahme des Angebots ${angebot.nummer} erhalten. Ihre Buchung für den Zeitraum <strong>${datumDE(buchung.anreise)}</strong> bis <strong>${datumDE(buchung.abreise)}</strong> ist damit bestätigt.</p>
-<p>Im Anhang finden Sie die Anzahlungsrechnung über <strong>${eurPdf(betrag)}</strong>. Mit Eingang der Anzahlung ist Ihr Aufenthalt fest reserviert.</p>
-<p>Herzliche Grüße<br>Ihr Team vom Ferienhaus Mantinia Hills</p>
+${textZuMailHtml(ersetzePlatzhalter(vorlage.text, werte))}
 <table cellpadding="0" cellspacing="0" border="0" style="margin-top:24px;border-top:1px solid #e2ddd6;padding-top:16px">
 <tr><td style="padding:0 0 8px 0"><img src="${logo}" width="200" height="50" alt="${anbieter.name}" style="display:block;border:0"></td></tr>
 <tr><td style="font-size:13px"><span style="font-weight:bold;color:#681318">${anbieter.name}</span><br>
@@ -100,7 +153,7 @@ Deno.serve(async (req) => {
       });
       await client.send({
         from: `${fromName} <${from}>`, to: buchung.email, bcc: from,
-        subject: `Buchungsbestaetigung und Anzahlungsrechnung ${nummer}`,
+        subject: betreff,
         content: "auto",
         html,
         attachments: [{ filename: `${nummer}_Anzahlung_Mantinia_Hills.pdf`, encoding: "base64", content: bytesZuBase64(pdfBytes), contentType: "application/pdf" }],

@@ -11,6 +11,17 @@ export function bytesZuBase64(bytes: Uint8Array): string {
   return btoa(bin)
 }
 
+/** Betreff ASCII-sicher machen — Umlaute im SMTP-Betreff kamen als Rohtext an. */
+export function betreffAsciiSicher(s: string): string {
+  return s
+    .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue')
+    .replace(/Ä/g, 'Ae').replace(/Ö/g, 'Oe').replace(/Ü/g, 'Ue')
+    .replace(/ß/g, 'ss')
+    .replace(/[–—]/g, '-')
+    .replace(/[„“”‚‘’]/g, "'")
+    .replace(/[^\x20-\x7E]/g, '')
+}
+
 export async function sendeMail(opts: {
   an: string
   betreff: string
@@ -21,7 +32,7 @@ export async function sendeMail(opts: {
 }): Promise<void> {
   const body: Record<string, unknown> = {
     an: opts.an,
-    betreff: opts.betreff,
+    betreff: betreffAsciiSicher(opts.betreff),
     html: opts.html,
     kopie_an_absender: opts.kopieAnMich ?? true,
   }
