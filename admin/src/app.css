@@ -172,6 +172,21 @@ details.akkordeon[open] > summary { border-bottom: 1px solid var(--linie); margi
 details.akkordeon > *:not(summary) { margin-left: 20px; margin-right: 20px; }
 details.akkordeon > *:last-child { margin-bottom: 20px; }
 
+/* Verschachtelte Unter-Akkordeons (z. B. einzelne E-Mail-Vorlagen) */
+details.unter-akkordeon { border: 1px solid var(--linie); border-radius: 8px; margin-bottom: 8px; overflow: hidden; }
+details.unter-akkordeon > summary {
+  list-style: none; cursor: pointer; padding: 11px 14px; font-size: 14px; font-weight: 600;
+  display: flex; align-items: center; gap: 9px; user-select: none;
+}
+details.unter-akkordeon > summary::-webkit-details-marker { display: none; }
+details.unter-akkordeon > summary::before {
+  content: '▸'; color: var(--brand); font-size: 12px; transition: transform .15s;
+}
+details.unter-akkordeon[open] > summary::before { transform: rotate(90deg); }
+details.unter-akkordeon[open] > summary { border-bottom: 1px solid var(--linie); }
+details.unter-akkordeon > *:not(summary) { margin-left: 14px; margin-right: 14px; }
+details.unter-akkordeon > *:last-child { margin-bottom: 14px; }
+
 /* Mobile */
 .card:has(table) { overflow-x: auto; }
 .kal-monatsliste { margin-top: 14px; border-top: 1px solid var(--linie); padding-top: 10px; }

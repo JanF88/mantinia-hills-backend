@@ -192,16 +192,16 @@ export default function Einstellungen() {
         {(Object.keys(MAIL_VORLAGEN_INFO) as (keyof MailVorlagen)[]).map((key) => {
           const info = MAIL_VORLAGEN_INFO[key]
           return (
-            <div key={key} style={{ marginBottom: 22 }}>
-              <h3 style={{ marginBottom: 2 }}>{info.label}</h3>
-              <p style={{ fontSize: 12.5, color: 'var(--grau)', margin: '0 0 8px' }}>
+            <details key={key} className="unter-akkordeon">
+              <summary>{info.label}</summary>
+              <p style={{ fontSize: 12.5, color: 'var(--grau)', margin: '8px 0' }}>
                 Wird versendet {info.wann}. Platzhalter: {info.platzhalter.map((p) => `{${p}}`).join(' · ')}
               </p>
               <label>Betreff</label>
               <input value={e.mail_vorlagen[key].betreff} onChange={(ev) => vorlageAendern(key, 'betreff', ev.target.value)} />
               <label style={{ marginTop: 8 }}>Text</label>
               <textarea rows={9} value={e.mail_vorlagen[key].text} onChange={(ev) => vorlageAendern(key, 'text', ev.target.value)} />
-            </div>
+            </details>
           )
         })}
       </details>
