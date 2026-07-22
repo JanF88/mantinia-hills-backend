@@ -10,6 +10,10 @@ verify_jwt = false
 # Benötigt Secret SMTP_PASS (optional SMTP_HOST/PORT/USER/FROM/FROM_NAME).
 verify_jwt = true
 
+[functions.benutzer-verwaltung]
+# Nutzerverwaltung — nur eingeloggte Admins, nutzt intern den Service-Role-Key.
+verify_jwt = true
+
 [functions.angebot-annehmen]
 # Öffentlicher Link aus der Angebots-Mail (Gast klickt "Annehmen").
 # Schutz über den unratbaren annahme_token pro Buchung. Erzeugt serverseitig
