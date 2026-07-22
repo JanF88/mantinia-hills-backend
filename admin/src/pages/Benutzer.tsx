@@ -70,13 +70,12 @@ export default function Benutzer() {
 
   return (
     <>
-      <h2>Nutzerverwaltung</h2>
       <p style={{ color: 'var(--grau)', fontSize: 14, marginTop: 0 }}>
         Alle Nutzer sind gleichberechtigte Admins mit vollem Zugriff. Lege nur Personen an, die alles verwalten dürfen.
       </p>
 
-      <form className="card" onSubmit={anlegen}>
-        <h2>Neuen Nutzer anlegen</h2>
+      <form onSubmit={anlegen}>
+        <h3 style={{ marginTop: 0 }}>Neuen Nutzer anlegen</h3>
         <div className="zeile">
           <div>
             <label htmlFor="email">E-Mail</label>
@@ -95,7 +94,8 @@ export default function Benutzer() {
         <button className="btn-primary" disabled={arbeitet}>{arbeitet ? 'Bitte warten …' : 'Nutzer anlegen'}</button>
       </form>
 
-      <div className="card" style={{ padding: 0 }}>
+      <h3 style={{ marginTop: 24 }}>Vorhandene Nutzer</h3>
+      <div style={{ overflowX: 'auto' }}>
         <table>
           <thead>
             <tr><th>E-Mail</th><th className="nur-desktop">Angelegt</th><th className="nur-desktop">Zuletzt angemeldet</th><th /></tr>

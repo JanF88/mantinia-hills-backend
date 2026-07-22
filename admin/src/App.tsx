@@ -10,7 +10,6 @@ import AnfrageNeu from './pages/AnfrageNeu'
 import AnfrageDetail from './pages/AnfrageDetail'
 import Kalender from './pages/Kalender'
 import Auswertung from './pages/Auswertung'
-import Benutzer from './pages/Benutzer'
 import Einstellungen from './pages/Einstellungen'
 
 export default function App() {
@@ -71,9 +70,6 @@ export default function App() {
           <NavLink to="/einstellungen" onClick={() => setMenuOffen(false)} className={({ isActive }) => (isActive ? 'aktiv' : '')}>
             Einstellungen
           </NavLink>
-          <NavLink to="/benutzer" onClick={() => setMenuOffen(false)} className={({ isActive }) => (isActive ? 'aktiv' : '')}>
-            Benutzer
-          </NavLink>
           <button className="btn-klein nav-abmelden" onClick={() => { setMenuOffen(false); abmelden() }}>Abmelden</button>
         </nav>
       </header>
@@ -86,7 +82,6 @@ export default function App() {
           <Route path="/kalender" element={<Kalender />} />
           <Route path="/auswertung" element={<Auswertung />} />
           <Route path="/einstellungen" element={<Einstellungen />} />
-          <Route path="/benutzer" element={<Benutzer />} />
           <Route path="*" element={<Navigate to="/anfragen" replace />} />
         </Routes>
       </main>

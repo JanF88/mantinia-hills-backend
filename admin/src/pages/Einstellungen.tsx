@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { ladeEinstellungen, speichereEinstellung } from '../lib/einstellungen'
 import { MAIL_VORLAGEN_INFO } from '../lib/mailVorlagen'
 import PasswortAendern from '../components/PasswortAendern'
+import Benutzer from './Benutzer'
 import type { Einstellungen as EinstellungenTyp } from '../lib/types'
 import type { MailVorlagen } from '../lib/mailVorlagen'
 
@@ -204,6 +205,11 @@ export default function Einstellungen() {
             </details>
           )
         })}
+      </details>
+
+      <details className="card akkordeon">
+        <summary>Benutzerverwaltung</summary>
+        <Benutzer />
       </details>
 
       <details className="card akkordeon">
