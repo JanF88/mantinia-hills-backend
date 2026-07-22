@@ -20,6 +20,21 @@ export default function Benutzer() {
   const [arbeitet, setArbeitet] = useState(false)
   const [loeschId, setLoeschId] = useState<string | null>(null)
 
+  // Holt die konkrete Fehlermeldung — bei non-2xx liegt sie in error.context (Response)
+  async function fehlerText(data: unknown, error: unknown): Promise<string | null> {
+    const ausData = (data as { error?: string } | null)?.error
+    if (ausData) return ausData
+    if (!error) return null
+    const ctx = (error as { context?: Response }).context
+    if (ctx && typeof ctx.json === 'function') {
+      try {
+        const j = await ctx.json()
+        if (j?.error) return j.error as string
+      } catch { /* Body nicht lesbar */ }
+    }
+    return (error as { message?: string }).message ?? 'Unbekannter Fehler'
+  }
+
   const laden = useCallback(async () => {
     setFehler(null)
     const { data, error } = await supabase.functions.invoke('benutzer-verwaltung', { body: { action: 'list' } })
@@ -42,9 +57,9 @@ export default function Benutzer() {
       body: { action: 'create', email, password: passwort },
     })
     setArbeitet(false)
-    const fehlerText = (data as { error?: string })?.error
-    if (error || fehlerText) {
-      setFehler(fehlerText ?? 'Anlegen fehlgeschlagen.')
+    const msg = await fehlerText(data, error)
+    if (msg) {
+      setFehler(msg)
       return
     }
     setMeldung(`Nutzer ${email.trim().toLowerCase()} wurde angelegt.`)
@@ -60,9 +75,9 @@ export default function Benutzer() {
     const { data, error } = await supabase.functions.invoke('benutzer-verwaltung', { body: { action: 'delete', id } })
     setArbeitet(false)
     setLoeschId(null)
-    const fehlerText = (data as { error?: string })?.error
-    if (error || fehlerText) {
-      setFehler(fehlerText ?? 'Löschen fehlgeschlagen.')
+    const msg = await fehlerText(data, error)
+    if (msg) {
+      setFehler(msg)
       return
     }
     laden()
