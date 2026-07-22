@@ -16,6 +16,7 @@ export default function App() {
   const [session, setSession] = useState<Session | null>(null)
   const [passwortReset, setPasswortReset] = useState(false)
   const [laedt, setLaedt] = useState(true)
+  const [menuOffen, setMenuOffen] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -48,21 +49,29 @@ export default function App() {
     <>
       <header className="topbar">
         <h1>Mantinia Hills</h1>
-        <nav>
-          <NavLink to="/anfragen" className={({ isActive }) => (isActive ? 'aktiv' : '')}>
+        <button
+          className="burger"
+          aria-label="Menü"
+          aria-expanded={menuOffen}
+          onClick={() => setMenuOffen((o) => !o)}
+        >
+          {menuOffen ? '✕' : '☰'}
+        </button>
+        <nav className={menuOffen ? 'offen' : ''}>
+          <NavLink to="/anfragen" onClick={() => setMenuOffen(false)} className={({ isActive }) => (isActive ? 'aktiv' : '')}>
             Anfragen
           </NavLink>
-          <NavLink to="/kalender" className={({ isActive }) => (isActive ? 'aktiv' : '')}>
+          <NavLink to="/kalender" onClick={() => setMenuOffen(false)} className={({ isActive }) => (isActive ? 'aktiv' : '')}>
             Kalender
           </NavLink>
-          <NavLink to="/auswertung" className={({ isActive }) => (isActive ? 'aktiv' : '')}>
+          <NavLink to="/auswertung" onClick={() => setMenuOffen(false)} className={({ isActive }) => (isActive ? 'aktiv' : '')}>
             Auswertung
           </NavLink>
-          <NavLink to="/einstellungen" className={({ isActive }) => (isActive ? 'aktiv' : '')}>
+          <NavLink to="/einstellungen" onClick={() => setMenuOffen(false)} className={({ isActive }) => (isActive ? 'aktiv' : '')}>
             Einstellungen
           </NavLink>
+          <button className="btn-klein nav-abmelden" onClick={() => { setMenuOffen(false); abmelden() }}>Abmelden</button>
         </nav>
-        <button className="btn-klein" onClick={abmelden}>Abmelden</button>
       </header>
       <main className="container">
         <Routes>

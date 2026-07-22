@@ -33,11 +33,15 @@ a { color: var(--brand); }
   gap: 24px;
 }
 .topbar h1 { font-size: 17px; margin: 0; font-weight: 700; }
-.topbar nav { display: flex; gap: 18px; flex: 1; }
+.topbar nav { display: flex; gap: 18px; flex: 1; align-items: center; }
 .topbar nav a { color: #f0d6d8; text-decoration: none; font-size: 14px; }
 .topbar nav a.aktiv, .topbar nav a:hover { color: #fff; font-weight: 600; }
+.topbar nav .nav-abmelden { margin-left: auto; }
 .topbar button { background: transparent; border: 1px solid rgba(255,255,255,.4); color: #fff; }
 .topbar button:hover { background: rgba(255,255,255,.12); }
+/* Burger nur auf dem Handy sichtbar (siehe Media Query) */
+.burger { display: none; background: transparent; border: none; color: #fff; font-size: 24px; line-height: 1; padding: 2px 6px; cursor: pointer; }
+.burger:hover { background: transparent; }
 
 .container { max-width: 1080px; margin: 0 auto; padding: 24px; }
 
@@ -199,10 +203,20 @@ details.unter-akkordeon > *:last-child { margin-bottom: 14px; }
   .card { padding: 14px; border-radius: 10px; }
   .zeile { flex-direction: column; gap: 0; }
 
-  .topbar { padding: 10px 12px; gap: 12px; flex-wrap: wrap; }
-  .topbar h1 { font-size: 15px; }
-  .topbar nav { gap: 12px; flex-wrap: wrap; }
-  .topbar nav a { font-size: 13px; }
+  .topbar { padding: 10px 14px; gap: 10px; position: relative; }
+  .topbar h1 { font-size: 16px; }
+  .burger { display: block; margin-left: auto; }
+  /* Menü standardmäßig zu; öffnet als Dropdown unter der Kopfzeile */
+  .topbar nav { display: none; }
+  .topbar nav.offen {
+    display: flex; flex-direction: column; gap: 2px; align-items: stretch;
+    position: absolute; top: 100%; left: 0; right: 0; z-index: 40;
+    background: var(--brand); padding: 6px 14px 14px;
+    box-shadow: 0 8px 14px rgba(0,0,0,.18);
+  }
+  .topbar nav.offen a { font-size: 16px; padding: 12px 10px; border-radius: 8px; }
+  .topbar nav.offen a.aktiv { background: rgba(255,255,255,.14); color: #fff; }
+  .topbar nav.offen .nav-abmelden { margin-left: 0; margin-top: 6px; text-align: center; }
 
   th, td { padding: 8px 6px; font-size: 13px; }
   .nur-desktop { display: none; }
