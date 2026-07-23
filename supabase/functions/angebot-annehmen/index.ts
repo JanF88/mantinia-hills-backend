@@ -14,7 +14,13 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
-import { anzahlungInhalt, datumDE, erzeugePdf, eurPdf, type Anbieter } from "./pdf.ts";
+import { anzahlungInhalt, erzeugePdf, eurPdf, pdfLang, type Anbieter } from "./pdf.ts";
+
+/** Datum je Sprache: de -> TT.MM.JJJJ, en/gr -> TT/MM/JJJJ (für die E-Mail-Texte). */
+function fmtDatum(iso: string, sprache: string): string {
+  const [y, m, d] = iso.slice(0, 10).split("-");
+  return sprache === "de" ? `${d}.${m}.${y}` : `${d}/${m}/${y}`;
+}
 
 const APP_BASE = "https://clients.mantinia-hills.com";
 
@@ -196,7 +202,7 @@ Deno.serve(async (req) => {
       gastName: `${buchung.vorname} ${buchung.nachname}`, gastEmail: buchung.email,
       nummer: nummer as string, datumISO: heute, angebotNummer: angebot.nummer,
       angebotGesamt: gesamt, anzahlungBetrag: betrag, anzahlungProzent: prozent,
-      anreiseISO: buchung.anreise, abreiseISO: buchung.abreise, anbieter,
+      anreiseISO: buchung.anreise, abreiseISO: buchung.abreise, anbieter, lang: pdfLang(sprache),
     });
     const pdfBytes = await erzeugePdf(inhalt);
     const pfad = `${buchung.id}/${nummer}.pdf`;
@@ -227,8 +233,8 @@ Deno.serve(async (req) => {
       const werte = {
         vorname: buchung.vorname,
         nachname: buchung.nachname,
-        anreise: datumDE(buchung.anreise),
-        abreise: datumDE(buchung.abreise),
+        anreise: fmtDatum(buchung.anreise, sprache),
+        abreise: fmtDatum(buchung.abreise, sprache),
         angebot_nummer: angebot.nummer,
         nummer: nummer as string,
         betrag: eurPdf(betrag),

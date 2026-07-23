@@ -1,5 +1,6 @@
 // Serverseitige PDF-Erzeugung für die Anzahlungsrechnung (Deno).
-// Portiert aus admin/src/pdf/layout.ts — Layout muss identisch bleiben.
+// Portiert aus admin/src/pdf/* — Layout identisch. Sprache de/en (GR→EN, da
+// pdf-lib Standard-Helvetica kein Griechisch kann; E-Mail/Seite bleiben GR).
 
 import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from "npm:pdf-lib@1.17.1";
 import QRCode from "npm:qrcode@1.5.4";
@@ -11,6 +12,12 @@ const LINIE = rgb(0.85, 0.83, 0.8);
 const A4 = { breite: 595.28, hoehe: 841.89 };
 const RAND = 50;
 
+export type PdfSprache = "de" | "en";
+/** GR kann Helvetica nicht darstellen → auf EN abbilden. */
+export function pdfLang(s: string): PdfSprache {
+  return s === "en" || s === "gr" ? "en" : "de";
+}
+
 const zahl = new Intl.NumberFormat("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 export function eurPdf(n: number): string {
   return zahl.format(n) + " €";
@@ -19,6 +26,26 @@ export function datumDE(iso: string): string {
   const [y, m, d] = iso.slice(0, 10).split("-");
   return `${d}.${m}.${y}`;
 }
+function datumL(iso: string, lang: PdfSprache): string {
+  const [y, m, d] = iso.slice(0, 10).split("-");
+  return lang === "de" ? `${d}.${m}.${y}` : `${d}/${m}/${y}`;
+}
+
+// --- feste Beschriftungen (Layout) ---
+const L = {
+  de: {
+    datum: "Datum:", bez: "Bezeichnung", menge: "Menge", einzel: "Einzelpreis", betrag: "Betrag",
+    giroTitel: "Bequem zahlen per Banking-App",
+    giroText: "Giro-Code mit Ihrer Banking-App scannen — Empfänger, IBAN, Betrag und Verwendungszweck werden automatisch übernommen.",
+    bank: "Bankverbindung",
+  },
+  en: {
+    datum: "Date:", bez: "Description", menge: "Qty", einzel: "Unit price", betrag: "Amount",
+    giroTitel: "Pay easily via your banking app",
+    giroText: "Scan the giro code with your banking app — payee, IBAN, amount and reference are filled in automatically.",
+    bank: "Bank details",
+  },
+};
 
 export interface Anbieter {
   name: string; inhaber: string; strasse: string; ort: string; land: string;
@@ -27,19 +54,16 @@ export interface Anbieter {
 export interface Position { bezeichnung: string; menge: number; einzelpreis: number; betrag: number; }
 export interface SummenZeile { label: string; betrag: number; fett?: boolean; }
 export interface Girocode {
-  iban: string; bic: string;
-  /** Kontoinhaber — muss wegen des Empfänger-Namensabgleichs der Banken exakt stimmen. */
-  empfaenger: string;
-  betrag: number; verwendungszweck: string;
+  iban: string; bic: string; empfaenger: string; betrag: number; verwendungszweck: string;
 }
 export interface DokumentInhalt {
+  lang: PdfSprache;
   titel: string; nummer: string; datumDE: string;
   empfaenger: { name: string; email: string };
   intro: string[]; positionen: Position[]; summen: SummenZeile[];
   hinweise: string[]; girocode?: Girocode; anbieter: Anbieter;
 }
 
-/** Payload nach EPC069-12 v2 („Giro-Code") — Zeilen LF-getrennt, Zeichensatz UTF-8. */
 function epcPayload(g: Girocode): string {
   return [
     "BCD", "002", "1", "SCT",
@@ -75,6 +99,7 @@ export async function erzeugePdf(inhalt: DokumentInhalt): Promise<Uint8Array> {
   const fett = await doc.embedFont(StandardFonts.HelveticaBold);
   const rechts = A4.breite - RAND;
   const a = inhalt.anbieter;
+  const t = L[inhalt.lang];
 
   let y = A4.hoehe - 60;
   page.drawText(a.name, { x: RAND, y, size: 18, font: fett, color: BRAND });
@@ -90,7 +115,7 @@ export async function erzeugePdf(inhalt: DokumentInhalt): Promise<Uint8Array> {
   rechtsbuendig(page, inhalt.nummer, rechts, y, fett, 11);
   y -= 14;
   page.drawText(inhalt.empfaenger.email, { x: RAND, y, size: 10, font: normal, color: GRAU });
-  rechtsbuendig(page, `Datum: ${inhalt.datumDE}`, rechts, y, normal, 10, GRAU);
+  rechtsbuendig(page, `${t.datum} ${inhalt.datumDE}`, rechts, y, normal, 10, GRAU);
 
   y -= 44;
   page.drawText(inhalt.titel, { x: RAND, y, size: 15, font: fett, color: SCHWARZ });
@@ -104,10 +129,10 @@ export async function erzeugePdf(inhalt: DokumentInhalt): Promise<Uint8Array> {
 
   y -= 12;
   const spalteMenge = 355, spalteEinzel = 455, spalteBetrag = rechts;
-  page.drawText("Bezeichnung", { x: RAND, y, size: 9, font: fett, color: GRAU });
-  rechtsbuendig(page, "Menge", spalteMenge, y, fett, 9, GRAU);
-  rechtsbuendig(page, "Einzelpreis", spalteEinzel, y, fett, 9, GRAU);
-  rechtsbuendig(page, "Betrag", spalteBetrag, y, fett, 9, GRAU);
+  page.drawText(t.bez, { x: RAND, y, size: 9, font: fett, color: GRAU });
+  rechtsbuendig(page, t.menge, spalteMenge, y, fett, 9, GRAU);
+  rechtsbuendig(page, t.einzel, spalteEinzel, y, fett, 9, GRAU);
+  rechtsbuendig(page, t.betrag, spalteBetrag, y, fett, 9, GRAU);
   y -= 6;
   page.drawLine({ start: { x: RAND, y }, end: { x: rechts, y }, thickness: 0.7, color: LINIE });
   y -= 15;
@@ -145,7 +170,6 @@ export async function erzeugePdf(inhalt: DokumentInhalt): Promise<Uint8Array> {
     y -= 3;
   }
 
-  // Giro-Code (EPC-QR) — nur wenn genug Platz über der Fußzeile bleibt (analog admin/src/pdf/layout.ts)
   const QR_GROESSE = 84;
   if (inhalt.girocode && y - QR_GROESSE > 130) {
     y -= 10;
@@ -163,12 +187,9 @@ export async function erzeugePdf(inhalt: DokumentInhalt): Promise<Uint8Array> {
     }
     let ty = y - 14;
     const tx = RAND + QR_GROESSE + 16;
-    page.drawText("Bequem zahlen per Banking-App", { x: tx, y: ty, size: 10, font: fett, color: SCHWARZ });
+    page.drawText(t.giroTitel, { x: tx, y: ty, size: 10, font: fett, color: SCHWARZ });
     ty -= 14;
-    for (const teil of zeilenUmbruch(
-      "Giro-Code mit Ihrer Banking-App scannen — Empfänger, IBAN, Betrag und Verwendungszweck werden automatisch übernommen.",
-      normal, 9, rechts - tx,
-    )) {
+    for (const teil of zeilenUmbruch(t.giroText, normal, 9, rechts - tx)) {
       page.drawText(teil, { x: tx, y: ty, size: 9, font: normal, color: GRAU });
       ty -= 12;
     }
@@ -180,38 +201,61 @@ export async function erzeugePdf(inhalt: DokumentInhalt): Promise<Uint8Array> {
   fy -= 14;
   page.drawText(`${a.name} · ${a.inhaber} · ${a.strasse}, ${a.ort}, ${a.land}`, { x: RAND, y: fy, size: 8, font: normal, color: GRAU });
   fy -= 11;
-  const bank = a.iban ? `Bankverbindung: ${a.bank ? a.bank + " · " : ""}IBAN ${a.iban}${a.bic ? " · BIC " + a.bic : ""}` : "";
+  const bank = a.iban ? `${t.bank}: ${a.bank ? a.bank + " · " : ""}IBAN ${a.iban}${a.bic ? " · BIC " + a.bic : ""}` : "";
   if (bank) { page.drawText(bank, { x: RAND, y: fy, size: 8, font: normal, color: GRAU }); fy -= 11; }
 
   return await doc.save();
 }
 
-/** Baut den Inhalt der Anzahlungsrechnung (analog admin/src/pdf/dokumente.ts). */
+// --- Inhaltstexte der Anzahlungsrechnung (de/en) ---
+const TX = {
+  de: {
+    titel: (n: string) => `Anzahlungsrechnung ${n}`,
+    rechnung: (n: string) => `Rechnung ${n}`,
+    pos: (pz: number, z: string, an: string, g: string) => `Anzahlung ${pz} % auf Buchung ${z} (gemäß Angebot ${an}, Gesamtbetrag ${g})`,
+    intro: (an: string) => `vielen Dank für die Annahme unseres Angebots ${an}. Zur verbindlichen Reservierung Ihres Aufenthalts berechnen wir folgende Anzahlung:`,
+    zuZahlen: "Zu zahlender Betrag",
+    iban: (iban: string, n: string) => `Bitte überweisen Sie den Betrag auf das unten angegebene Konto (IBAN ${iban}) unter Angabe der Rechnungsnummer ${n}.`,
+    ohne: (n: string) => `Bitte überweisen Sie den Betrag unter Angabe der Rechnungsnummer ${n}.`,
+    rest: (r: string) => `Der Restbetrag von ${r} wird vor Anreise fällig.`,
+  },
+  en: {
+    titel: (n: string) => `Deposit invoice ${n}`,
+    rechnung: (n: string) => `Invoice ${n}`,
+    pos: (pz: number, z: string, an: string, g: string) => `Deposit ${pz}% on booking ${z} (per offer ${an}, total ${g})`,
+    intro: (an: string) => `thank you for accepting our offer ${an}. To bindingly reserve your stay we charge the following deposit:`,
+    zuZahlen: "Amount payable",
+    iban: (iban: string, n: string) => `Please transfer the amount to the account below (IBAN ${iban}), quoting invoice number ${n}.`,
+    ohne: (n: string) => `Please transfer the amount quoting invoice number ${n}.`,
+    rest: (r: string) => `The remaining balance of ${r} is due before arrival.`,
+  },
+};
+
+/** Baut den Inhalt der Anzahlungsrechnung in der gewünschten Sprache (de/en). */
 export function anzahlungInhalt(opts: {
   gastName: string; gastEmail: string; nummer: string; datumISO: string;
   angebotNummer: string; angebotGesamt: number; anzahlungBetrag: number; anzahlungProzent: number;
-  anreiseISO: string; abreiseISO: string; anbieter: Anbieter;
+  anreiseISO: string; abreiseISO: string; anbieter: Anbieter; lang?: PdfSprache;
 }): DokumentInhalt {
+  const lang: PdfSprache = opts.lang ?? "de";
+  const t = TX[lang];
   const restbetrag = opts.angebotGesamt - opts.anzahlungBetrag;
-  const zeitraum = `${datumDE(opts.anreiseISO)} – ${datumDE(opts.abreiseISO)}`;
+  const zeitraum = `${datumL(opts.anreiseISO, lang)} – ${datumL(opts.abreiseISO, lang)}`;
   return {
-    titel: `Anzahlungsrechnung ${opts.nummer}`,
-    nummer: `Rechnung ${opts.nummer}`,
-    datumDE: datumDE(opts.datumISO),
+    lang,
+    titel: t.titel(opts.nummer),
+    nummer: t.rechnung(opts.nummer),
+    datumDE: datumL(opts.datumISO, lang),
     empfaenger: { name: opts.gastName, email: opts.gastEmail },
-    intro: [
-      `vielen Dank für die Annahme unseres Angebots ${opts.angebotNummer}. Zur verbindlichen Reservierung Ihres Aufenthalts berechnen wir folgende Anzahlung:`,
-    ],
+    intro: [t.intro(opts.angebotNummer)],
     positionen: [{
-      bezeichnung: `Anzahlung ${opts.anzahlungProzent} % auf Buchung ${zeitraum} (gemäß Angebot ${opts.angebotNummer}, Gesamtbetrag ${eurPdf(opts.angebotGesamt)})`,
+      bezeichnung: t.pos(opts.anzahlungProzent, zeitraum, opts.angebotNummer, eurPdf(opts.angebotGesamt)),
       menge: 1, einzelpreis: opts.anzahlungBetrag, betrag: opts.anzahlungBetrag,
     }],
-    summen: [{ label: "Zu zahlender Betrag", betrag: opts.anzahlungBetrag, fett: true }],
+    summen: [{ label: t.zuZahlen, betrag: opts.anzahlungBetrag, fett: true }],
     hinweise: [
-      opts.anbieter.iban
-        ? `Bitte überweisen Sie den Betrag auf das unten angegebene Konto (IBAN ${opts.anbieter.iban}) unter Angabe der Rechnungsnummer ${opts.nummer}.`
-        : `Bitte überweisen Sie den Betrag unter Angabe der Rechnungsnummer ${opts.nummer}.`,
-      `Der Restbetrag von ${eurPdf(restbetrag)} wird vor Anreise fällig.`,
+      opts.anbieter.iban ? t.iban(opts.anbieter.iban, opts.nummer) : t.ohne(opts.nummer),
+      t.rest(eurPdf(restbetrag)),
     ],
     girocode: opts.anbieter.iban && opts.anzahlungBetrag > 0
       ? {

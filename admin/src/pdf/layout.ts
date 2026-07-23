@@ -3,7 +3,8 @@
 
 import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from 'pdf-lib'
 import QRCode from 'qrcode'
-import type { Anbieter, Position } from '../lib/types'
+import type { Anbieter, Position, Sprache } from '../lib/types'
+import { pdfT } from './texte'
 
 const BRAND = rgb(0x68 / 255, 0x13 / 255, 0x18 / 255)
 const GRAU = rgb(0.42, 0.42, 0.42)
@@ -56,6 +57,8 @@ function epcPayload(g: Girocode): string {
 }
 
 export interface DokumentInhalt {
+  /** Sprache für feste Beschriftungen (Tabellenköpfe, Datum, Fußzeile, Giro). */
+  lang: Sprache
   titel: string
   nummer: string
   datumDE: string
@@ -99,6 +102,7 @@ export async function erzeugePdf(inhalt: DokumentInhalt): Promise<Uint8Array> {
   const fett = await doc.embedFont(StandardFonts.HelveticaBold)
   const rechts = A4.breite - RAND
   const a = inhalt.anbieter
+  const T = pdfT(inhalt.lang)
 
   // Briefkopf
   let y = A4.hoehe - 60
@@ -116,7 +120,7 @@ export async function erzeugePdf(inhalt: DokumentInhalt): Promise<Uint8Array> {
   rechtsbuendig(page, inhalt.nummer, rechts, y, fett, 11)
   y -= 14
   page.drawText(inhalt.empfaenger.email, { x: RAND, y, size: 10, font: normal, color: GRAU })
-  rechtsbuendig(page, `Datum: ${inhalt.datumDE}`, rechts, y, normal, 10, GRAU)
+  rechtsbuendig(page, `${T.datum} ${inhalt.datumDE}`, rechts, y, normal, 10, GRAU)
 
   // Titel + Intro
   y -= 44
@@ -134,10 +138,10 @@ export async function erzeugePdf(inhalt: DokumentInhalt): Promise<Uint8Array> {
   const spalteMenge = 355
   const spalteEinzel = 455
   const spalteBetrag = rechts
-  page.drawText('Bezeichnung', { x: RAND, y, size: 9, font: fett, color: GRAU })
-  rechtsbuendig(page, 'Menge', spalteMenge, y, fett, 9, GRAU)
-  rechtsbuendig(page, 'Einzelpreis', spalteEinzel, y, fett, 9, GRAU)
-  rechtsbuendig(page, 'Betrag', spalteBetrag, y, fett, 9, GRAU)
+  page.drawText(T.spBezeichnung, { x: RAND, y, size: 9, font: fett, color: GRAU })
+  rechtsbuendig(page, T.spMenge, spalteMenge, y, fett, 9, GRAU)
+  rechtsbuendig(page, T.spEinzelpreis, spalteEinzel, y, fett, 9, GRAU)
+  rechtsbuendig(page, T.spBetrag, spalteBetrag, y, fett, 9, GRAU)
   y -= 6
   page.drawLine({ start: { x: RAND, y }, end: { x: rechts, y }, thickness: 0.7, color: LINIE })
   y -= 15
@@ -201,12 +205,9 @@ export async function erzeugePdf(inhalt: DokumentInhalt): Promise<Uint8Array> {
     }
     let ty = y - 14
     const tx = RAND + QR_GROESSE + 16
-    page.drawText('Bequem zahlen per Banking-App', { x: tx, y: ty, size: 10, font: fett, color: SCHWARZ })
+    page.drawText(T.giroTitel, { x: tx, y: ty, size: 10, font: fett, color: SCHWARZ })
     ty -= 14
-    for (const teil of zeilenUmbruch(
-      'Giro-Code mit Ihrer Banking-App scannen — Empfänger, IBAN, Betrag und Verwendungszweck werden automatisch übernommen.',
-      normal, 9, rechts - tx,
-    )) {
+    for (const teil of zeilenUmbruch(T.giroText, normal, 9, rechts - tx)) {
       page.drawText(teil, { x: tx, y: ty, size: 9, font: normal, color: GRAU })
       ty -= 12
     }
@@ -220,7 +221,7 @@ export async function erzeugePdf(inhalt: DokumentInhalt): Promise<Uint8Array> {
   page.drawText(`${a.name} · ${a.inhaber} · ${a.strasse}, ${a.ort}, ${a.land}`, { x: RAND, y: fy, size: 8, font: normal, color: GRAU })
   fy -= 11
   const bank = a.iban
-    ? `Bankverbindung: ${a.bank ? a.bank + ' · ' : ''}IBAN ${a.iban}${a.bic ? ' · BIC ' + a.bic : ''}`
+    ? `${T.bankLabel}: ${a.bank ? a.bank + ' · ' : ''}IBAN ${a.iban}${a.bic ? ' · BIC ' + a.bic : ''}`
     : ''
   if (bank) {
     page.drawText(bank, { x: RAND, y: fy, size: 8, font: normal, color: GRAU })

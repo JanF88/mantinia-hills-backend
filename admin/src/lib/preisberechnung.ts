@@ -3,7 +3,8 @@
 // Nächte derselben Saison zu Segmenten gruppiert — ein Aufenthalt über
 // Saisongrenzen hinweg ergibt dadurch mehrere Angebotspositionen.
 
-import type { Einstellungen, Position } from './types'
+import type { Einstellungen, Position, Sprache } from './types'
+import { pdfT } from '../pdf/texte'
 
 /**
  * Liefert die Saisonpreis-Tabelle, die am Datum `iso` ("YYYY-MM-DD") gilt:
@@ -88,22 +89,24 @@ export function angebotsPositionen(
   transferLabel: string | null,
   transferEur: number | null,
   e: Einstellungen,
+  lang: Sprache = 'de',
 ): Position[] {
+  const T = pdfT(lang)
   const positionen: Position[] = kalk.segmente.map((s) => ({
-    bezeichnung: `Übernachtung ${s.saisonName}: ${s.naechte} ${s.naechte === 1 ? 'Nacht' : 'Nächte'} × ${personen} Pers. × ${s.satzProPersonNacht} €`,
+    bezeichnung: T.uebernachtung(s.saisonName, s.naechte, personen, s.satzProPersonNacht),
     menge: 1,
     einzelpreis: s.betrag,
     betrag: s.betrag,
   }))
   positionen.push({
-    bezeichnung: 'Endreinigung',
+    bezeichnung: T.endreinigung,
     menge: 1,
     einzelpreis: e.endreinigung_eur,
     betrag: e.endreinigung_eur,
   })
   if (transferEur && transferEur > 0) {
     positionen.push({
-      bezeichnung: `Flughafentransfer (${transferLabel ?? ''})`,
+      bezeichnung: T.transfer(transferLabel ?? ''),
       menge: 1,
       einzelpreis: transferEur,
       betrag: transferEur,

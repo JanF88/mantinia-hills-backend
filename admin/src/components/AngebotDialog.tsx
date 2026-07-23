@@ -21,7 +21,7 @@ export default function AngebotDialog({ buchung, einstellungen, onFertig, onAbbr
   const initial = useMemo<Position[]>(() => {
     const kalk = berechneAufenthalt(buchung.anreise, buchung.abreise, buchung.personen, einstellungen)
     if (!kalk) return []
-    return angebotsPositionen(kalk, buchung.personen, buchung.transfer_option, buchung.transfer_eur, einstellungen)
+    return angebotsPositionen(kalk, buchung.personen, buchung.transfer_option, buchung.transfer_eur, einstellungen, buchung.sprache)
   }, [buchung, einstellungen])
 
   const [positionen, setPositionen] = useState<Position[]>(initial)

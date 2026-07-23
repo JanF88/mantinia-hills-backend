@@ -1,9 +1,9 @@
-// Die drei Dokument-Templates: Angebot, Anzahlungsrechnung, Stornorechnung.
-// Jede Funktion liefert die PDF-Bytes; Nummernvergabe, Upload und DB-Insert
-// übernimmt lib/dokumentService.ts.
+// Die vier Dokument-Templates: Angebot, Anzahlungs-, Abschluss-, Stornorechnung.
+// Sprache je Buchung (b.sprache) über pdf/texte.ts. Jede Funktion liefert die
+// PDF-Bytes; Nummernvergabe, Upload und DB-Insert übernimmt lib/dokumentService.
 
-import { erzeugePdf, eurPdf, type Girocode } from './layout'
-import { datumDE } from '../lib/format'
+import { erzeugePdf, type Girocode } from './layout'
+import { pdfT, eur, datumL, pdfLang } from './texte'
 import { positionenSumme } from '../lib/preisberechnung'
 import type { Buchung, Einstellungen, Position } from '../lib/types'
 
@@ -31,22 +31,22 @@ export async function angebotPdf(
   gueltigBisISO: string,
   e: Einstellungen,
 ): Promise<Uint8Array> {
+  const L = pdfLang(b.sprache)
+  const T = pdfT(L)
   const gesamt = positionenSumme(positionen)
   return erzeugePdf({
-    titel: `Angebot ${nummer}`,
-    nummer: `Angebot ${nummer}`,
-    datumDE: datumDE(datumISO),
+    lang: L,
+    titel: T.angebotTitel(nummer),
+    nummer: T.angebotNummer(nummer),
+    datumDE: datumL(datumISO, L),
     empfaenger: empfaenger(b),
     intro: [
-      `vielen Dank für Ihre Anfrage. Gerne unterbreiten wir Ihnen folgendes Angebot für Ihren Aufenthalt im ${e.anbieter.name}:`,
-      `Zeitraum: ${datumDE(b.anreise)} – ${datumDE(b.abreise)} (${b.naechte} ${b.naechte === 1 ? 'Nacht' : 'Nächte'}) · ${b.personen} ${b.personen === 1 ? 'Person' : 'Personen'}`,
+      T.angebotIntro(e.anbieter.name),
+      T.angebotZeitraum(datumL(b.anreise, L), datumL(b.abreise, L), b.naechte, b.personen),
     ],
     positionen,
-    summen: [{ label: 'Gesamtbetrag', betrag: gesamt, fett: true }],
-    hinweise: [
-      `Dieses Angebot ist freibleibend und gültig bis ${datumDE(gueltigBisISO)}.`,
-      'Zur Annahme genügt eine kurze Bestätigung per E-Mail. Nach Annahme erhalten Sie eine Anzahlungsrechnung; mit Eingang der Anzahlung ist Ihre Buchung verbindlich reserviert.',
-    ],
+    summen: [{ label: T.gesamtbetrag, betrag: gesamt, fett: true }],
+    hinweise: [T.angebotGueltig(datumL(gueltigBisISO, L)), T.angebotAnnahme],
     anbieter: e.anbieter,
   })
 }
@@ -61,9 +61,11 @@ export async function anzahlungsrechnungPdf(
   anzahlungProzent: number,
   e: Einstellungen,
 ): Promise<Uint8Array> {
+  const L = pdfLang(b.sprache)
+  const T = pdfT(L)
   const positionen: Position[] = [
     {
-      bezeichnung: `Anzahlung ${anzahlungProzent} % auf Buchung ${datumDE(b.anreise)} – ${datumDE(b.abreise)} (gemäß Angebot ${angebotNummer}, Gesamtbetrag ${eurPdf(angebotGesamt)})`,
+      bezeichnung: T.anzahlungPos(anzahlungProzent, datumL(b.anreise, L), datumL(b.abreise, L), angebotNummer, eur(angebotGesamt)),
       menge: 1,
       einzelpreis: anzahlungBetrag,
       betrag: anzahlungBetrag,
@@ -71,20 +73,17 @@ export async function anzahlungsrechnungPdf(
   ]
   const restbetrag = angebotGesamt - anzahlungBetrag
   return erzeugePdf({
-    titel: `Anzahlungsrechnung ${nummer}`,
-    nummer: `Rechnung ${nummer}`,
-    datumDE: datumDE(datumISO),
+    lang: L,
+    titel: T.anzahlungTitel(nummer),
+    nummer: T.rechnung(nummer),
+    datumDE: datumL(datumISO, L),
     empfaenger: empfaenger(b),
-    intro: [
-      `vielen Dank für die Annahme unseres Angebots ${angebotNummer}. Zur verbindlichen Reservierung Ihres Aufenthalts berechnen wir folgende Anzahlung:`,
-    ],
+    intro: [T.anzahlungIntro(angebotNummer)],
     positionen,
-    summen: [{ label: 'Zu zahlender Betrag', betrag: anzahlungBetrag, fett: true }],
+    summen: [{ label: T.zuZahlenderBetrag, betrag: anzahlungBetrag, fett: true }],
     hinweise: [
-      e.anbieter.iban
-        ? `Bitte überweisen Sie den Betrag auf das unten angegebene Konto (IBAN ${e.anbieter.iban}) unter Angabe der Rechnungsnummer ${nummer}.`
-        : `Bitte überweisen Sie den Betrag unter Angabe der Rechnungsnummer ${nummer}.`,
-      `Der Restbetrag von ${eurPdf(restbetrag)} wird vor Anreise fällig.`,
+      e.anbieter.iban ? T.bitteUeberweisenIban(e.anbieter.iban, nummer) : T.bitteUeberweisenOhne(nummer),
+      T.restVorAnreise(eur(restbetrag)),
     ],
     girocode: girocode(e, anzahlungBetrag, nummer),
     anbieter: e.anbieter,
@@ -102,33 +101,34 @@ export async function abschlussrechnungPdf(
   faelligBisISO: string,
   e: Einstellungen,
 ): Promise<Uint8Array> {
+  const L = pdfLang(b.sprache)
+  const T = pdfT(L)
   const positionen: Position[] = [
     {
-      bezeichnung: `Restbetrag für Aufenthalt ${datumDE(b.anreise)} – ${datumDE(b.abreise)} (gemäß Angebot ${angebotNummer}, Gesamtbetrag ${eurPdf(angebotGesamt)}, abzüglich Anzahlung ${eurPdf(anzahlungBetrag)})`,
+      bezeichnung: T.abschlussPos(datumL(b.anreise, L), datumL(b.abreise, L), angebotNummer, eur(angebotGesamt), eur(anzahlungBetrag)),
       menge: 1,
       einzelpreis: restbetrag,
       betrag: restbetrag,
     },
   ]
   return erzeugePdf({
-    titel: `Abschlussrechnung ${nummer}`,
-    nummer: `Rechnung ${nummer}`,
-    datumDE: datumDE(datumISO),
+    lang: L,
+    titel: T.abschlussTitel(nummer),
+    nummer: T.rechnung(nummer),
+    datumDE: datumL(datumISO, L),
     empfaenger: empfaenger(b),
-    intro: [
-      `Ihr Aufenthalt vom ${datumDE(b.anreise)} bis ${datumDE(b.abreise)} steht bevor. Hiermit stellen wir Ihnen den noch offenen Restbetrag in Rechnung:`,
-    ],
+    intro: [T.abschlussIntro(datumL(b.anreise, L), datumL(b.abreise, L))],
     positionen,
     summen: [
-      { label: 'Gesamtbetrag Aufenthalt', betrag: angebotGesamt },
-      { label: 'bereits gezahlte Anzahlung', betrag: -anzahlungBetrag },
-      { label: 'Zu zahlender Restbetrag', betrag: restbetrag, fett: true },
+      { label: T.gesamtAufenthalt, betrag: angebotGesamt },
+      { label: T.bereitsAnzahlung, betrag: -anzahlungBetrag },
+      { label: T.zuZahlenderRest, betrag: restbetrag, fett: true },
     ],
     hinweise: [
       e.anbieter.iban
-        ? `Bitte überweisen Sie den Restbetrag bis spätestens ${datumDE(faelligBisISO)} auf das unten angegebene Konto (IBAN ${e.anbieter.iban}) unter Angabe der Rechnungsnummer ${nummer}.`
-        : `Bitte überweisen Sie den Restbetrag bis spätestens ${datumDE(faelligBisISO)} unter Angabe der Rechnungsnummer ${nummer}.`,
-      'Wir freuen uns sehr auf Ihren Aufenthalt!',
+        ? T.bitteRestIban(datumL(faelligBisISO, L), e.anbieter.iban, nummer)
+        : T.bitteRestOhne(datumL(faelligBisISO, L), nummer),
+      T.freuenAufenthalt,
     ],
     girocode: girocode(e, restbetrag, nummer),
     anbieter: e.anbieter,
@@ -156,58 +156,53 @@ export async function stornorechnungPdf(
   storno: StornoDaten,
   e: Einstellungen,
 ): Promise<Uint8Array> {
+  const L = pdfLang(b.sprache)
+  const T = pdfT(L)
+  const wann = storno.tageVorAnreise >= 0 ? T.stornoTageVor(storno.tageVorAnreise) : T.stornoNachTermin
   const positionen: Position[] = [
     {
-      bezeichnung: `Stornogebühr ${storno.prozent} % (Stornierung ${storno.tageVorAnreise >= 0 ? storno.tageVorAnreise + ' Tage vor Anreise' : 'nach Anreisetermin'}) auf Buchung ${datumDE(b.anreise)} – ${datumDE(b.abreise)}, ${eurPdf(storno.basisbetrag)} gemäß Angebot ${angebotNummer}`,
+      bezeichnung: T.stornoPos(storno.prozent, wann, datumL(b.anreise, L), datumL(b.abreise, L), eur(storno.basisbetrag), angebotNummer),
       menge: 1,
       einzelpreis: storno.gebuehr,
       betrag: storno.gebuehr,
     },
   ]
 
-  const summen = [{ label: 'Stornogebühr', betrag: storno.gebuehr, fett: false }]
+  const summen = [{ label: T.stornogebuehr, betrag: storno.gebuehr, fett: false }]
   const hinweise: string[] = []
 
   if (storno.verrechneteAnzahlung > 0) {
+    const label = storno.zahlungLabel === 'Zahlungen' ? T.zahlungenLabel : T.anzahlungLabel
     summen.push({
-      label: `abzüglich erhaltener ${storno.zahlungLabel ?? 'Anzahlung'}${storno.anzahlungNummer ? ` (${storno.anzahlungNummer})` : ''}`,
+      label: T.abzueglich(label, storno.anzahlungNummer ?? ''),
       betrag: -storno.verrechneteAnzahlung,
       fett: false,
     })
     if (storno.restbetrag > 0) {
-      summen.push({ label: 'Zu zahlender Restbetrag', betrag: storno.restbetrag, fett: true })
+      summen.push({ label: T.zuZahlenderRest, betrag: storno.restbetrag, fett: true })
       hinweise.push(
-        e.anbieter.iban
-          ? `Bitte überweisen Sie den Restbetrag auf das unten angegebene Konto (IBAN ${e.anbieter.iban}) unter Angabe der Rechnungsnummer ${nummer}.`
-          : `Bitte überweisen Sie den Restbetrag unter Angabe der Rechnungsnummer ${nummer}.`,
+        e.anbieter.iban ? T.bitteRestforderungIban(e.anbieter.iban, nummer) : T.bitteRestforderungOhne(nummer),
       )
     } else {
-      summen.push({ label: 'Guthaben zu Ihren Gunsten', betrag: Math.abs(storno.restbetrag), fett: true })
-      hinweise.push(
-        `Die erhaltene Anzahlung übersteigt die Stornogebühr. Wir erstatten Ihnen den Betrag von ${eurPdf(Math.abs(storno.restbetrag))} auf Ihr Konto zurück. Bitte teilen Sie uns hierfür Ihre Bankverbindung mit.`,
-      )
+      summen.push({ label: T.guthaben, betrag: Math.abs(storno.restbetrag), fett: true })
+      hinweise.push(T.guthabenText(eur(Math.abs(storno.restbetrag))))
     }
   } else {
-    summen.push({ label: 'Zu zahlender Betrag', betrag: storno.gebuehr, fett: true })
-    hinweise.push(
-      e.anbieter.iban
-        ? `Bitte überweisen Sie den Betrag auf das unten angegebene Konto (IBAN ${e.anbieter.iban}) unter Angabe der Rechnungsnummer ${nummer}.`
-        : `Bitte überweisen Sie den Betrag unter Angabe der Rechnungsnummer ${nummer}.`,
-    )
+    summen.push({ label: T.zuZahlenderBetrag, betrag: storno.gebuehr, fett: true })
+    hinweise.push(e.anbieter.iban ? T.bitteBetragIban(e.anbieter.iban, nummer) : T.bitteBetragOhne(nummer))
   }
-  hinweise.push('Wir bedauern, dass Ihr Aufenthalt nicht zustande kommt, und würden uns freuen, Sie zu einem anderen Zeitpunkt begrüßen zu dürfen.')
+  hinweise.push(T.stornoBedauern)
 
   // Zu zahlender Betrag: Restforderung nach Verrechnung, sonst die volle Gebühr; bei Guthaben kein QR
   const offenerBetrag = storno.verrechneteAnzahlung > 0 ? storno.restbetrag : storno.gebuehr
 
   return erzeugePdf({
-    titel: `Stornorechnung ${nummer}`,
-    nummer: `Rechnung ${nummer}`,
-    datumDE: datumDE(datumISO),
+    lang: L,
+    titel: T.stornoTitel(nummer),
+    nummer: T.rechnung(nummer),
+    datumDE: datumL(datumISO, L),
     empfaenger: empfaenger(b),
-    intro: [
-      `hiermit bestätigen wir die Stornierung Ihrer Buchung für den Zeitraum ${datumDE(b.anreise)} – ${datumDE(b.abreise)}. Gemäß unseren Stornobedingungen berechnen wir:`,
-    ],
+    intro: [T.stornoIntro(datumL(b.anreise, L), datumL(b.abreise, L))],
     positionen,
     summen,
     hinweise,
