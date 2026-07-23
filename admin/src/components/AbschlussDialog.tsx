@@ -59,7 +59,7 @@ export default function AbschlussDialog({ buchung, angebot, anzahlung, einstellu
       downloadPdf(bytes, `${nummer}_Abschluss_Mantinia_Hills.pdf`)
 
       if (senden) {
-        const { betreff, html } = renderMailVorlage(einstellungen.mail_vorlagen.abschluss, {
+        const { betreff, html } = renderMailVorlage(einstellungen.mail_vorlagen[buchung.sprache].abschluss, {
           vorname: buchung.vorname,
           nachname: buchung.nachname,
           anreise: datumDE(buchung.anreise),

@@ -11,15 +11,22 @@ export function bytesZuBase64(bytes: Uint8Array): string {
   return btoa(bin)
 }
 
-/** Betreff ASCII-sicher machen — Umlaute im SMTP-Betreff kamen als Rohtext an. */
+/**
+ * Betreff mail-tauglich kodieren. DE-Umlaute/Sonderzeichen werden transliteriert
+ * (bewährt); bleibt danach nur ASCII übrig, wird der Betreff unverändert gesendet.
+ * Andernfalls (z. B. Griechisch) als RFC-2047-Encoded-Word (UTF-8/Base64) — so
+ * kommen alle Zeichen korrekt an, statt entfernt zu werden.
+ */
 export function betreffAsciiSicher(s: string): string {
-  return s
+  const ascii = s
     .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue')
     .replace(/Ä/g, 'Ae').replace(/Ö/g, 'Oe').replace(/Ü/g, 'Ue')
     .replace(/ß/g, 'ss')
     .replace(/[–—]/g, '-')
     .replace(/[„“”‚‘’]/g, "'")
-    .replace(/[^\x20-\x7E]/g, '')
+  if (/^[\x20-\x7E]*$/.test(ascii)) return ascii
+  const b64 = btoa(String.fromCharCode(...new TextEncoder().encode(s)))
+  return '=?UTF-8?B?' + b64 + '?='
 }
 
 export async function sendeMail(opts: {

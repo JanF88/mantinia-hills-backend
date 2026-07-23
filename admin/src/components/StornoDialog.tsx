@@ -94,7 +94,7 @@ export default function StornoDialog({ buchung, angebot, anzahlung, einstellunge
       if (statusErr) throw statusErr
 
       if (!ohneRechnung && senden && nummer && bytes) {
-        const { betreff, html } = renderMailVorlage(einstellungen.mail_vorlagen.storno, {
+        const { betreff, html } = renderMailVorlage(einstellungen.mail_vorlagen[buchung.sprache].storno, {
           vorname: buchung.vorname,
           nachname: buchung.nachname,
           anreise: datumDE(buchung.anreise),

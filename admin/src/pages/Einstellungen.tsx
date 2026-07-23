@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { ladeEinstellungen, speichereEinstellung } from '../lib/einstellungen'
 import { saisonPreiseFuer } from '../lib/preisberechnung'
 import { heuteISO } from '../lib/format'
-import { MAIL_VORLAGEN_INFO } from '../lib/mailVorlagen'
+import { MAIL_VORLAGEN_INFO, MAIL_SPRACHEN } from '../lib/mailVorlagen'
 import PasswortAendern from '../components/PasswortAendern'
 import Benutzer from './Benutzer'
 import type { Einstellungen as EinstellungenTyp } from '../lib/types'
@@ -13,6 +13,7 @@ export default function Einstellungen() {
   const [meldung, setMeldung] = useState<string | null>(null)
   const [fehler, setFehler] = useState<string | null>(null)
   const [laedt, setLaedt] = useState(false)
+  const [mailSprache, setMailSprache] = useState<'de' | 'en' | 'gr'>('de')
 
   useEffect(() => {
     ladeEinstellungen().then(setE).catch(() => setFehler('Einstellungen konnten nicht geladen werden.'))
@@ -86,9 +87,11 @@ export default function Einstellungen() {
   }
 
   function vorlageAendern(key: keyof MailVorlagen, feld: 'betreff' | 'text', wert: string) {
+    const alle = e!.mail_vorlagen
+    const satz = alle[mailSprache]
     set('mail_vorlagen', {
-      ...e!.mail_vorlagen,
-      [key]: { ...e!.mail_vorlagen[key], [feld]: wert },
+      ...alle,
+      [mailSprache]: { ...satz, [key]: { ...satz[key], [feld]: wert } },
     })
   }
 
@@ -241,19 +244,32 @@ export default function Einstellungen() {
           Platzhalter in geschweiften Klammern werden beim Versand automatisch ersetzt.
           <strong> **Text**</strong> wird fett dargestellt, eine Leerzeile beginnt einen neuen Absatz.
           Anrede und Grußformel gehören mit in den Text; die Signatur (Logo &amp; Kontaktdaten) wird automatisch angehängt.
+          Jede Anfrage erhält die Mails in ihrer Sprache — unten die Sprache wählen und die Texte pflegen.
         </p>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+          {MAIL_SPRACHEN.map((sp) => (
+            <button
+              key={sp.code}
+              className={mailSprache === sp.code ? 'btn-primary btn-klein' : 'btn-klein'}
+              onClick={() => setMailSprache(sp.code)}
+            >
+              {sp.label}
+            </button>
+          ))}
+        </div>
         {(Object.keys(MAIL_VORLAGEN_INFO) as (keyof MailVorlagen)[]).map((key) => {
           const info = MAIL_VORLAGEN_INFO[key]
+          const vorlage = e.mail_vorlagen[mailSprache][key]
           return (
-            <details key={key} className="unter-akkordeon">
+            <details key={key + mailSprache} className="unter-akkordeon">
               <summary>{info.label}</summary>
               <p style={{ fontSize: 12.5, color: 'var(--grau)', margin: '8px 0' }}>
                 Wird versendet {info.wann}. Platzhalter: {info.platzhalter.map((p) => `{${p}}`).join(' · ')}
               </p>
               <label>Betreff</label>
-              <input value={e.mail_vorlagen[key].betreff} onChange={(ev) => vorlageAendern(key, 'betreff', ev.target.value)} />
+              <input value={vorlage.betreff} onChange={(ev) => vorlageAendern(key, 'betreff', ev.target.value)} />
               <label style={{ marginTop: 8 }}>Text</label>
-              <textarea rows={9} value={e.mail_vorlagen[key].text} onChange={(ev) => vorlageAendern(key, 'text', ev.target.value)} />
+              <textarea rows={9} value={vorlage.text} onChange={(ev) => vorlageAendern(key, 'text', ev.target.value)} />
             </details>
           )
         })}

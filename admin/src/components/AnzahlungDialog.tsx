@@ -72,7 +72,7 @@ export default function AnzahlungDialog({ buchung, angebot, einstellungen, onFer
       downloadPdf(bytes, `${nummer}_Anzahlung_Mantinia_Hills.pdf`)
 
       if (senden) {
-        const { betreff, html } = renderMailVorlage(einstellungen.mail_vorlagen.anzahlung, {
+        const { betreff, html } = renderMailVorlage(einstellungen.mail_vorlagen[buchung.sprache].anzahlung, {
           vorname: buchung.vorname,
           nachname: buchung.nachname,
           anreise: datumDE(buchung.anreise),

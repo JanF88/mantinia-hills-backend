@@ -37,9 +37,11 @@ function bytesZuBase64(bytes: Uint8Array): string {
 
 // --- Mail-Vorlage (Default identisch zu admin/src/lib/mailVorlagen.ts, Key `annahme`) ---
 
-const VORLAGE_DEFAULT = {
-  betreff: "Buchungsbestätigung und Anzahlungsrechnung {nummer}",
-  text: `Guten Tag {vorname} {nachname},
+// Default-„annahme"-Vorlage je Sprache (Fallback, falls in den Einstellungen leer).
+const VORLAGEN_DEFAULT: Record<"de" | "en" | "gr", { betreff: string; text: string }> = {
+  de: {
+    betreff: "Buchungsbestätigung und Anzahlungsrechnung {nummer}",
+    text: `Guten Tag {vorname} {nachname},
 
 vielen Dank – wir haben Ihre Annahme des Angebots {angebot_nummer} erhalten. Ihre Buchung für den Zeitraum **{anreise}** bis **{abreise}** ist damit bestätigt.
 
@@ -47,6 +49,29 @@ Im Anhang finden Sie die Anzahlungsrechnung über **{betrag}**. Mit Eingang der 
 
 Herzliche Grüße
 Ihr Team vom Ferienhaus Mantinia Hills`,
+  },
+  en: {
+    betreff: "Booking confirmation and deposit invoice {nummer}",
+    text: `Dear {vorname} {nachname},
+
+thank you – we have received your acceptance of offer {angebot_nummer}. Your booking for the period **{anreise}** to **{abreise}** is hereby confirmed.
+
+Please find the deposit invoice for **{betrag}** attached. Once the deposit is received, your stay is firmly reserved.
+
+Kind regards
+Your team at Ferienhaus Mantinia Hills`,
+  },
+  gr: {
+    betreff: "Επιβεβαίωση κράτησης και τιμολόγιο προκαταβολής {nummer}",
+    text: `Αγαπητέ/ή {vorname} {nachname},
+
+σας ευχαριστούμε – λάβαμε την αποδοχή της προσφοράς {angebot_nummer}. Η κράτησή σας για το διάστημα **{anreise}** έως **{abreise}** επιβεβαιώνεται.
+
+Στο συνημμένο θα βρείτε το τιμολόγιο προκαταβολής ύψους **{betrag}**. Μόλις λάβουμε την προκαταβολή, η διαμονή σας είναι οριστικά εξασφαλισμένη.
+
+Με εγκάρδιους χαιρετισμούς
+Η ομάδα του Ferienhaus Mantinia Hills`,
+  },
 };
 
 function ersetzePlatzhalter(text: string, werte: Record<string, string>): string {
@@ -68,15 +93,20 @@ function textZuMailHtml(text: string): string {
     .join("\n");
 }
 
-/** Betreff ASCII-sicher (Umlaute im SMTP-Betreff kamen als Rohtext an). */
+/**
+ * Betreff mail-tauglich kodieren: DE-Umlaute transliterieren; bleibt danach nur
+ * ASCII, unverändert senden. Sonst (z. B. Griechisch) als RFC-2047-Encoded-Word
+ * (UTF-8/Base64), damit alle Zeichen korrekt ankommen statt entfernt zu werden.
+ */
 function betreffAsciiSicher(s: string): string {
-  return s
+  const ascii = s
     .replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue")
     .replace(/Ä/g, "Ae").replace(/Ö/g, "Oe").replace(/Ü/g, "Ue")
     .replace(/ß/g, "ss")
-    .replace(/[–—]/g, "-")
-    .replace(/[„""‚''']/g, "'")
-    .replace(/[^\x20-\x7E]/g, "");
+    .replace(/[–—]/g, "-");
+  if (/^[\x20-\x7E]*$/.test(ascii)) return ascii;
+  const b64 = btoa(String.fromCharCode(...new TextEncoder().encode(s)));
+  return "=?UTF-8?B?" + b64 + "?=";
 }
 
 Deno.serve(async (req) => {
@@ -147,8 +177,9 @@ Deno.serve(async (req) => {
     for (const r of eRows ?? []) emap[r.key] = r.value;
     const anbieter = emap.anbieter as Anbieter;
     const prozent = Number(emap.anzahlung_prozent_default ?? 30);
-    const vorlagen = emap.mail_vorlagen as { annahme?: { betreff?: string; text?: string } } | undefined;
-    const vorlage = { ...VORLAGE_DEFAULT, ...vorlagen?.annahme };
+    const sprache = (["de", "en", "gr"].includes(buchung.sprache) ? buchung.sprache : "de") as "de" | "en" | "gr";
+    const vorlagen = emap.mail_vorlagen as Record<string, { annahme?: { betreff?: string; text?: string } }> | undefined;
+    const vorlage = { ...VORLAGEN_DEFAULT[sprache], ...vorlagen?.[sprache]?.annahme };
 
     const gesamt = Number(angebot.gesamt);
     const betrag = Math.round(gesamt * prozent) / 100;

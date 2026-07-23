@@ -34,7 +34,7 @@ export async function sendeAngebotErneut(
   const gueltig = new Date()
   gueltig.setDate(gueltig.getDate() + einstellungen.angebot_gueltig_tage)
   const { betreff, html } = renderMailVorlage(
-    einstellungen.mail_vorlagen.angebot,
+    einstellungen.mail_vorlagen[buchung.sprache].angebot,
     {
       vorname: buchung.vorname,
       nachname: buchung.nachname,

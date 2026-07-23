@@ -65,7 +65,7 @@ export default function AngebotDialog({ buchung, einstellungen, onFertig, onAbbr
         // Auf die Bestätigungsseite der App verlinken (NICHT direkt auf die
         // Funktion) — dort bestätigt der Gast bewusst per Klick. So nimmt kein
         // automatischer Mail-/Virenscanner das Angebot versehentlich an.
-        const { betreff, html } = renderMailVorlage(einstellungen.mail_vorlagen.angebot, {
+        const { betreff, html } = renderMailVorlage(einstellungen.mail_vorlagen[buchung.sprache].angebot, {
           vorname: buchung.vorname,
           nachname: buchung.nachname,
           anreise: datumDE(buchung.anreise),
