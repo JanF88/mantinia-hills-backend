@@ -7,6 +7,7 @@ import { restzahlungFaellig } from '../lib/statistik'
 import { datumDE, eur, zeitpunktDE } from '../lib/format'
 import type { Buchung, Dokument, Einstellungen } from '../lib/types'
 import StatusBadge from '../components/StatusBadge'
+import MailTest from '../components/MailTest'
 import AngebotDialog from '../components/AngebotDialog'
 import AnzahlungDialog from '../components/AnzahlungDialog'
 import AbschlussDialog from '../components/AbschlussDialog'
@@ -208,6 +209,7 @@ export default function AnfrageDetail() {
           </p>
         )}
         {fehler && <p className="fehler">{fehler}</p>}
+        {einstellungen && <MailTest einstellungen={einstellungen} />}
       </div>
 
       <div className="card">
