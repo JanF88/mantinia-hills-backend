@@ -76,6 +76,10 @@ Deno.serve(async (req) => {
     raw[k] = v;
   }
 
+  // Sprache der Anfrage (de/en/gr) — steuert Sprache von Mails/PDFs/Gästeseiten.
+  const spracheRoh = (p.get("sprache") ?? "").trim().toLowerCase();
+  const sprache = ["de", "en", "gr"].includes(spracheRoh) ? spracheRoh : "de";
+
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
@@ -112,6 +116,7 @@ Deno.serve(async (req) => {
     fahrzeug_interesse: p.get("fahrzeug_interesse"),
     anfrage_zeitpunkt: p.get("anfrage_zeitpunkt") || null,
     seite: p.get("seite"),
+    sprache,
     raw_payload: raw,
   });
 

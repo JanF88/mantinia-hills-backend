@@ -5,7 +5,8 @@ import { ladeEinstellungen } from '../lib/einstellungen'
 import { berechneAufenthalt } from '../lib/preisberechnung'
 import { pruefeZeitraum } from '../lib/statistik'
 import { datumDE, eur } from '../lib/format'
-import type { Buchung, Einstellungen } from '../lib/types'
+import type { Buchung, Einstellungen, Sprache } from '../lib/types'
+import { SPRACHE_LABEL } from '../lib/types'
 
 export default function AnfrageNeu() {
   const [e, setE] = useState<Einstellungen | null>(null)
@@ -18,6 +19,7 @@ export default function AnfrageNeu() {
   const [abreise, setAbreise] = useState('')
   const [transferIdx, setTransferIdx] = useState(0)
   const [fahrzeug, setFahrzeug] = useState('Nein')
+  const [sprache, setSprache] = useState<Sprache>('de')
   const [buchungen, setBuchungen] = useState<Buchung[]>([])
   const [fehler, setFehler] = useState<string | null>(null)
   const [laedt, setLaedt] = useState(false)
@@ -73,6 +75,7 @@ export default function AnfrageNeu() {
         gesamtpreis_eur: gesamt,
         saison_aufschluesselung: aufschluesselung,
         fahrzeug_interesse: fahrzeug,
+        sprache,
         anfrage_zeitpunkt: new Date().toISOString(),
       })
       .select('id')
@@ -138,6 +141,14 @@ export default function AnfrageNeu() {
               <option>Nein</option>
               <option>Vielleicht</option>
               <option>Ja, gerne</option>
+            </select>
+          </div>
+          <div>
+            <label htmlFor="sprache">Sprache (E-Mails &amp; PDFs)</label>
+            <select id="sprache" value={sprache} onChange={(e) => setSprache(e.target.value as Sprache)}>
+              {(Object.keys(SPRACHE_LABEL) as Sprache[]).map((s) => (
+                <option key={s} value={s}>{SPRACHE_LABEL[s]}</option>
+              ))}
             </select>
           </div>
         </div>

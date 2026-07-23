@@ -6,7 +6,8 @@ import { downloadArchiviertesPdf } from '../lib/dokumentService'
 import { sendeAngebotErneut } from '../lib/angebotMail'
 import { restzahlungFaellig } from '../lib/statistik'
 import { datumDE, eur, zeitpunktDE } from '../lib/format'
-import type { Buchung, Dokument, Einstellungen } from '../lib/types'
+import type { Buchung, Dokument, Einstellungen, Sprache } from '../lib/types'
+import { SPRACHE_LABEL } from '../lib/types'
 import StatusBadge from '../components/StatusBadge'
 import MailTest from '../components/MailTest'
 import AngebotDialog from '../components/AngebotDialog'
@@ -138,6 +139,21 @@ export default function AnfrageDetail() {
           <div><dt>E-Mail</dt><dd><a href={`mailto:${buchung.email}`}>{buchung.email}</a></dd></div>
           {buchung.telefon && <div><dt>Telefon</dt><dd>{buchung.telefon}</dd></div>}
           <div><dt>Quelle</dt><dd>{buchung.quelle === 'webhook' ? 'Website' : 'Manuell'}</dd></div>
+          <div>
+            <dt>Sprache</dt>
+            <dd>
+              <select
+                value={buchung.sprache}
+                onChange={(ev) => statusSetzen({ sprache: ev.target.value as Sprache })}
+                style={{ padding: '2px 6px', fontSize: 13 }}
+                title="Sprache für E-Mails, PDFs und Bestätigungsseiten"
+              >
+                {(Object.keys(SPRACHE_LABEL) as Sprache[]).map((s) => (
+                  <option key={s} value={s}>{SPRACHE_LABEL[s]}</option>
+                ))}
+              </select>
+            </dd>
+          </div>
           <div><dt>Eingang</dt><dd>{zeitpunktDE(buchung.anfrage_zeitpunkt ?? buchung.created_at)}</dd></div>
           <div><dt>Transfer</dt><dd>{buchung.transfer_option ?? '–'}{buchung.transfer_eur ? ` (${eur(buchung.transfer_eur)})` : ''}</dd></div>
           <div><dt>Fahrzeug/Tour</dt><dd>{buchung.fahrzeug_interesse ?? '–'}</dd></div>

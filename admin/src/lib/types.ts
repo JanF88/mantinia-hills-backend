@@ -10,6 +10,10 @@ export type BuchungStatus =
 
 export type DokumentTyp = 'angebot' | 'anzahlungsrechnung' | 'abschlussrechnung' | 'stornorechnung'
 export type AnfrageQuelle = 'webhook' | 'manuell'
+export type Sprache = 'de' | 'en' | 'gr'
+
+/** Anzeigename je Sprache. */
+export const SPRACHE_LABEL: Record<Sprache, string> = { de: 'Deutsch', en: 'English', gr: 'Ελληνικά' }
 
 export interface Buchung {
   id: string
@@ -17,6 +21,7 @@ export interface Buchung {
   updated_at: string
   status: BuchungStatus
   quelle: AnfrageQuelle
+  sprache: Sprache
   vorname: string
   nachname: string
   email: string

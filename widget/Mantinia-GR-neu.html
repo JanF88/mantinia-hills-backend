@@ -479,6 +479,7 @@
     p.append('fahrzeug_interesse', vehicleLabel[state.vehicle]);
     p.append('anfrage_zeitpunkt', new Date().toISOString());
     p.append('seite', (typeof location!=='undefined'?location.href:''));
+    p.append('sprache', 'gr');
     return fetch(BACKEND_WEBHOOK, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'}, body:p.toString(), keepalive:true }).catch(function(){});
   }
 
