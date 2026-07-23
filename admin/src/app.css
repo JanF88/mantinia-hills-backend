@@ -96,6 +96,8 @@ td { padding: 10px; border-bottom: 1px solid var(--linie); vertical-align: middl
 tr.klickbar { cursor: pointer; }
 tr.klickbar:hover { background: var(--beige); }
 td.rechts, th.rechts { text-align: right; }
+th.sortierbar { cursor: pointer; user-select: none; white-space: nowrap; }
+th.sortierbar:hover { color: var(--rot, #681318); }
 
 /* Status-Badges */
 .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }

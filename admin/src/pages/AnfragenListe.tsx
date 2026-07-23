@@ -19,7 +19,12 @@ const FILTER: (BuchungStatus | 'alle')[] = [
   'abgelehnt',
 ]
 
-type Sortierung = 'eingang' | 'anreise' | 'preis' | 'name'
+type Sortierung = 'eingang' | 'anreise' | 'preis' | 'name' | 'status'
+
+// Reihenfolge für die Status-Sortierung (entlang des Buchungs-Workflows).
+const STATUS_REIHENFOLGE: BuchungStatus[] = [
+  'neu', 'angebot_erstellt', 'bestaetigt', 'angezahlt', 'bezahlt', 'abgeschlossen', 'storniert', 'abgelehnt',
+]
 
 export default function AnfragenListe() {
   const [alle, setAlle] = useState<Buchung[]>([])
@@ -55,6 +60,7 @@ export default function AnfragenListe() {
         case 'anreise': return a.anreise.localeCompare(b.anreise)
         case 'preis': return (Number(b.gesamtpreis_eur) || 0) - (Number(a.gesamtpreis_eur) || 0)
         case 'name': return `${a.nachname}`.localeCompare(`${b.nachname}`)
+        case 'status': return STATUS_REIHENFOLGE.indexOf(a.status) - STATUS_REIHENFOLGE.indexOf(b.status)
         default: return b.created_at.localeCompare(a.created_at)
       }
     })
@@ -116,13 +122,13 @@ export default function AnfragenListe() {
         <table>
           <thead>
             <tr>
-              <th>Gast</th>
-              <th>Zeitraum</th>
+              <th className="sortierbar" onClick={() => setSortierung('name')}>Gast{sortierung === 'name' ? ' ▾' : ''}</th>
+              <th className="sortierbar" onClick={() => setSortierung('anreise')}>Zeitraum{sortierung === 'anreise' ? ' ▾' : ''}</th>
               <th className="rechts">Pers.</th>
-              <th className="rechts">Gesamtpreis</th>
-              <th>Status</th>
+              <th className="rechts sortierbar" onClick={() => setSortierung('preis')}>Gesamtpreis{sortierung === 'preis' ? ' ▾' : ''}</th>
+              <th className="sortierbar" onClick={() => setSortierung('status')}>Status{sortierung === 'status' ? ' ▾' : ''}</th>
               <th className="nur-desktop">Quelle</th>
-              <th className="nur-desktop">Eingang</th>
+              <th className="nur-desktop sortierbar" onClick={() => setSortierung('eingang')}>Eingang{sortierung === 'eingang' ? ' ▾' : ''}</th>
             </tr>
           </thead>
           <tbody>
