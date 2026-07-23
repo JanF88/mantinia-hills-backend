@@ -72,7 +72,7 @@ export default function AngebotDialog({ buchung, einstellungen, onFertig, onAbbr
           abreise: datumDE(buchung.abreise),
           nummer,
           gueltig_bis: datumDE(gueltigBis),
-        }, { button: annahmeButtonHtml(token) })
+        }, { button: annahmeButtonHtml(token, buchung.sprache) })
         try {
           await sendeMail({
             an: buchung.email,

@@ -8,9 +8,9 @@ import { ladePdfBytes, markiereVersendet } from './dokumentService'
 import { datumDE, lokalISO } from './format'
 import type { Buchung, Dokument, Einstellungen } from './types'
 
-/** HTML-Button, der auf die Bestätigungsseite (…/angebot-annehmen?token=…) führt. */
-export function annahmeButtonHtml(token: string): string {
-  const url = `${window.location.origin}/angebot-annehmen?token=${token}`
+/** HTML-Button, der auf die Bestätigungsseite (…/angebot-annehmen?token=…&lang=…) führt. */
+export function annahmeButtonHtml(token: string, lang: string = 'de'): string {
+  const url = `${window.location.origin}/angebot-annehmen?token=${token}&lang=${lang}`
   return `<table cellpadding="0" cellspacing="0" border="0" style="margin:22px 0"><tr><td style="border-radius:8px;background:#681318">
 <a href="${url}" target="_blank" style="display:inline-block;padding:14px 28px;color:#fff;font-weight:bold;font-size:15px;text-decoration:none;font-family:Arial,Helvetica,sans-serif">Angebot annehmen</a>
 </td></tr></table>
@@ -43,7 +43,7 @@ export async function sendeAngebotErneut(
       nummer: angebot.nummer,
       gueltig_bis: datumDE(lokalISO(gueltig)),
     },
-    { button: annahmeButtonHtml(buchung.annahme_token) },
+    { button: annahmeButtonHtml(buchung.annahme_token, buchung.sprache) },
   )
   await sendeMail({
     an: buchung.email,
