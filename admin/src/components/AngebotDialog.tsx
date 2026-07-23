@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { angebotsPositionen, berechneAufenthalt, positionenSumme } from '../lib/preisberechnung'
-import { downloadPdf, naechsteNummer, speichereDokument } from '../lib/dokumentService'
+import { downloadPdf, naechsteNummer, speichereDokument, markiereVersendet } from '../lib/dokumentService'
 import { sendeMail, mailRahmen } from '../lib/mail'
 import { renderMailVorlage } from '../lib/mailVorlagen'
+import { annahmeButtonHtml } from '../lib/angebotMail'
 import { angebotPdf } from '../pdf/dokumente'
 import { datumDE, heuteISO, lokalISO } from '../lib/format'
 import PositionenEditor from './PositionenEditor'
@@ -45,7 +46,7 @@ export default function AngebotDialog({ buchung, einstellungen, onFertig, onAbbr
       const nummer = await naechsteNummer('AN')
       const datumISO = heuteISO()
       const bytes = await angebotPdf(buchung, nummer, datumISO, positionen, gueltigBis, einstellungen)
-      await speichereDokument({
+      const doc = await speichereDokument({
         buchungId: buchung.id,
         typ: 'angebot',
         nummer,
@@ -64,11 +65,6 @@ export default function AngebotDialog({ buchung, einstellungen, onFertig, onAbbr
         // Auf die Bestätigungsseite der App verlinken (NICHT direkt auf die
         // Funktion) — dort bestätigt der Gast bewusst per Klick. So nimmt kein
         // automatischer Mail-/Virenscanner das Angebot versehentlich an.
-        const annahmeUrl = `${window.location.origin}/angebot-annehmen?token=${token}`
-        const annahmeButton = `<table cellpadding="0" cellspacing="0" border="0" style="margin:22px 0"><tr><td style="border-radius:8px;background:#681318">
-<a href="${annahmeUrl}" target="_blank" style="display:inline-block;padding:14px 28px;color:#fff;font-weight:bold;font-size:15px;text-decoration:none;font-family:Arial,Helvetica,sans-serif">Angebot annehmen</a>
-</td></tr></table>
-<p style="font-size:13px;color:#666">Falls der Button nicht funktioniert, kopieren Sie bitte diesen Link in Ihren Browser:<br><a href="${annahmeUrl}">${annahmeUrl}</a></p>`
         const { betreff, html } = renderMailVorlage(einstellungen.mail_vorlagen.angebot, {
           vorname: buchung.vorname,
           nachname: buchung.nachname,
@@ -76,7 +72,7 @@ export default function AngebotDialog({ buchung, einstellungen, onFertig, onAbbr
           abreise: datumDE(buchung.abreise),
           nummer,
           gueltig_bis: datumDE(gueltigBis),
-        }, { button: annahmeButton })
+        }, { button: annahmeButtonHtml(token) })
         try {
           await sendeMail({
             an: buchung.email,
@@ -86,6 +82,7 @@ export default function AngebotDialog({ buchung, einstellungen, onFertig, onAbbr
             anhangName: `${nummer}_Angebot_Mantinia_Hills.pdf`,
             kopieAnMich: true,
           })
+          await markiereVersendet(doc.id)
         } catch (mailErr) {
           setVersandHinweis(
             'Das Angebot wurde erstellt und heruntergeladen, aber der E-Mail-Versand schlug fehl: ' +

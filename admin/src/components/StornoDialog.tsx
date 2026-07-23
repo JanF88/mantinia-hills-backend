@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { stornorechnungPdf } from '../pdf/dokumente'
-import { downloadPdf, naechsteNummer, speichereDokument } from '../lib/dokumentService'
+import { downloadPdf, naechsteNummer, speichereDokument, markiereVersendet } from '../lib/dokumentService'
 import { stornoProzent, tageVorAnreise } from '../lib/storno'
 import { sendeMail, mailRahmen } from '../lib/mail'
 import { renderMailVorlage } from '../lib/mailVorlagen'
@@ -43,6 +43,7 @@ export default function StornoDialog({ buchung, angebot, anzahlung, einstellunge
     try {
       let nummer: string | null = null
       let bytes: Uint8Array | null = null
+      let docId: string | null = null
       if (!ohneRechnung) {
         nummer = await naechsteNummer('RE')
         const datumISO = heuteISO()
@@ -57,7 +58,7 @@ export default function StornoDialog({ buchung, angebot, anzahlung, einstellunge
           zahlungLabel: vollBezahlt ? 'Zahlungen' : undefined,
         }
         bytes = await stornorechnungPdf(buchung, nummer, datumISO, angebot.nummer, storno, einstellungen)
-        await speichereDokument({
+        const doc = await speichereDokument({
           buchungId: buchung.id,
           typ: 'stornorechnung',
           nummer,
@@ -79,6 +80,7 @@ export default function StornoDialog({ buchung, angebot, anzahlung, einstellunge
           },
           pdfBytes: bytes,
         })
+        docId = doc.id
         downloadPdf(bytes, `${nummer}_Storno_Mantinia_Hills.pdf`)
       }
 
@@ -108,6 +110,7 @@ export default function StornoDialog({ buchung, angebot, anzahlung, einstellunge
             anhangName: `${nummer}_Stornorechnung_Mantinia_Hills.pdf`,
             kopieAnMich: true,
           })
+          if (docId) await markiereVersendet(docId)
         } catch (mailErr) {
           setVersandHinweis(
             'Die Buchung wurde storniert und die Stornorechnung erstellt, aber der E-Mail-Versand schlug fehl: ' +

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { anzahlungsrechnungPdf } from '../pdf/dokumente'
-import { downloadPdf, naechsteNummer, speichereDokument } from '../lib/dokumentService'
+import { downloadPdf, naechsteNummer, speichereDokument, markiereVersendet } from '../lib/dokumentService'
 import { sendeMail, mailRahmen } from '../lib/mail'
 import { renderMailVorlage } from '../lib/mailVorlagen'
 import { datumDE, eur, heuteISO } from '../lib/format'
@@ -54,7 +54,7 @@ export default function AnzahlungDialog({ buchung, angebot, einstellungen, onFer
       const bytes = await anzahlungsrechnungPdf(
         buchung, nummer, datumISO, angebot.nummer, basis, betrag, prozent, einstellungen,
       )
-      await speichereDokument({
+      const doc = await speichereDokument({
         buchungId: buchung.id,
         typ: 'anzahlungsrechnung',
         nummer,
@@ -89,6 +89,7 @@ export default function AnzahlungDialog({ buchung, angebot, einstellungen, onFer
             anhangName: `${nummer}_Anzahlung_Mantinia_Hills.pdf`,
             kopieAnMich: true,
           })
+          await markiereVersendet(doc.id)
         } catch (mailErr) {
           setVersandHinweis(
             'Die Rechnung wurde erstellt und heruntergeladen, aber der E-Mail-Versand schlug fehl: ' +

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { abschlussrechnungPdf } from '../pdf/dokumente'
-import { downloadPdf, naechsteNummer, speichereDokument } from '../lib/dokumentService'
+import { downloadPdf, naechsteNummer, speichereDokument, markiereVersendet } from '../lib/dokumentService'
 import { sendeMail, mailRahmen } from '../lib/mail'
 import { renderMailVorlage } from '../lib/mailVorlagen'
 import { datumDE, eur, heuteISO, lokalISO } from '../lib/format'
@@ -46,7 +46,7 @@ export default function AbschlussDialog({ buchung, angebot, anzahlung, einstellu
       const bytes = await abschlussrechnungPdf(
         buchung, nummer, datumISO, angebot.nummer, gesamt, anzahlungBetrag, restbetrag, faelligBis, einstellungen,
       )
-      await speichereDokument({
+      const doc = await speichereDokument({
         buchungId: buchung.id,
         typ: 'abschlussrechnung',
         nummer,
@@ -77,6 +77,7 @@ export default function AbschlussDialog({ buchung, angebot, anzahlung, einstellu
             anhangName: `${nummer}_Abschluss_Mantinia_Hills.pdf`,
             kopieAnMich: true,
           })
+          await markiereVersendet(doc.id)
         } catch (mailErr) {
           setVersandHinweis(
             'Die Abschlussrechnung wurde erstellt und heruntergeladen, aber der E-Mail-Versand schlug fehl: ' +

@@ -174,11 +174,11 @@ Deno.serve(async (req) => {
       .upload(pfad, pdfBytes, { contentType: "application/pdf", upsert: true });
     if (upErr) console.error("Storage-Upload-Fehler (nicht fatal):", upErr.message);
 
-    const { error: insErr } = await supabase.from("dokumente").insert({
+    const { data: insData, error: insErr } = await supabase.from("dokumente").insert({
       buchung_id: buchung.id, typ: "anzahlungsrechnung", nummer, datum: heute,
       positionen: [{ bezeichnung: `Anzahlung ${prozent} % auf Angebot ${angebot.nummer}`, menge: 1, einzelpreis: betrag, betrag }],
       gesamt: betrag, meta: { anzahlung_prozent: prozent, angebot_nummer: angebot.nummer, basisbetrag: gesamt, auto: true }, pdf_path: pfad,
-    });
+    }).select("id").single();
     if (insErr) {
       // Ohne Rechnungsdatensatz KEINE Mail (sonst hätte der Gast eine Rechnung,
       // die im System nicht existiert). Admin erstellt sie manuell nach.
@@ -226,6 +226,10 @@ ${textZuMailHtml(ersetzePlatzhalter(vorlage.text, werte))}
           new Promise((_, reject) => setTimeout(() => reject(new Error("SMTP-Timeout")), 25_000)),
         ]);
         await client.close();
+        // Versand-Vermerk setzen (wie in der Admin-App).
+        if (insData?.id) {
+          await supabase.from("dokumente").update({ versendet_am: new Date().toISOString() }).eq("id", insData.id);
+        }
       } catch (err) {
         console.error("Mailversand fehlgeschlagen:", err instanceof Error ? err.message : String(err));
         // Rechnung liegt in DB/Storage — Admin kann sie manuell nachsenden.

@@ -60,6 +60,8 @@ export interface Dokument {
   meta: Record<string, unknown>
   pdf_path: string | null
   created_at: string
+  /** Zeitpunkt des erfolgreichen E-Mail-Versands an den Gast; null = nicht versendet. */
+  versendet_am: string | null
 }
 
 export interface TransferOption {

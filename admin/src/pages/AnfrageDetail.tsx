@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { ladeEinstellungen } from '../lib/einstellungen'
 import { downloadArchiviertesPdf } from '../lib/dokumentService'
+import { sendeAngebotErneut } from '../lib/angebotMail'
 import { restzahlungFaellig } from '../lib/statistik'
 import { datumDE, eur, zeitpunktDE } from '../lib/format'
 import type { Buchung, Dokument, Einstellungen } from '../lib/types'
@@ -30,6 +31,8 @@ export default function AnfrageDetail() {
   const [fehler, setFehler] = useState<string | null>(null)
   const [loeschBestaetigung, setLoeschBestaetigung] = useState(false)
   const [loescht, setLoescht] = useState(false)
+  const [angebotSenden, setAngebotSenden] = useState<'idle' | 'laedt' | 'ok' | 'fehler'>('idle')
+  const [angebotSendenMeldung, setAngebotSendenMeldung] = useState('')
 
   const laden = useCallback(async () => {
     if (!id) return
@@ -78,12 +81,28 @@ export default function AnfrageDetail() {
     }
   }
 
+  async function angebotErneutSenden() {
+    if (!juengstesAngebot || !einstellungen) return
+    setAngebotSenden('laedt')
+    setAngebotSendenMeldung('')
+    try {
+      await sendeAngebotErneut(buchung!, juengstesAngebot, einstellungen)
+      setAngebotSenden('ok')
+      setAngebotSendenMeldung(`Angebot ${juengstesAngebot.nummer} an ${buchung!.email} gesendet.`)
+      laden()
+    } catch (err) {
+      setAngebotSenden('fehler')
+      setAngebotSendenMeldung(err instanceof Error ? err.message : String(err))
+    }
+  }
+
   // Pro Status genau eine Hauptaktion; Dokumente sind unveränderlich,
   // daher verschwindet jeder Erstellen-Button, sobald das Dokument existiert.
   const s = buchung.status
   const kannAngebot = s === 'neu' && einstellungen != null
   const kannAblehnen = s === 'neu' || s === 'angebot_erstellt'
   const kannAnnehmen = s === 'angebot_erstellt' && juengstesAngebot != null
+  const kannAngebotSenden = s === 'angebot_erstellt' && juengstesAngebot != null && buchung.annahme_token != null && einstellungen != null
   const kannAnzahlungsRechnung = s === 'bestaetigt' && juengsteAnzahlung == null && juengstesAngebot != null && einstellungen != null
   const kannAnzahlungEingang = s === 'bestaetigt' && juengsteAnzahlung != null
   const kannAbschlussrechnung = s === 'angezahlt' && juengsteAbschluss == null && juengstesAngebot != null && einstellungen != null
@@ -163,6 +182,11 @@ export default function AnfrageDetail() {
               Annahme bestätigen
             </button>
           )}
+          {kannAngebotSenden && (
+            <button onClick={angebotErneutSenden} disabled={angebotSenden === 'laedt'}>
+              {angebotSenden === 'laedt' ? 'Wird gesendet …' : 'Angebot erneut senden'}
+            </button>
+          )}
           {kannAnzahlungsRechnung && (
             <button className="btn-primary" onClick={() => setDialog('anzahlung')}>
               Anzahlungsrechnung erstellen
@@ -208,6 +232,12 @@ export default function AnfrageDetail() {
             „Restzahlung eingegangen" erst klicken, wenn die Zahlung zu {juengsteAbschluss!.nummer} tatsächlich auf dem Konto ist.
           </p>
         )}
+        {angebotSenden === 'ok' && (
+          <p className="hinweis" style={{ marginBottom: 0 }}>✓ {angebotSendenMeldung} Bitte den Gast ggf. auf den Spam-Ordner hinweisen.</p>
+        )}
+        {angebotSenden === 'fehler' && (
+          <p className="fehler" style={{ marginBottom: 0 }}>✗ Versand fehlgeschlagen: {angebotSendenMeldung}</p>
+        )}
         {fehler && <p className="fehler">{fehler}</p>}
         {einstellungen && <MailTest einstellungen={einstellungen} />}
       </div>
@@ -219,7 +249,7 @@ export default function AnfrageDetail() {
         ) : (
           <table>
             <thead>
-              <tr><th>Nummer</th><th>Typ</th><th>Datum</th><th className="rechts">Betrag</th><th /></tr>
+              <tr><th>Nummer</th><th>Typ</th><th>Datum</th><th className="rechts">Betrag</th><th>Versand</th><th /></tr>
             </thead>
             <tbody>
               {dokumente.map((d) => (
@@ -228,6 +258,11 @@ export default function AnfrageDetail() {
                   <td>{TYP_LABEL[d.typ]}</td>
                   <td>{datumDE(d.datum)}</td>
                   <td className="rechts">{eur(Number(d.gesamt))}</td>
+                  <td style={{ fontSize: 13 }}>
+                    {d.versendet_am
+                      ? <span style={{ color: 'var(--gruen, #1a7f37)' }}>✓ {datumDE(d.versendet_am)}</span>
+                      : <span style={{ color: 'var(--grau)' }}>— nicht gesendet</span>}
+                  </td>
                   <td className="rechts">
                     <button className="btn-klein" onClick={() => downloadArchiviertesPdf(d).catch((e) => setFehler(String(e)))}>
                       PDF herunterladen

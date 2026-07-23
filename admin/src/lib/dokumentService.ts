@@ -49,6 +49,19 @@ export async function speichereDokument(opts: {
   return data as Dokument
 }
 
+/** Vermerkt einen erfolgreichen E-Mail-Versand am Dokument (Versand-Nachweis). */
+export async function markiereVersendet(dokumentId: string): Promise<void> {
+  await supabase.from('dokumente').update({ versendet_am: new Date().toISOString() }).eq('id', dokumentId)
+}
+
+/** Lädt das archivierte PDF eines Dokuments als Bytes (für erneuten Versand). */
+export async function ladePdfBytes(dokument: Dokument): Promise<Uint8Array> {
+  if (!dokument.pdf_path) throw new Error('Kein PDF hinterlegt')
+  const { data, error } = await supabase.storage.from('dokumente').download(dokument.pdf_path)
+  if (error) throw error
+  return new Uint8Array(await data.arrayBuffer())
+}
+
 export function downloadPdf(bytes: Uint8Array, dateiname: string): void {
   const url = URL.createObjectURL(new Blob([bytes.slice().buffer], { type: 'application/pdf' }))
   const a = document.createElement('a')
