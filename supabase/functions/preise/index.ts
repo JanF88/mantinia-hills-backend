@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
 
   try {
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const KEYS = ["saison_preise", "monat_zu_saison", "saison_namen", "personen_schwelle", "endreinigung_eur", "transfer_optionen"];
+    const KEYS = ["saison_preise", "preis_perioden", "monat_zu_saison", "saison_namen", "personen_schwelle", "endreinigung_eur", "transfer_optionen"];
     const { data, error } = await supabase.from("einstellungen").select("key,value").in("key", KEYS);
     if (error) throw error;
     const out: Record<string, unknown> = {};

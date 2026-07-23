@@ -5,6 +5,23 @@
 
 import type { Einstellungen, Position } from './types'
 
+/**
+ * Liefert die Saisonpreis-Tabelle, die am Datum `iso` ("YYYY-MM-DD") gilt:
+ * die Periode mit dem jüngsten Startdatum `ab` ≤ iso. Liegt das Datum vor allen
+ * Perioden, gilt die früheste. Ohne Perioden fällt es auf saison_preise zurück.
+ */
+export function saisonPreiseFuer(iso: string, e: Einstellungen): number[][] {
+  const perioden = e.preis_perioden
+  if (!perioden || perioden.length === 0) return e.saison_preise
+  const sortiert = [...perioden].sort((a, b) => a.ab.localeCompare(b.ab))
+  let gewaehlt = sortiert[0]
+  for (const p of sortiert) {
+    if (p.ab <= iso) gewaehlt = p
+    else break
+  }
+  return gewaehlt.saison_preise
+}
+
 export interface SaisonSegment {
   saison: number
   saisonName: string
@@ -37,7 +54,9 @@ export function berechneAufenthalt(
   const d = new Date(anreise)
   while (d < abreise) {
     const saison = e.monat_zu_saison[d.getMonth()]
-    const satz = e.saison_preise[saison][reduziert ? 1 : 0]
+    // Preis der Nacht nach ihrem Datum (zeitabhängige Perioden, z. B. ab 2027).
+    const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    const satz = saisonPreiseFuer(iso, e)[saison][reduziert ? 1 : 0]
     const letztes = segmente[segmente.length - 1]
     if (letztes && letztes.saison === saison && letztes.satzProPersonNacht === satz) {
       letztes.naechte++

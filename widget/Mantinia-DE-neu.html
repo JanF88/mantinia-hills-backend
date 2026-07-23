@@ -356,6 +356,7 @@
   var step = 0;
   var prices = [[35,30],[40,35],[45,40],[50,45],[65,60],[60,55],[50,45],[45,40],[35,30]];
   var monthToSeason = [0,0,1,1,2,3,4,4,5,6,7,8];
+  var preisPerioden = null; // [{ab,saison_preise}] aus /preise – zeitabhängige Preise (z. B. ab 2027)
   var seasonNames = ["Jan–Feb","Mär–Apr","Mai","Jun","Jul–Aug","Sep","Okt","Nov","Dez"];
   var vehicleLabel = {yes:"Ja, gerne", maybe:"Vielleicht", no:"Nein"};
 
@@ -372,6 +373,7 @@
   function ladePreise(){
     fetch(BACKEND + "/preise").then(function(r){return r.json();}).then(function(p){
       if(p && p.saison_preise){ prices = p.saison_preise; }
+      if(p && p.preis_perioden){ preisPerioden = p.preis_perioden; }
       if(p && p.monat_zu_saison){ monthToSeason = p.monat_zu_saison; }
       if(p && typeof p.personen_schwelle !== 'undefined'){ personenSchwelle = Number(p.personen_schwelle); }
       if(p && typeof p.endreinigung_eur !== 'undefined'){ ENDREINIGUNG = Number(p.endreinigung_eur); }
@@ -442,9 +444,19 @@
     return fetch(BACKEND_WEBHOOK, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'}, body:p.toString(), keepalive:true }).catch(function(){});
   }
 
+  function isoOf(date){ var m=('0'+(date.getMonth()+1)).slice(-2), t=('0'+date.getDate()).slice(-2); return date.getFullYear()+'-'+m+'-'+t; }
+  function pricesFor(date){
+    if(!preisPerioden || !preisPerioden.length) return prices;
+    var iso=isoOf(date);
+    var arr=preisPerioden.slice().sort(function(a,b){return a.ab<b.ab?-1:(a.ab>b.ab?1:0);});
+    var sel=arr[0];
+    for(var i=0;i<arr.length;i++){ if(arr[i].ab<=iso) sel=arr[i]; else break; }
+    return sel.saison_preise;
+  }
   function pricePerNight(date, people){
+    var pr = pricesFor(date);
     var s = monthToSeason[date.getMonth()];
-    return people>=personenSchwelle ? prices[s][1] : prices[s][0];
+    return people>=personenSchwelle ? pr[s][1] : pr[s][0];
   }
 
   function calcStay(){

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ladeEinstellungen, speichereEinstellung } from '../lib/einstellungen'
+import { saisonPreiseFuer } from '../lib/preisberechnung'
+import { heuteISO } from '../lib/format'
 import { MAIL_VORLAGEN_INFO } from '../lib/mailVorlagen'
 import PasswortAendern from '../components/PasswortAendern'
 import Benutzer from './Benutzer'
@@ -24,13 +26,21 @@ export default function Einstellungen() {
 
   async function speichern() {
     if (!e) return
+    if (e.preis_perioden.some((p) => !p.ab)) {
+      setFehler('Bitte für jede Preisperiode ein „gültig ab"-Datum angeben.')
+      return
+    }
     setLaedt(true)
     setMeldung(null)
     setFehler(null)
     try {
-      for (const key of Object.keys(e) as (keyof EinstellungenTyp)[]) {
-        await speichereEinstellung(key, e[key])
+      // saison_preise mit dem heute gültigen Stand synchron halten — so zeigt
+      // auch das (noch nicht neu eingebundene) alte Website-Widget aktuelle Preise.
+      const zuSpeichern: EinstellungenTyp = { ...e, saison_preise: saisonPreiseFuer(heuteISO(), e) }
+      for (const key of Object.keys(zuSpeichern) as (keyof EinstellungenTyp)[]) {
+        await speichereEinstellung(key, zuSpeichern[key])
       }
+      setE(zuSpeichern)
       setMeldung('Einstellungen gespeichert.')
     } catch (err) {
       setFehler('Speichern fehlgeschlagen: ' + (err instanceof Error ? err.message : String(err)))
@@ -38,12 +48,29 @@ export default function Einstellungen() {
     setLaedt(false)
   }
 
-  function preisAendern(saison: number, spalte: 0 | 1, wert: string) {
+  function periodePreisAendern(pi: number, saison: number, spalte: 0 | 1, wert: string) {
     const p = parseFloat(wert.replace(',', '.'))
     if (isNaN(p)) return
-    const kopie = e!.saison_preise.map((r) => [...r])
-    kopie[saison][spalte] = p
-    set('saison_preise', kopie)
+    const perioden = e!.preis_perioden.map((per) => ({ ...per, saison_preise: per.saison_preise.map((r) => [...r]) }))
+    perioden[pi].saison_preise[saison][spalte] = p
+    set('preis_perioden', perioden)
+  }
+
+  function periodeDatumAendern(pi: number, wert: string) {
+    const perioden = e!.preis_perioden.map((per) => ({ ...per, saison_preise: per.saison_preise.map((r) => [...r]) }))
+    perioden[pi].ab = wert
+    set('preis_perioden', perioden)
+  }
+
+  function periodeHinzufuegen() {
+    const letzte = e!.preis_perioden[e!.preis_perioden.length - 1]
+    // Preise der letzten Periode als Startwert kopieren (dann anpassen).
+    set('preis_perioden', [...e!.preis_perioden, { ab: '', saison_preise: letzte.saison_preise.map((r) => [...r]) }])
+  }
+
+  function periodeEntfernen(pi: number) {
+    if (e!.preis_perioden.length <= 1) return
+    set('preis_perioden', e!.preis_perioden.filter((_, i) => i !== pi))
   }
 
   function stufeAendern(index: number, feld: 'min_tage' | 'prozent', wert: string) {
@@ -80,24 +107,49 @@ export default function Einstellungen() {
 
       <details className="card akkordeon">
         <summary>Saisonpreise (€ pro Person und Nacht)</summary>
-        <table style={{ maxWidth: 560 }}>
-          <thead>
-            <tr>
-              <th>Saison</th>
-              <th className="rechts">bis {e.personen_schwelle - 1} Pers.</th>
-              <th className="rechts">ab {e.personen_schwelle} Pers.</th>
-            </tr>
-          </thead>
-          <tbody>
-            {e.saison_namen.map((name, s) => (
-              <tr key={s}>
-                <td>{name}</td>
-                <td><input type="number" step="1" style={{ textAlign: 'right' }} value={e.saison_preise[s][0]} onChange={(ev) => preisAendern(s, 0, ev.target.value)} /></td>
-                <td><input type="number" step="1" style={{ textAlign: 'right' }} value={e.saison_preise[s][1]} onChange={(ev) => preisAendern(s, 1, ev.target.value)} /></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <p style={{ fontSize: 13, color: 'var(--grau)', marginTop: 0 }}>
+          Preise gelten jeweils <strong>ab</strong> dem angegebenen Datum. Für eine Preisänderung
+          (z. B. ab 01.01.2027) unten eine <strong>neue Preisperiode</strong> hinzufügen. Jede Nacht
+          wird automatisch mit dem an ihrem Datum gültigen Preis berechnet — auch über den Jahreswechsel.
+          Bereits erstellte Angebote bleiben unverändert.
+        </p>
+        {e.preis_perioden.map((periode, pi) => (
+          <div
+            key={pi}
+            style={{
+              borderTop: pi ? '1px solid var(--linie, #e2ddd6)' : 'none',
+              paddingTop: pi ? 18 : 0,
+              marginTop: pi ? 18 : 0,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 10 }}>
+              <label style={{ margin: 0 }}>Gültig ab</label>
+              <input type="date" style={{ maxWidth: 175 }} value={periode.ab} onChange={(ev) => periodeDatumAendern(pi, ev.target.value)} />
+              {e.preis_perioden.length > 1 && (
+                <button className="btn-klein" onClick={() => periodeEntfernen(pi)}>Periode entfernen</button>
+              )}
+            </div>
+            <table style={{ maxWidth: 560 }}>
+              <thead>
+                <tr>
+                  <th>Saison</th>
+                  <th className="rechts">bis {e.personen_schwelle - 1} Pers.</th>
+                  <th className="rechts">ab {e.personen_schwelle} Pers.</th>
+                </tr>
+              </thead>
+              <tbody>
+                {e.saison_namen.map((name, s) => (
+                  <tr key={s}>
+                    <td>{name}</td>
+                    <td><input type="number" step="1" style={{ textAlign: 'right' }} value={periode.saison_preise[s][0]} onChange={(ev) => periodePreisAendern(pi, s, 0, ev.target.value)} /></td>
+                    <td><input type="number" step="1" style={{ textAlign: 'right' }} value={periode.saison_preise[s][1]} onChange={(ev) => periodePreisAendern(pi, s, 1, ev.target.value)} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ))}
+        <button className="btn-klein" style={{ marginTop: 16 }} onClick={periodeHinzufuegen}>+ Preisperiode hinzufügen</button>
       </details>
 
       <details className="card akkordeon">

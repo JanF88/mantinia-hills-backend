@@ -88,9 +88,20 @@ export interface Anbieter {
   bank: string
 }
 
+/** Ein Preisstand ab einem Stichtag (zeitabhängige Übernachtungspreise). */
+export interface PreisPeriode {
+  /** Gültig ab diesem Datum (ISO "YYYY-MM-DD"), einschließlich. */
+  ab: string
+  /** Saisonpreise wie saison_preise: 9 Saisons × [bis Schwelle, ab Schwelle]. */
+  saison_preise: number[][]
+}
+
 /** Alle Einstellungs-Keys, geladen aus der Tabelle `einstellungen`. */
 export interface Einstellungen {
+  /** Legacy-Basis (= früheste Periode); Fallback fürs alte Website-Widget. */
   saison_preise: number[][]
+  /** Zeitabhängige Übernachtungspreise, nach `ab` aufsteigend genutzt. */
+  preis_perioden: PreisPeriode[]
   monat_zu_saison: number[]
   saison_namen: string[]
   personen_schwelle: number

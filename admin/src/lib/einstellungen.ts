@@ -28,6 +28,11 @@ export async function ladeEinstellungen(): Promise<Einstellungen> {
   const map: Record<string, unknown> = { ...STANDARD_EINSTELLUNGEN }
   for (const row of data ?? []) map[row.key] = row.value
   map.mail_vorlagen = mitVorlagenDefaults(map.mail_vorlagen as Partial<MailVorlagen> | undefined)
+  // Zeitabhängige Preise: fehlt die Periodenliste, aus saison_preise ableiten.
+  const perioden = map.preis_perioden as unknown[] | undefined
+  if (!Array.isArray(perioden) || perioden.length === 0) {
+    map.preis_perioden = [{ ab: '2000-01-01', saison_preise: map.saison_preise }]
+  }
   return map as unknown as Einstellungen
 }
 
