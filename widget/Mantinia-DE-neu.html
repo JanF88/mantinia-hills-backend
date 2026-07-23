@@ -1,0 +1,821 @@
+<div id="fa-wrap"
+  style="font-family: Arial, Helvetica, sans-serif; width: 100%; box-sizing: border-box; color: #2c2c2a;">
+  <style>
+    #fa-wrap * {
+      box-sizing: border-box;
+    }
+
+    #fa-wrap .fa-card {
+      background: #f7f5f2;
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    #fa-wrap .fa-total {
+      background: #681318;
+      border-radius: 8px;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    #fa-wrap .fa-total-label {
+      font-size: 13px;
+      color: #f0d6d8;
+    }
+
+    #fa-wrap .fa-total-val {
+      font-size: 26px;
+      font-weight: bold;
+      color: #fff;
+    }
+
+    #fa-wrap .fa-total-sub {
+      font-size: 12px;
+      color: #e9c4c6;
+      width: 100%;
+    }
+
+    #fa-wrap .fa-progress {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 20px;
+    }
+
+    #fa-wrap .fa-dot {
+      height: 4px;
+      flex: 1;
+      border-radius: 2px;
+      background: #e2e2e2;
+      transition: background .2s;
+    }
+
+    #fa-wrap .fa-dot.active {
+      background: #681318;
+    }
+
+    #fa-wrap .fa-step {
+      display: none;
+    }
+
+    #fa-wrap .fa-step.active {
+      display: block;
+    }
+
+    #fa-wrap .fa-q {
+      font-size: 19px;
+      font-weight: bold;
+      margin: 0 0 4px;
+    }
+
+    #fa-wrap .fa-sub {
+      font-size: 14px;
+      color: #666;
+      margin: 0 0 18px;
+      line-height: 1.5;
+    }
+
+    #fa-wrap label.fa-flabel {
+      display: block;
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 8px;
+    }
+
+    #fa-wrap input[type=date],
+    #fa-wrap input[type=text],
+    #fa-wrap input[type=email] {
+      width: 100%;
+      padding: 11px;
+      border: 1px solid #d9d4cd;
+      border-radius: 8px;
+      font-size: 15px;
+      background: #fff;
+      color: #2c2c2a;
+    }
+
+    #fa-wrap input[type=range] {
+      width: 100%;
+      accent-color: #681318;
+    }
+
+    #fa-wrap .fa-people-out {
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    #fa-wrap .fa-opt {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    #fa-wrap .fa-opt button {
+      flex: 1;
+      padding: 13px;
+      border: 1px solid #d9d4cd;
+      border-radius: 8px;
+      background: #fff;
+      font-size: 15px;
+      cursor: pointer;
+      color: #2c2c2a;
+      transition: all .15s;
+    }
+
+    #fa-wrap .fa-opt button.sel {
+      border-color: #681318;
+      background: #681318;
+      color: #fff;
+      font-weight: bold;
+    }
+
+    #fa-wrap .fa-nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    #fa-wrap .fa-btn {
+      padding: 13px 22px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+    }
+
+    #fa-wrap .fa-btn-next {
+      background: #681318;
+      color: #fff;
+      flex: 1;
+    }
+
+    #fa-wrap .fa-btn-next:disabled {
+      background: #c9b3b4;
+      cursor: not-allowed;
+    }
+
+    #fa-wrap .fa-btn-back {
+      background: transparent;
+      color: #681318;
+      border: 1px solid #d9d4cd;
+    }
+
+    #fa-wrap .fa-note {
+      font-size: 13px;
+      color: #888;
+      line-height: 1.6;
+      margin: 10px 0 0;
+    }
+
+    #fa-wrap .fa-link {
+      color: #681318;
+      font-weight: bold;
+    }
+
+    #fa-wrap .fa-sum-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 9px 0;
+      border-bottom: 1px solid #e2e2e2;
+      font-size: 14px;
+    }
+
+    #fa-wrap .fa-sum-row span:first-child {
+      color: #666;
+    }
+
+    #fa-wrap .fa-sum-row span:last-child {
+      font-weight: bold;
+      text-align: right;
+    }
+
+    #fa-wrap .fa-warn {
+      background: #fff;
+      border: 1px solid #e2e2e2;
+      border-left: 3px solid #681318;
+      border-radius: 6px;
+      padding: 11px 14px;
+      font-size: 13px;
+      color: #555;
+      margin-top: 14px;
+      line-height: 1.5;
+    }
+
+    #fa-wrap .fa-spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, .4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: fa-spin .7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    @keyframes fa-spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    #fa-wrap .fa-cal-sel { display:flex; gap:10px; margin-bottom:12px; }
+    #fa-wrap .fa-cal-sel > div { flex:1; background:#fff; border:1px solid #d9d4cd; border-radius:8px; padding:8px 11px; }
+    #fa-wrap .fa-cal-lbl { display:block; font-size:11px; color:#999; }
+    #fa-wrap .fa-cal { background:#fff; border:1px solid #d9d4cd; border-radius:8px; padding:12px; }
+    #fa-wrap .fa-cal-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+    #fa-wrap .fa-cal-nav { background:none; border:none; font-size:20px; line-height:1; color:#681318; cursor:pointer; padding:2px 10px; }
+    #fa-wrap .fa-cal-title { font-weight:bold; font-size:15px; }
+    #fa-wrap .fa-cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+    #fa-wrap .fa-cal-wd { text-align:center; font-size:11px; color:#999; padding:4px 0; }
+    #fa-wrap .fa-cal-day { border:none; background:none; padding:9px 0; font-size:14px; border-radius:6px; cursor:pointer; color:#2c2c2a; text-align:center; font-family:inherit; }
+    #fa-wrap .fa-cal-day:disabled { color:#cfcac3; cursor:not-allowed; text-decoration:line-through; }
+    #fa-wrap .fa-cal-day.empty { visibility:hidden; }
+    #fa-wrap .fa-cal-day.range { background:#f0d6d8; }
+    #fa-wrap .fa-cal-day.end { background:#681318; color:#fff; font-weight:bold; }
+    #fa-wrap .fa-cal-legend { display:flex; gap:16px; margin-top:10px; font-size:12px; color:#888; flex-wrap:wrap; }
+    #fa-wrap .fa-cal-legend .dot { display:inline-block; width:10px; height:10px; border-radius:2px; vertical-align:middle; margin-right:5px; }
+  </style>
+
+  <div class="fa-card">
+    <div class="fa-total">
+      <div class="fa-total-label">Voraussichtlicher Gesamtpreis</div>
+      <div class="fa-total-val" id="fa-grandtotal">–</div>
+      <div class="fa-total-sub" id="fa-total-breakdown">Bitte Personen und Reisezeitraum wählen</div>
+    </div>
+
+    <div class="fa-progress" id="fa-progress"></div>
+
+    <div class="fa-step active" data-step="0">
+      <p class="fa-q">Mit wie vielen Personen reisen Sie?</p>
+      <p class="fa-sub">Ab 5 Personen profitieren Sie von einem reduzierten Preis pro Person.</p>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+        <label class="fa-flabel" style="margin:0;">Anzahl Personen</label>
+        <span class="fa-people-out" id="fa-people-out">4</span>
+      </div>
+      <input type="range" id="fa-people" min="1" max="6" value="4" step="1" />
+    </div>
+
+    <div class="fa-step" data-step="1">
+      <p class="fa-q">Wann möchten Sie anreisen und abreisen?</p>
+      <p class="fa-sub">Der Preis wird nächtegenau berechnet – auch über Saisongrenzen hinweg.</p>
+      <div class="fa-cal-sel">
+        <div><span class="fa-cal-lbl">Anreise</span><span id="fa-cal-arr">–</span></div>
+        <div><span class="fa-cal-lbl">Abreise</span><span id="fa-cal-dep">–</span></div>
+      </div>
+      <div class="fa-cal" id="fa-cal"></div>
+      <div class="fa-cal-legend">
+        <span><span class="dot" style="background:#681318;"></span>Ausgewählt</span>
+        <span><span class="dot" style="background:#e2e2e2;"></span>Belegt / nicht verfügbar</span>
+      </div>
+      <div class="fa-warn" id="fa-date-warn" style="display:none;"></div>
+    </div>
+
+    <div class="fa-step" data-step="2">
+      <p class="fa-q">Interesse an einer Quad-Tour oder einem Fahrzeug?</p>
+      <p class="fa-sub">Erkunden Sie die Region flexibel mit Rollern, Quads oder UTVs.</p>
+      <div class="fa-opt" id="fa-vehicle-opts">
+        <button data-val="yes">Ja, gerne</button>
+        <button data-val="maybe">Vielleicht</button>
+        <button data-val="no">Nein</button>
+      </div>
+      <div class="fa-warn">
+        Touren &amp; Verleih über unseren Partner:
+        <a class="fa-link" href="https://eco-tours-greece.com/" target="_blank" rel="noopener">eco-tours-greece.com</a>.
+        Bei Interesse vermerken wir Ihren Wunsch in der Anfrage.
+      </div>
+    </div>
+
+    <div class="fa-step" data-step="3">
+      <p class="fa-q">Wie heißen Sie?</p>
+      <p class="fa-sub">Damit wir Sie persönlich ansprechen können.</p>
+      <label class="fa-flabel" for="fa-firstname">Vorname</label>
+      <input type="text" id="fa-firstname" style="margin-bottom:16px;" autocomplete="given-name" />
+      <label class="fa-flabel" for="fa-lastname">Nachname</label>
+      <input type="text" id="fa-lastname" autocomplete="family-name" />
+    </div>
+
+    <div class="fa-step" data-step="4">
+      <p class="fa-q">Ihre E-Mail-Adresse</p>
+      <p class="fa-sub">Hierhin senden wir Ihnen Verfügbarkeit und den verbindlichen Endpreis.</p>
+      <label class="fa-flabel" for="fa-email">E-Mail</label>
+      <input type="email" id="fa-email" autocomplete="email" placeholder="name@beispiel.de" />
+      <div class="fa-warn" id="fa-email-warn" style="display:none;">Bitte geben Sie eine gültige E-Mail-Adresse ein.
+      </div>
+    </div>
+
+    <div class="fa-step" data-step="5">
+      <p class="fa-q">Zusammenfassung Ihrer Anfrage</p>
+      <p class="fa-sub">Bitte prüfen Sie Ihre Angaben und senden Sie die Anfrage unverbindlich ab.</p>
+      <div id="fa-summary"></div>
+      <p class="fa-note">Unverbindlich &amp; kostenlos. Die Buchung erfolgt nicht über diese Seite – wir bestätigen
+        Ihnen Verfügbarkeit und den verbindlichen Endpreis per E-Mail. Ihre Daten werden vertraulich behandelt.</p>
+    </div>
+
+    <div class="fa-nav">
+      <button class="fa-btn fa-btn-back" id="fa-back" style="display:none;">Zurück</button>
+      <button class="fa-btn fa-btn-next" id="fa-next">Weiter</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function(){
+  /* =========================================================
+     KONFIGURATION – HIER DEINE ZAPIER WEBHOOK-URL EINTRAGEN
+     ========================================================= */
+  var ZAPIER_WEBHOOK_URL = "https://hooks.zapier.com/hooks/catch/2029006/42cuwdt/";
+  var FB_PIXEL_ID = "1002497339183650";
+
+  /* --- Anbieter-Kontaktdaten fürs PDF (PLATZHALTER – bitte ersetzen) --- */
+  var ANBIETER = {
+    name:    "Ferienhaus Mantinia Hills",
+    inhaber: "ZERO CENTER HELLAS IKE",
+    strasse: "Asprochoma",
+    ort:     "Kalamata, PC 24100",
+    land:    "Griechenland",
+    telefon: "+30 2721 111 909",
+    email:   "info@zero-center.gr",
+    web:     "www.mantinia-hills.com"
+  };
+  var OBJEKT_NAME = "Ferienhaus Mantinia Hills";
+  var ENDREINIGUNG = 180; // Fallback – wird aus dem Backend überschrieben
+  var personenSchwelle = 5; // Fallback – ab dieser Personenzahl gilt der reduzierte Preis
+
+  /* Backend clients.mantinia-hills.com */
+  var BACKEND = "https://fiicnznmxbahfnansckp.supabase.co/functions/v1";
+  var BACKEND_WEBHOOK = BACKEND + "/anfrage-webhook?key=358df55578f41fd3941997948f028e8b";
+  /* ========================================================= */
+
+  var TOTAL_STEPS = 6;
+  var step = 0;
+  var prices = [[35,30],[40,35],[45,40],[50,45],[65,60],[60,55],[50,45],[45,40],[35,30]];
+  var monthToSeason = [0,0,1,1,2,3,4,4,5,6,7,8];
+  var seasonNames = ["Jan–Feb","Mär–Apr","Mai","Jun","Jul–Aug","Sep","Okt","Nov","Dez"];
+  var vehicleLabel = {yes:"Ja, gerne", maybe:"Vielleicht", no:"Nein"};
+
+  var state = {people:4, arrival:null, departure:null, vehicle:"no", firstname:"", lastname:"", email:""};
+
+  var $ = function(id){return document.getElementById(id);};
+
+  var prog = $('fa-progress');
+  for(var i=0;i<TOTAL_STEPS;i++){var d=document.createElement('div');d.className='fa-dot';prog.appendChild(d);}
+
+  function parseDate(v){ if(!v) return null; var p=v.split('-'); return new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2])); }
+
+  /* ===== Live-Preise + Endreinigung aus dem Backend ===== */
+  function ladePreise(){
+    fetch(BACKEND + "/preise").then(function(r){return r.json();}).then(function(p){
+      if(p && p.saison_preise){ prices = p.saison_preise; }
+      if(p && p.monat_zu_saison){ monthToSeason = p.monat_zu_saison; }
+      if(p && typeof p.personen_schwelle !== 'undefined'){ personenSchwelle = Number(p.personen_schwelle); }
+      if(p && typeof p.endreinigung_eur !== 'undefined'){ ENDREINIGUNG = Number(p.endreinigung_eur); }
+      updateTotal();
+    }).catch(function(){});
+  }
+
+  /* ===== Kalender mit Belegung (belegt = Anzahlung getätigt, inkl. 1 Puffertag) ===== */
+  var monthNames = ["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
+  var weekdayShort = ["Mo","Di","Mi","Do","Fr","Sa","So"];
+  var calView = (function(){ var d=new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); })();
+  var blocked = {};
+  function pad2(n){ return ('0'+n).slice(-2); }
+  function ymd(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
+  function todayMid(){ var t=new Date(); t.setHours(0,0,0,0); return t; }
+  function ladeBelegung(){
+    fetch(BACKEND + "/belegung").then(function(r){return r.json();}).then(function(data){
+      blocked = {};
+      (data && data.belegt ? data.belegt : []).forEach(function(b){
+        var von=parseDate(b.von), bis=parseDate(b.bis); if(!von||!bis) return;
+        var d=new Date(von);
+        while(d<=bis){ blocked[ymd(d)]=true; d.setDate(d.getDate()+1); }
+      });
+      renderCal();
+    }).catch(function(){ renderCal(); });
+  }
+  function spanFrei(aStr,bStr){ var a=parseDate(aStr), b=parseDate(bStr); var d=new Date(a); while(d<=b){ if(blocked[ymd(d)]) return false; d.setDate(d.getDate()+1); } return true; }
+  function waehleTag(dstr){
+    var d=parseDate(dstr);
+    if(d < todayMid() || blocked[dstr]) return;
+    if(!state.arrival || state.departure){ state.arrival=dstr; state.departure=null; }
+    else if(dstr <= state.arrival){ state.arrival=dstr; state.departure=null; }
+    else if(!spanFrei(state.arrival, dstr)){ state.arrival=dstr; state.departure=null; }
+    else { state.departure=dstr; }
+    renderCal(); updateTotal(); validate();
+  }
+  function renderCal(){
+    var wrap=$('fa-cal'); if(!wrap) return;
+    var y=calView.getFullYear(), m=calView.getMonth();
+    var h='<div class="fa-cal-head"><button type="button" class="fa-cal-nav" id="fa-cal-prev">\u2039</button>'
+      +'<span class="fa-cal-title">'+monthNames[m]+' '+y+'</span>'
+      +'<button type="button" class="fa-cal-nav" id="fa-cal-next">\u203a</button></div><div class="fa-cal-grid">';
+    for(var w=0;w<7;w++){ h+='<div class="fa-cal-wd">'+weekdayShort[w]+'</div>'; }
+    var first=new Date(y,m,1); var off=(first.getDay()+6)%7;
+    for(var i=0;i<off;i++){ h+='<span class="fa-cal-day empty"></span>'; }
+    var days=new Date(y,m+1,0).getDate();
+    for(var t=1;t<=days;t++){
+      var dd=new Date(y,m,t); var ds=ymd(dd); var cls='fa-cal-day'; var dis=(dd<todayMid())||blocked[ds];
+      if(state.arrival && state.departure && ds>=state.arrival && ds<=state.departure){ cls+=(ds===state.arrival||ds===state.departure)?' end':' range'; }
+      else if(ds===state.arrival){ cls+=' end'; }
+      h+='<button type="button" class="'+cls+'"'+(dis?' disabled':' data-d="'+ds+'"')+'>'+t+'</button>';
+    }
+    h+='</div>';
+    wrap.innerHTML=h;
+    $('fa-cal-arr').textContent = state.arrival ? formatDE(state.arrival) : '\u2013';
+    $('fa-cal-dep').textContent = state.departure ? formatDE(state.departure) : '\u2013';
+    var cur=todayMid(); var minM=new Date(cur.getFullYear(),cur.getMonth(),1);
+    $('fa-cal-prev').addEventListener('click',function(){ var pv=new Date(calView.getFullYear(),calView.getMonth()-1,1); if(pv>=minM){ calView=pv; renderCal(); } });
+    $('fa-cal-next').addEventListener('click',function(){ calView=new Date(calView.getFullYear(),calView.getMonth()+1,1); renderCal(); });
+    var btns=wrap.querySelectorAll('.fa-cal-day[data-d]');
+    for(var k=0;k<btns.length;k++){ btns[k].addEventListener('click',function(){ waehleTag(this.getAttribute('data-d')); }); }
+  }
+
+  /* ===== Anfrage zusätzlich ins Backend schreiben ===== */
+  function sendToBackend(payload){
+    var p=new URLSearchParams();
+    for(var key in payload){ if(payload.hasOwnProperty(key) && key!=='pdf_base64' && key!=='pdf_dateiname'){ p.append(key, payload[key]); } }
+    return fetch(BACKEND_WEBHOOK, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'}, body:p.toString(), keepalive:true }).catch(function(){});
+  }
+
+  function pricePerNight(date, people){
+    var s = monthToSeason[date.getMonth()];
+    return people>=personenSchwelle ? prices[s][1] : prices[s][0];
+  }
+
+  function calcStay(){
+    if(!state.arrival || !state.departure) return null;
+    var a=parseDate(state.arrival), dep=parseDate(state.departure);
+    if(dep<=a) return null;
+    var total=0, nights=0, bySeason={};
+    var d=new Date(a);
+    while(d<dep){
+      var s=monthToSeason[d.getMonth()];
+      var pn=pricePerNight(d, state.people);
+      var nightTotal=pn*state.people;
+      total+=nightTotal; nights++;
+      if(!bySeason[s]) bySeason[s]={nights:0,sum:0};
+      bySeason[s].nights++; bySeason[s].sum+=nightTotal;
+      d.setDate(d.getDate()+1);
+    }
+    return {total:total, nights:nights, bySeason:bySeason};
+  }
+
+  function updateTotal(){
+    var stay = calcStay();
+    var gt = $('fa-grandtotal'), bd = $('fa-total-breakdown');
+    if(!stay){
+      gt.textContent='–';
+      bd.textContent = state.arrival||state.departure ? 'Abreise muss nach Anreise liegen' : 'Bitte Personen und Reisezeitraum wählen';
+      return;
+    }
+    var grand = stay.total + ENDREINIGUNG;
+    gt.textContent = grand + ' €';
+    var parts = stay.nights + (stay.nights===1?' Nacht':' Nächte') + ' · ' + state.people + (state.people===1?' Person':' Personen') + ' · inkl. Endreinigung';
+    bd.textContent = parts;
+  }
+
+  function seasonBreakdownHtml(stay){
+    var rows='';
+    for(var s in stay.bySeason){
+      var b=stay.bySeason[s];
+      rows += '<div class="fa-sum-row"><span>'+seasonNames[s]+' ('+b.nights+(b.nights===1?' Nacht':' Nächte')+')</span><span>'+b.sum+' €</span></div>';
+    }
+    return rows;
+  }
+
+  function buildSummary(){
+    var stay=calcStay();
+    var el=$('fa-summary');
+    var html='';
+    html+='<div class="fa-sum-row"><span>Personen</span><span>'+state.people+'</span></div>';
+    if(stay){
+      html+='<div class="fa-sum-row"><span>Anreise</span><span>'+formatDE(state.arrival)+'</span></div>';
+      html+='<div class="fa-sum-row"><span>Abreise</span><span>'+formatDE(state.departure)+'</span></div>';
+      html+='<div class="fa-sum-row"><span>Nächte gesamt</span><span>'+stay.nights+'</span></div>';
+      html+=seasonBreakdownHtml(stay);
+      html+='<div class="fa-sum-row"><span>Übernachtung gesamt</span><span>'+stay.total+' €</span></div>';
+    }
+    html+='<div class="fa-sum-row"><span>Endreinigung</span><span>'+ENDREINIGUNG+' €</span></div>';
+    html+='<div class="fa-sum-row"><span>Fahrzeuge / Tour</span><span>'+vehicleLabel[state.vehicle]+'</span></div>';
+    html+='<div class="fa-sum-row"><span>Name</span><span>'+esc(state.firstname)+' '+esc(state.lastname)+'</span></div>';
+    html+='<div class="fa-sum-row"><span>E-Mail</span><span>'+esc(state.email)+'</span></div>';
+    if(stay){
+      var grand=stay.total+ENDREINIGUNG;
+      html+='<div class="fa-sum-row" style="border-bottom:none;padding-top:14px;"><span style="font-size:16px;color:#2c2c2a;font-weight:bold;">Gesamt</span><span style="font-size:18px;color:#681318;">'+grand+' €</span></div>';
+    }
+    el.innerHTML=html;
+  }
+
+  function esc(s){return (s||'').replace(/[<>&"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c];});}
+  function formatDE(v){var p=v.split('-');return p[2]+'.'+p[1]+'.'+p[0];}
+
+  function showStep(n){
+    step=n;
+    var steps=document.querySelectorAll('#fa-wrap .fa-step');
+    for(var i=0;i<steps.length;i++) steps[i].classList.toggle('active', i===n);
+    var dots=prog.children;
+    for(var j=0;j<dots.length;j++) dots[j].classList.toggle('active', j<=n);
+    $('fa-back').style.display = n===0 ? 'none' : 'block';
+    var next=$('fa-next');
+    next.textContent = n===TOTAL_STEPS-1 ? 'Anfrage absenden' : 'Weiter';
+    if(n===TOTAL_STEPS-1) buildSummary();
+    validate();
+  }
+
+  function validate(){
+    var next=$('fa-next');
+    var ok=true;
+    if(step===1){
+      var stay=calcStay();
+      var warn=$('fa-date-warn');
+      if(state.arrival && state.departure && !stay){
+        warn.style.display='block';
+        warn.textContent='Die Abreise muss nach der Anreise liegen.';
+        ok=false;
+      } else if(!stay){
+        warn.style.display='none';
+        ok=false;
+      } else { warn.style.display='none'; }
+    }
+    if(step===3){ ok = state.firstname.trim()!=='' && state.lastname.trim()!==''; }
+    if(step===4){
+      var valid=/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(state.email);
+      $('fa-email-warn').style.display = (state.email!=='' && !valid) ? 'block':'none';
+      ok=valid;
+    }
+    next.disabled=!ok;
+  }
+
+  $('fa-people').addEventListener('input',function(){
+    state.people=parseInt(this.value,10);
+    $('fa-people-out').textContent=state.people;
+    updateTotal();
+  });
+
+  /* Datumsauswahl erfolgt über den Kalender (renderCal) */
+
+  bindOpts('fa-vehicle-opts', function(v){state.vehicle=v;});
+
+  function bindOpts(containerId, cb){
+    var c=$(containerId); var btns=c.querySelectorAll('button');
+    for(var i=0;i<btns.length;i++){
+      btns[i].addEventListener('click',function(){
+        for(var k=0;k<btns.length;k++) btns[k].classList.remove('sel');
+        this.classList.add('sel');
+        cb(this.getAttribute('data-val'));
+      });
+    }
+  }
+  $('fa-vehicle-opts').querySelector('[data-val=no]').classList.add('sel');
+
+  $('fa-firstname').addEventListener('input',function(){state.firstname=this.value; validate();});
+  $('fa-lastname').addEventListener('input',function(){state.lastname=this.value; validate();});
+  $('fa-email').addEventListener('input',function(){state.email=this.value.trim(); validate();});
+
+  $('fa-next').addEventListener('click',function(){
+    if(this.disabled) return;
+    if(step<TOTAL_STEPS-1){ showStep(step+1); }
+    else { submit(); }
+  });
+  $('fa-back').addEventListener('click',function(){ if(step>0) showStep(step-1); });
+
+  /* ---- Facebook Pixel Lead-Event (Basis-Pixel liegt global auf der Seite) ---- */
+  function fireLeadEvent(payload){
+    try{
+      if(typeof fbq === 'function'){
+        fbq('track', 'Lead', {
+          value: payload.gesamtpreis_eur,
+          currency: 'EUR',
+          content_name: 'Ferienimmobilie Matninia Hills Anfrage',
+          num_people: payload.personen,
+          nights: payload.naechte
+        });
+      }
+    }catch(e){ /* Pixel optional – Prozess läuft auch ohne weiter */ }
+  }
+
+  /* ---- Daten an Zapier senden ---- */
+  function sendToZapier(payload, pdfBase64, pdfFilename){
+    if(!ZAPIER_WEBHOOK_URL || ZAPIER_WEBHOOK_URL.indexOf('hooks.zapier.com')===-1){
+      // Keine gültige URL hinterlegt – nur Konsolenhinweis, Prozess bricht nicht ab
+      return Promise.resolve({skipped:true});
+    }
+    // Formular-kodiert senden (kein Preflight, Zapier erkennt jedes Feld einzeln)
+    var params = new URLSearchParams();
+    for(var key in payload){
+      if(payload.hasOwnProperty(key)){ params.append(key, payload[key]); }
+    }
+    // PDF als Base64-Anhang mitsenden (Zapier: "Attach a File" -> base64-Feld nutzen)
+    if(pdfBase64){
+      params.append('pdf_base64', pdfBase64);
+      params.append('pdf_dateiname', pdfFilename || 'Anfrage.pdf');
+    }
+    return fetch(ZAPIER_WEBHOOK_URL, {
+      method: 'POST',
+      headers: {'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},
+      body: params.toString()
+    });
+  }
+
+  function buildPayload(){
+    var stay=calcStay();
+    var grand = stay ? stay.total+ENDREINIGUNG : 0;
+    var seasons = [];
+    if(stay){ for(var s in stay.bySeason){ seasons.push(seasonNames[s]+': '+stay.bySeason[s].nights+' Nächte ('+stay.bySeason[s].sum+' €)'); } }
+    return {
+      vorname: state.firstname,
+      nachname: state.lastname,
+      email: state.email,
+      personen: state.people,
+      anreise: state.arrival ? formatDE(state.arrival) : '',
+      abreise: state.departure ? formatDE(state.departure) : '',
+      naechte: stay ? stay.nights : 0,
+      uebernachtung_eur: stay ? stay.total : 0,
+      saison_aufschluesselung: seasons.join(' | '),
+      endreinigung_eur: ENDREINIGUNG,
+      fahrzeug_interesse: vehicleLabel[state.vehicle],
+      gesamtpreis_eur: grand,
+      anfrage_zeitpunkt: new Date().toISOString(),
+      seite: (typeof location!=='undefined' ? location.href : '')
+    };
+  }
+
+  var cachedPdfDoc = null; // einmal erzeugtes PDF für Download wiederverwenden
+
+  function submit(){
+    var payload = buildPayload();
+    var nextBtn = $('fa-next');
+    nextBtn.disabled = true;
+    nextBtn.innerHTML = '<span class="fa-spinner"></span>Wird gesendet …';
+
+    // 1) Facebook Pixel Lead-Event
+    fireLeadEvent(payload);
+
+    // 2) PDF erzeugen (für Anhang + späteren Download), dann an Zapier
+    ensureJsPDF(function(ok){
+      var pdfBase64 = null, pdfFilename = null;
+      if(ok){
+        try{
+          cachedPdfDoc = buildPdfDoc(payload);
+          pdfFilename = 'Anfrage_'+OBJEKT_NAME.replace(/[^a-zA-Z0-9]+/g,'_')+'_'+todayStr().replace(/\./g,'-')+'.pdf';
+          // datauristring -> robust den Base64-Teil nach ';base64,' extrahieren
+          var dataUri = cachedPdfDoc.output('datauristring');
+          pdfBase64 = dataUri.split(';base64,').pop();
+        }catch(e){ /* PDF optional – Anfrage wird auch ohne Anhang gesendet */ }
+      }
+      var versand = (window.Promise && Promise.allSettled)
+        ? Promise.allSettled([ sendToZapier(payload, pdfBase64, pdfFilename), sendToBackend(payload) ])
+        : sendToZapier(payload, pdfBase64, pdfFilename);
+      Promise.resolve(versand).then(function(){ showSuccess(payload); }, function(){ showSuccess(payload); });
+    });
+  }
+
+  function showSuccess(payload){
+    var card=document.querySelector('#fa-wrap .fa-card');
+    card.innerHTML='<div style="text-align:center;padding:30px 10px;">'+
+      '<div style="font-size:40px;margin-bottom:10px;color:#681318;">✓</div>'+
+      '<p class="fa-q" style="font-size:22px;">Vielen Dank, '+esc(payload.vorname)+'!</p>'+
+      '<p class="fa-sub" style="font-size:15px;">Ihre unverbindliche Anfrage über '+payload.gesamtpreis_eur+' € ist bei uns eingegangen. Wir werden uns schnellstmöglich mit Ihnen in Verbindung setzen. Sollten Sie in der Zwischenzeit weitere Fragen haben, melden Sie sich jederzeit gerne direkt bei uns.</p>'+
+      '<p class="fa-sub" style="font-size:15px;margin-bottom:20px;">Hier können Sie sich Ihre Anfrage noch einmal als PDF herunterladen.</p>'+
+      '<button class="fa-btn fa-btn-next" id="fa-pdf" style="flex:none;display:inline-block;width:auto;padding:13px 26px;">PDF herunterladen</button>'+
+      '<p class="fa-note" id="fa-pdf-note" style="text-align:center;display:none;">PDF wird erstellt …</p>'+
+      '</div>';
+    document.getElementById('fa-pdf').addEventListener('click', function(){ downloadPdf(payload); });
+  }
+
+  /* ---- jsPDF bei Bedarf laden, dann PDF erzeugen ---- */
+  function downloadPdf(payload){
+    var note=document.getElementById('fa-pdf-note');
+    var fname='Anfrage_'+OBJEKT_NAME.replace(/[^a-zA-Z0-9]+/g,'_')+'_'+todayStr().replace(/\./g,'-')+'.pdf';
+    // Bereits beim Absenden erzeugtes PDF wiederverwenden, falls vorhanden
+    if(cachedPdfDoc){
+      cachedPdfDoc.save(fname);
+      return;
+    }
+    if(note){ note.style.display='block'; note.textContent='PDF wird erstellt …'; }
+    ensureJsPDF(function(ok){
+      if(!ok){ if(note){ note.textContent='PDF konnte nicht geladen werden. Bitte Internetverbindung prüfen.'; } return; }
+      generatePdf(payload);
+      if(note){ note.style.display='none'; }
+    });
+  }
+
+  function ensureJsPDF(cb){
+    if(window.jspdf && window.jspdf.jsPDF){ cb(true); return; }
+    var s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload=function(){ cb(!!(window.jspdf && window.jspdf.jsPDF)); };
+    s.onerror=function(){ cb(false); };
+    document.head.appendChild(s);
+  }
+
+  function generatePdf(payload){
+    var doc = buildPdfDoc(payload);
+    var dStr = todayStr();
+    var fname='Anfrage_'+OBJEKT_NAME.replace(/[^a-zA-Z0-9]+/g,'_')+'_'+dStr.replace(/\./g,'-')+'.pdf';
+    doc.save(fname);
+  }
+
+  function todayStr(){
+    var h=new Date();
+    return ('0'+h.getDate()).slice(-2)+'.'+('0'+(h.getMonth()+1)).slice(-2)+'.'+h.getFullYear();
+  }
+
+  function buildPdfDoc(payload){
+    var jsPDF=window.jspdf.jsPDF;
+    var doc=new jsPDF({unit:'mm', format:'a4'});
+    var W=210, M=20, x=M, y=22;
+    var line=function(h){ y+=h; };
+    var maroon=[104,19,24];
+
+    // Kopf
+    doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(maroon[0],maroon[1],maroon[2]);
+    doc.text(OBJEKT_NAME, x, y);
+    doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(90);
+    line(7); doc.text('Zusammenfassung Ihrer unverbindlichen Anfrage', x, y);
+
+    // Datum (rechtsbündig)
+    var heute=new Date();
+    var dStr=('0'+heute.getDate()).slice(-2)+'.'+('0'+(heute.getMonth()+1)).slice(-2)+'.'+heute.getFullYear();
+    doc.setFontSize(10); doc.setTextColor(120);
+    doc.text('Datum der Anfrage: '+dStr, W-M, 22, {align:'right'});
+
+    // Trennlinie
+    line(6); doc.setDrawColor(maroon[0],maroon[1],maroon[2]); doc.setLineWidth(0.6); doc.line(x, y, W-M, y);
+    line(10);
+
+    // Abschnitt: Ihre Angaben
+    var sectionTitle=function(t){
+      doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(maroon[0],maroon[1],maroon[2]);
+      doc.text(t, x, y); line(7);
+      doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(40);
+    };
+    var row=function(label, val){
+      doc.setTextColor(110); doc.text(label, x, y);
+      doc.setTextColor(30); doc.text(String(val), W-M, y, {align:'right'}); line(7);
+    };
+
+    sectionTitle('Kontaktdaten des Gastes');
+    row('Name', (payload.vorname+' '+payload.nachname).trim());
+    row('E-Mail', payload.email);
+
+    line(4); sectionTitle('Aufenthalt');
+    row('Personen', payload.personen);
+    if(payload.anreise){ row('Anreise', payload.anreise); }
+    if(payload.abreise){ row('Abreise', payload.abreise); }
+    if(payload.naechte){ row('Nächte gesamt', payload.naechte); }
+    if(payload.saison_aufschluesselung){
+      doc.setTextColor(110); doc.text('Saison-Aufschlüsselung', x, y); line(6);
+      doc.setTextColor(60); doc.setFontSize(10);
+      var segs=String(payload.saison_aufschluesselung).split(' | ');
+      for(var i=0;i<segs.length;i++){ doc.text('• '+segs[i], x+2, y); line(5); }
+      doc.setFontSize(11);
+      line(1);
+    }
+
+    line(4); sectionTitle('Leistungen & Optionen');
+    if(payload.uebernachtung_eur){ row('Übernachtung gesamt', payload.uebernachtung_eur+' €'); }
+    row('Endreinigung', payload.endreinigung_eur+' €');
+    row('Fahrzeug / Tour-Interesse', payload.fahrzeug_interesse);
+
+    // Gesamtpreis-Box
+    line(2);
+    doc.setFillColor(maroon[0],maroon[1],maroon[2]);
+    doc.roundedRect(x, y, W-2*M, 14, 2, 2, 'F');
+    doc.setFont('helvetica','bold'); doc.setTextColor(255); doc.setFontSize(12);
+    doc.text('Voraussichtlicher Gesamtpreis', x+5, y+9);
+    doc.setFontSize(14);
+    doc.text(payload.gesamtpreis_eur+' €', W-M-5, y+9, {align:'right'});
+    line(22);
+
+    // Hinweis
+    doc.setFont('helvetica','italic'); doc.setFontSize(9); doc.setTextColor(120);
+    var hinweis='Dies ist eine unverbindliche Anfrage. Die Buchung erfolgt nicht automatisch. Der hier genannte Preis ist eine voraussichtliche Kalkulation auf Basis Ihrer Angaben. Wir setzen uns schnellstmöglich persönlich mit Ihnen in Verbindung und bestätigen Ihnen Verfügbarkeit und verbindlichen Endpreis.';
+    var hLines=doc.splitTextToSize(hinweis, W-2*M);
+    doc.text(hLines, x, y); line(hLines.length*4+8);
+
+    // Anbieter-Fußzeile
+    doc.setDrawColor(210); doc.setLineWidth(0.3); doc.line(x, 270, W-M, 270);
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(maroon[0],maroon[1],maroon[2]);
+    doc.text('Ihr Ansprechpartner', x, 276);
+    doc.setFont('helvetica','normal'); doc.setTextColor(90); doc.setFontSize(8.5);
+    var fy=281;
+    doc.text(ANBIETER.name+'  ·  '+ANBIETER.inhaber, x, fy); fy+=4;
+    doc.text(ANBIETER.strasse+'  ·  '+ANBIETER.ort+'  ·  '+ANBIETER.land, x, fy); fy+=4;
+    doc.text('Tel: '+ANBIETER.telefon+'   E-Mail: '+ANBIETER.email+'   Web: '+ANBIETER.web, x, fy);
+
+    return doc;
+  }
+
+  ladePreise();
+  ladeBelegung();
+  renderCal();
+  updateTotal();
+  showStep(0);
+})();
+</script>

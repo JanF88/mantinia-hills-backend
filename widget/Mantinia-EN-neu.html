@@ -1,0 +1,803 @@
+<div id="fa-wrap"
+  style="font-family: Arial, Helvetica, sans-serif; width: 100%; box-sizing: border-box; color: #2c2c2a;">
+  <style>
+    #fa-wrap * {
+      box-sizing: border-box;
+    }
+
+    #fa-wrap .fa-card {
+      background: #f7f5f2;
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    #fa-wrap .fa-total {
+      background: #681318;
+      border-radius: 8px;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    #fa-wrap .fa-total-label {
+      font-size: 13px;
+      color: #f0d6d8;
+    }
+
+    #fa-wrap .fa-total-val {
+      font-size: 26px;
+      font-weight: bold;
+      color: #fff;
+    }
+
+    #fa-wrap .fa-total-sub {
+      font-size: 12px;
+      color: #e9c4c6;
+      width: 100%;
+    }
+
+    #fa-wrap .fa-progress {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 20px;
+    }
+
+    #fa-wrap .fa-dot {
+      height: 4px;
+      flex: 1;
+      border-radius: 2px;
+      background: #e2e2e2;
+      transition: background .2s;
+    }
+
+    #fa-wrap .fa-dot.active {
+      background: #681318;
+    }
+
+    #fa-wrap .fa-step {
+      display: none;
+    }
+
+    #fa-wrap .fa-step.active {
+      display: block;
+    }
+
+    #fa-wrap .fa-q {
+      font-size: 19px;
+      font-weight: bold;
+      margin: 0 0 4px;
+    }
+
+    #fa-wrap .fa-sub {
+      font-size: 14px;
+      color: #666;
+      margin: 0 0 18px;
+      line-height: 1.5;
+    }
+
+    #fa-wrap label.fa-flabel {
+      display: block;
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 8px;
+    }
+
+    #fa-wrap input[type=date],
+    #fa-wrap input[type=text],
+    #fa-wrap input[type=email] {
+      width: 100%;
+      padding: 11px;
+      border: 1px solid #d9d4cd;
+      border-radius: 8px;
+      font-size: 15px;
+      background: #fff;
+      color: #2c2c2a;
+    }
+
+    #fa-wrap input[type=range] {
+      width: 100%;
+      accent-color: #681318;
+    }
+
+    #fa-wrap .fa-people-out {
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    #fa-wrap .fa-opt {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    #fa-wrap .fa-opt button {
+      flex: 1;
+      padding: 13px;
+      border: 1px solid #d9d4cd;
+      border-radius: 8px;
+      background: #fff;
+      font-size: 15px;
+      cursor: pointer;
+      color: #2c2c2a;
+      transition: all .15s;
+    }
+
+    #fa-wrap .fa-opt button.sel {
+      border-color: #681318;
+      background: #681318;
+      color: #fff;
+      font-weight: bold;
+    }
+
+    #fa-wrap .fa-nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    #fa-wrap .fa-btn {
+      padding: 13px 22px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+    }
+
+    #fa-wrap .fa-btn-next {
+      background: #681318;
+      color: #fff;
+      flex: 1;
+    }
+
+    #fa-wrap .fa-btn-next:disabled {
+      background: #c9b3b4;
+      cursor: not-allowed;
+    }
+
+    #fa-wrap .fa-btn-back {
+      background: transparent;
+      color: #681318;
+      border: 1px solid #d9d4cd;
+    }
+
+    #fa-wrap .fa-note {
+      font-size: 13px;
+      color: #888;
+      line-height: 1.6;
+      margin: 10px 0 0;
+    }
+
+    #fa-wrap .fa-link {
+      color: #681318;
+      font-weight: bold;
+    }
+
+    #fa-wrap .fa-sum-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 9px 0;
+      border-bottom: 1px solid #e2e2e2;
+      font-size: 14px;
+    }
+
+    #fa-wrap .fa-sum-row span:first-child {
+      color: #666;
+    }
+
+    #fa-wrap .fa-sum-row span:last-child {
+      font-weight: bold;
+      text-align: right;
+    }
+
+    #fa-wrap .fa-warn {
+      background: #fff;
+      border: 1px solid #e2e2e2;
+      border-left: 3px solid #681318;
+      border-radius: 6px;
+      padding: 11px 14px;
+      font-size: 13px;
+      color: #555;
+      margin-top: 14px;
+      line-height: 1.5;
+    }
+
+    #fa-wrap .fa-spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, .4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: fa-spin .7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    @keyframes fa-spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    #fa-wrap .fa-cal-sel { display:flex; gap:10px; margin-bottom:12px; }
+    #fa-wrap .fa-cal-sel > div { flex:1; background:#fff; border:1px solid #d9d4cd; border-radius:8px; padding:8px 11px; }
+    #fa-wrap .fa-cal-lbl { display:block; font-size:11px; color:#999; }
+    #fa-wrap .fa-cal { background:#fff; border:1px solid #d9d4cd; border-radius:8px; padding:12px; }
+    #fa-wrap .fa-cal-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+    #fa-wrap .fa-cal-nav { background:none; border:none; font-size:20px; line-height:1; color:#681318; cursor:pointer; padding:2px 10px; }
+    #fa-wrap .fa-cal-title { font-weight:bold; font-size:15px; }
+    #fa-wrap .fa-cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+    #fa-wrap .fa-cal-wd { text-align:center; font-size:11px; color:#999; padding:4px 0; }
+    #fa-wrap .fa-cal-day { border:none; background:none; padding:9px 0; font-size:14px; border-radius:6px; cursor:pointer; color:#2c2c2a; text-align:center; font-family:inherit; }
+    #fa-wrap .fa-cal-day:disabled { color:#cfcac3; cursor:not-allowed; text-decoration:line-through; }
+    #fa-wrap .fa-cal-day.empty { visibility:hidden; }
+    #fa-wrap .fa-cal-day.range { background:#f0d6d8; }
+    #fa-wrap .fa-cal-day.end { background:#681318; color:#fff; font-weight:bold; }
+    #fa-wrap .fa-cal-legend { display:flex; gap:16px; margin-top:10px; font-size:12px; color:#888; flex-wrap:wrap; }
+    #fa-wrap .fa-cal-legend .dot { display:inline-block; width:10px; height:10px; border-radius:2px; vertical-align:middle; margin-right:5px; }
+  </style>
+
+  <div class="fa-card">
+    <div class="fa-total">
+      <div class="fa-total-label">Estimated total price</div>
+      <div class="fa-total-val" id="fa-grandtotal">–</div>
+      <div class="fa-total-sub" id="fa-total-breakdown">Please select guests and travel dates</div>
+    </div>
+
+    <div class="fa-progress" id="fa-progress"></div>
+
+    <div class="fa-step active" data-step="0">
+      <p class="fa-q">How many people are traveling?</p>
+      <p class="fa-sub">From 5 guests onwards, you benefit from a reduced price per person.</p>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+        <label class="fa-flabel" style="margin:0;">Number of guests</label>
+        <span class="fa-people-out" id="fa-people-out">4</span>
+      </div>
+      <input type="range" id="fa-people" min="1" max="6" value="4" step="1" />
+    </div>
+
+    <div class="fa-step" data-step="1">
+      <p class="fa-q">When would you like to arrive and depart?</p>
+      <p class="fa-sub">The price is calculated to the exact night — even across season boundaries.</p>
+      <div class="fa-cal-sel">
+        <div><span class="fa-cal-lbl">Arrival</span><span id="fa-cal-arr">–</span></div>
+        <div><span class="fa-cal-lbl">Departure</span><span id="fa-cal-dep">–</span></div>
+      </div>
+      <div class="fa-cal" id="fa-cal"></div>
+      <div class="fa-cal-legend">
+        <span><span class="dot" style="background:#681318;"></span>Selected</span>
+        <span><span class="dot" style="background:#e2e2e2;"></span>Booked / unavailable</span>
+      </div>
+      <div class="fa-warn" id="fa-date-warn" style="display:none;"></div>
+    </div>
+
+    <div class="fa-step" data-step="2">
+      <p class="fa-q">Interested in a quad tour or a vehicle?</p>
+      <p class="fa-sub">Explore the region flexibly with scooters, quads, or UTVs.</p>
+      <div class="fa-opt" id="fa-vehicle-opts">
+        <button data-val="yes">Yes, please</button>
+        <button data-val="maybe">Maybe</button>
+        <button data-val="no">No</button>
+      </div>
+      <div class="fa-warn">
+        Tours &amp; rentals via our partner:
+        <a class="fa-link" href="https://eco-tours-greece.com/" target="_blank" rel="noopener">eco-tours-greece.com</a>.
+        If interested, we'll note your request in the inquiry.
+      </div>
+    </div>
+
+    <div class="fa-step" data-step="3">
+      <p class="fa-q">What is your name?</p>
+      <p class="fa-sub">So we can address you personally.</p>
+      <label class="fa-flabel" for="fa-firstname">First name</label>
+      <input type="text" id="fa-firstname" style="margin-bottom:16px;" autocomplete="given-name" />
+      <label class="fa-flabel" for="fa-lastname">Last name</label>
+      <input type="text" id="fa-lastname" autocomplete="family-name" />
+    </div>
+
+    <div class="fa-step" data-step="4">
+      <p class="fa-q">Your email address</p>
+      <p class="fa-sub">This is where we'll send you availability and the binding final price.</p>
+      <label class="fa-flabel" for="fa-email">Email</label>
+      <input type="email" id="fa-email" autocomplete="email" placeholder="name@example.com" />
+      <div class="fa-warn" id="fa-email-warn" style="display:none;">Please enter a valid email address.</div>
+    </div>
+
+    <div class="fa-step" data-step="5">
+      <p class="fa-q">Summary of your inquiry</p>
+      <p class="fa-sub">Please review your details and submit your inquiry without obligation.</p>
+      <div id="fa-summary"></div>
+      <p class="fa-note">Free &amp; non-binding. Booking is not done through this site — we'll confirm availability and
+        the binding final price by email. Your data will be treated confidentially.</p>
+    </div>
+
+    <div class="fa-nav">
+      <button class="fa-btn fa-btn-back" id="fa-back" style="display:none;">Back</button>
+      <button class="fa-btn fa-btn-next" id="fa-next">Next</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function(){
+  var ZAPIER_WEBHOOK_URL = "https://hooks.zapier.com/hooks/catch/2029006/42vxsvy/";
+  var FB_PIXEL_ID = "1626715398426567";
+
+  var PROVIDER = {
+    name: "Mantinia Hills Holiday Home",
+    contact: "ZERO CENTER HELLAS IKE",
+    street: "Asprochoma",
+    city: "Kalamata, PC 24100",
+    country: "Greece",
+    phone: "+30 2721 111 909",
+    email: "info@zero-center.gr",
+    web: "www.mantinia-hills.com"
+  };
+  var OBJECT_NAME = "Mantinia Hills Holiday Home";
+  var CLEANING_FEE = 180; // Fallback – overwritten from backend
+  var personenSchwelle = 5; // Fallback
+  var BACKEND = "https://fiicnznmxbahfnansckp.supabase.co/functions/v1";
+  var BACKEND_WEBHOOK = BACKEND + "/anfrage-webhook?key=358df55578f41fd3941997948f028e8b";
+
+  var TOTAL_STEPS = 6;
+  var step = 0;
+  var prices = [[35,30],[40,35],[45,40],[50,45],[65,60],[60,55],[50,45],[45,40],[35,30]];
+  var monthToSeason = [0,0,1,1,2,3,4,4,5,6,7,8];
+  var seasonNames = ["Jan–Feb","Mar–Apr","May","Jun","Jul–Aug","Sep","Oct","Nov","Dec"];
+  var vehicleLabel = {yes:"Yes, please", maybe:"Maybe", no:"No"};
+
+  var state = {people:4, arrival:null, departure:null, vehicle:"no", firstname:"", lastname:"", email:""};
+
+  var $ = function(id){return document.getElementById(id);};
+
+  var prog = $('fa-progress');
+  for(var i=0;i<TOTAL_STEPS;i++){var d=document.createElement('div');d.className='fa-dot';prog.appendChild(d);}
+
+  function parseDate(v){ if(!v) return null; var p=v.split('-'); return new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2])); }
+
+  function ladePreise(){
+    fetch(BACKEND + "/preise").then(function(r){return r.json();}).then(function(p){
+      if(p && p.saison_preise){ prices = p.saison_preise; }
+      if(p && p.monat_zu_saison){ monthToSeason = p.monat_zu_saison; }
+      if(p && typeof p.personen_schwelle !== 'undefined'){ personenSchwelle = Number(p.personen_schwelle); }
+      if(p && typeof p.endreinigung_eur !== 'undefined'){ CLEANING_FEE = Number(p.endreinigung_eur); }
+      updateTotal();
+    }).catch(function(){});
+  }
+  function formatDMY(v){ var p=v.split('-'); return p[2]+'.'+p[1]+'.'+p[0]; }
+  var monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  var weekdayShort = ["Mo","Tu","We","Th","Fr","Sa","Su"];
+  var calView = (function(){ var d=new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); })();
+  var blocked = {};
+  function pad2(n){ return ('0'+n).slice(-2); }
+  function ymd(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
+  function todayMid(){ var t=new Date(); t.setHours(0,0,0,0); return t; }
+  function ladeBelegung(){
+    fetch(BACKEND + "/belegung").then(function(r){return r.json();}).then(function(data){
+      blocked = {};
+      (data && data.belegt ? data.belegt : []).forEach(function(b){
+        var von=parseDate(b.von), bis=parseDate(b.bis); if(!von||!bis) return;
+        var d=new Date(von); while(d<=bis){ blocked[ymd(d)]=true; d.setDate(d.getDate()+1); }
+      });
+      renderCal();
+    }).catch(function(){ renderCal(); });
+  }
+  function spanFrei(aStr,bStr){ var a=parseDate(aStr), b=parseDate(bStr); var d=new Date(a); while(d<=b){ if(blocked[ymd(d)]) return false; d.setDate(d.getDate()+1); } return true; }
+  function waehleTag(dstr){
+    var d=parseDate(dstr);
+    if(d < todayMid() || blocked[dstr]) return;
+    if(!state.arrival || state.departure){ state.arrival=dstr; state.departure=null; }
+    else if(dstr <= state.arrival){ state.arrival=dstr; state.departure=null; }
+    else if(!spanFrei(state.arrival, dstr)){ state.arrival=dstr; state.departure=null; }
+    else { state.departure=dstr; }
+    renderCal(); updateTotal(); validate();
+  }
+  function renderCal(){
+    var wrap=$('fa-cal'); if(!wrap) return;
+    var y=calView.getFullYear(), m=calView.getMonth();
+    var h='<div class="fa-cal-head"><button type="button" class="fa-cal-nav" id="fa-cal-prev">\u2039</button>'
+      +'<span class="fa-cal-title">'+monthNames[m]+' '+y+'</span>'
+      +'<button type="button" class="fa-cal-nav" id="fa-cal-next">\u203a</button></div><div class="fa-cal-grid">';
+    for(var w=0;w<7;w++){ h+='<div class="fa-cal-wd">'+weekdayShort[w]+'</div>'; }
+    var first=new Date(y,m,1); var off=(first.getDay()+6)%7;
+    for(var i=0;i<off;i++){ h+='<span class="fa-cal-day empty"></span>'; }
+    var days=new Date(y,m+1,0).getDate();
+    for(var t=1;t<=days;t++){
+      var dd=new Date(y,m,t); var ds=ymd(dd); var cls='fa-cal-day'; var dis=(dd<todayMid())||blocked[ds];
+      if(state.arrival && state.departure && ds>=state.arrival && ds<=state.departure){ cls+=(ds===state.arrival||ds===state.departure)?' end':' range'; }
+      else if(ds===state.arrival){ cls+=' end'; }
+      h+='<button type="button" class="'+cls+'"'+(dis?' disabled':' data-d="'+ds+'"')+'>'+t+'</button>';
+    }
+    h+='</div>';
+    wrap.innerHTML=h;
+    $('fa-cal-arr').textContent = state.arrival ? formatEN(state.arrival) : '\u2013';
+    $('fa-cal-dep').textContent = state.departure ? formatEN(state.departure) : '\u2013';
+    var cur=todayMid(); var minM=new Date(cur.getFullYear(),cur.getMonth(),1);
+    $('fa-cal-prev').addEventListener('click',function(){ var pv=new Date(calView.getFullYear(),calView.getMonth()-1,1); if(pv>=minM){ calView=pv; renderCal(); } });
+    $('fa-cal-next').addEventListener('click',function(){ calView=new Date(calView.getFullYear(),calView.getMonth()+1,1); renderCal(); });
+    var btns=wrap.querySelectorAll('.fa-cal-day[data-d]');
+    for(var k=0;k<btns.length;k++){ btns[k].addEventListener('click',function(){ waehleTag(this.getAttribute('data-d')); }); }
+  }
+  function sendToBackend(){
+    var stay=calcStay(); if(!stay) return Promise.resolve();
+    var grand=stay.total+CLEANING_FEE;
+    var seasons=[]; for(var s in stay.bySeason){ seasons.push(seasonNames[s]+': '+stay.bySeason[s].nights+' ('+stay.bySeason[s].sum+' EUR)'); }
+    var p=new URLSearchParams();
+    p.append('vorname', state.firstname); p.append('nachname', state.lastname); p.append('email', state.email);
+    p.append('personen', state.people);
+    p.append('anreise', formatDMY(state.arrival)); p.append('abreise', formatDMY(state.departure));
+    p.append('naechte', stay.nights); p.append('uebernachtung_eur', stay.total);
+    p.append('endreinigung_eur', CLEANING_FEE); p.append('gesamtpreis_eur', grand);
+    p.append('saison_aufschluesselung', seasons.join(' | '));
+    p.append('fahrzeug_interesse', vehicleLabel[state.vehicle]);
+    p.append('anfrage_zeitpunkt', new Date().toISOString());
+    p.append('seite', (typeof location!=='undefined'?location.href:''));
+    return fetch(BACKEND_WEBHOOK, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'}, body:p.toString(), keepalive:true }).catch(function(){});
+  }
+
+  function pricePerNight(date, people){
+    var s = monthToSeason[date.getMonth()];
+    return people>=personenSchwelle ? prices[s][1] : prices[s][0];
+  }
+
+  function calcStay(){
+    if(!state.arrival || !state.departure) return null;
+    var a=parseDate(state.arrival), dep=parseDate(state.departure);
+    if(dep<=a) return null;
+    var total=0, nights=0, bySeason={};
+    var d=new Date(a);
+    while(d<dep){
+      var s=monthToSeason[d.getMonth()];
+      var pn=pricePerNight(d, state.people);
+      var nightTotal=pn*state.people;
+      total+=nightTotal; nights++;
+      if(!bySeason[s]) bySeason[s]={nights:0,sum:0};
+      bySeason[s].nights++; bySeason[s].sum+=nightTotal;
+      d.setDate(d.getDate()+1);
+    }
+    return {total:total, nights:nights, bySeason:bySeason};
+  }
+
+  function updateTotal(){
+    var stay = calcStay();
+    var gt = $('fa-grandtotal'), bd = $('fa-total-breakdown');
+    if(!stay){
+      gt.textContent='–';
+      bd.textContent = state.arrival||state.departure ? 'Departure must be after arrival' : 'Please select guests and travel dates';
+      return;
+    }
+    var grand = stay.total + CLEANING_FEE;
+    gt.textContent = '€' + grand;
+    var parts = stay.nights + (stay.nights===1?' night':' nights') + ' · ' + state.people + (state.people===1?' guest':' guests') + ' · incl. final cleaning';
+    bd.textContent = parts;
+  }
+
+  function seasonBreakdownHtml(stay){
+    var rows='';
+    for(var s in stay.bySeason){
+      var b=stay.bySeason[s];
+      rows += '<div class="fa-sum-row"><span>'+seasonNames[s]+' ('+b.nights+(b.nights===1?' night':' nights')+')</span><span>€'+b.sum+'</span></div>';
+    }
+    return rows;
+  }
+
+  function buildSummary(){
+    var stay=calcStay();
+    var el=$('fa-summary');
+    var html='';
+    html+='<div class="fa-sum-row"><span>Guests</span><span>'+state.people+'</span></div>';
+    if(stay){
+      html+='<div class="fa-sum-row"><span>Arrival</span><span>'+formatEN(state.arrival)+'</span></div>';
+      html+='<div class="fa-sum-row"><span>Departure</span><span>'+formatEN(state.departure)+'</span></div>';
+      html+='<div class="fa-sum-row"><span>Total nights</span><span>'+stay.nights+'</span></div>';
+      html+=seasonBreakdownHtml(stay);
+      html+='<div class="fa-sum-row"><span>Accommodation total</span><span>€'+stay.total+'</span></div>';
+    }
+    html+='<div class="fa-sum-row"><span>Final cleaning</span><span>€'+CLEANING_FEE+'</span></div>';
+    html+='<div class="fa-sum-row"><span>Vehicle / tour</span><span>'+vehicleLabel[state.vehicle]+'</span></div>';
+    html+='<div class="fa-sum-row"><span>Name</span><span>'+esc(state.firstname)+' '+esc(state.lastname)+'</span></div>';
+    html+='<div class="fa-sum-row"><span>Email</span><span>'+esc(state.email)+'</span></div>';
+    if(stay){
+      var grand=stay.total+CLEANING_FEE;
+      html+='<div class="fa-sum-row" style="border-bottom:none;padding-top:14px;"><span style="font-size:16px;color:#2c2c2a;font-weight:bold;">Total</span><span style="font-size:18px;color:#681318;">€'+grand+'</span></div>';
+    }
+    el.innerHTML=html;
+  }
+
+  function esc(s){return (s||'').replace(/[<>&"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c];});}
+  function formatEN(v){var p=v.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+
+  function showStep(n){
+    step=n;
+    var steps=document.querySelectorAll('#fa-wrap .fa-step');
+    for(var i=0;i<steps.length;i++) steps[i].classList.toggle('active', i===n);
+    var dots=prog.children;
+    for(var j=0;j<dots.length;j++) dots[j].classList.toggle('active', j<=n);
+    $('fa-back').style.display = n===0 ? 'none' : 'block';
+    var next=$('fa-next');
+    next.textContent = n===TOTAL_STEPS-1 ? 'Submit inquiry' : 'Next';
+    if(n===TOTAL_STEPS-1) buildSummary();
+    validate();
+  }
+
+  function validate(){
+    var next=$('fa-next');
+    var ok=true;
+    if(step===1){
+      var stay=calcStay();
+      var warn=$('fa-date-warn');
+      if(state.arrival && state.departure && !stay){
+        warn.style.display='block';
+        warn.textContent='Departure must be after arrival.';
+        ok=false;
+      } else if(!stay){
+        warn.style.display='none';
+        ok=false;
+      } else { warn.style.display='none'; }
+    }
+    if(step===3){ ok = state.firstname.trim()!=='' && state.lastname.trim()!==''; }
+    if(step===4){
+      var valid=/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(state.email);
+      $('fa-email-warn').style.display = (state.email!=='' && !valid) ? 'block':'none';
+      ok=valid;
+    }
+    next.disabled=!ok;
+  }
+
+  $('fa-people').addEventListener('input',function(){
+    state.people=parseInt(this.value,10);
+    $('fa-people-out').textContent=state.people;
+    updateTotal();
+  });
+
+  /* date selection via calendar (renderCal) */
+
+  bindOpts('fa-vehicle-opts', function(v){state.vehicle=v;});
+
+  function bindOpts(containerId, cb){
+    var c=$(containerId); var btns=c.querySelectorAll('button');
+    for(var i=0;i<btns.length;i++){
+      btns[i].addEventListener('click',function(){
+        for(var k=0;k<btns.length;k++) btns[k].classList.remove('sel');
+        this.classList.add('sel');
+        cb(this.getAttribute('data-val'));
+      });
+    }
+  }
+  $('fa-vehicle-opts').querySelector('[data-val=no]').classList.add('sel');
+
+  $('fa-firstname').addEventListener('input',function(){state.firstname=this.value; validate();});
+  $('fa-lastname').addEventListener('input',function(){state.lastname=this.value; validate();});
+  $('fa-email').addEventListener('input',function(){state.email=this.value.trim(); validate();});
+
+  $('fa-next').addEventListener('click',function(){
+    if(this.disabled) return;
+    if(step<TOTAL_STEPS-1){ showStep(step+1); }
+    else { submit(); }
+  });
+  $('fa-back').addEventListener('click',function(){ if(step>0) showStep(step-1); });
+
+  function fireLeadEvent(payload){
+    try{
+      if(typeof fbq === 'function'){
+        var data = {
+          value: payload.total_price_eur,
+          currency: 'EUR',
+          content_name: 'Mantinia Hills Holiday Home Inquiry',
+          num_people: payload.guests,
+          nights: payload.nights
+        };
+        if(FB_PIXEL_ID){ fbq('trackSingle', FB_PIXEL_ID, 'Lead', data); }
+        else { fbq('track', 'Lead', data); }
+      }
+    }catch(e){ /* Pixel optional */ }
+  }
+
+  function sendToZapier(payload, pdfBase64, pdfFilename){
+    if(!ZAPIER_WEBHOOK_URL || ZAPIER_WEBHOOK_URL.indexOf('hooks.zapier.com')===-1){
+      return Promise.resolve({skipped:true});
+    }
+    var params = new URLSearchParams();
+    for(var key in payload){
+      if(payload.hasOwnProperty(key)){ params.append(key, payload[key]); }
+    }
+    if(pdfBase64){
+      params.append('pdf_base64', pdfBase64);
+      params.append('pdf_filename', pdfFilename || 'Inquiry.pdf');
+    }
+    return fetch(ZAPIER_WEBHOOK_URL, {
+      method: 'POST',
+      headers: {'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},
+      body: params.toString()
+    });
+  }
+
+  function buildPayload(){
+    var stay=calcStay();
+    var grand = stay ? stay.total+CLEANING_FEE : 0;
+    var seasons = [];
+    if(stay){ for(var s in stay.bySeason){ seasons.push(seasonNames[s]+': '+stay.bySeason[s].nights+' nights (€'+stay.bySeason[s].sum+')'); } }
+    return {
+      first_name: state.firstname,
+      last_name: state.lastname,
+      email: state.email,
+      guests: state.people,
+      arrival: state.arrival ? formatEN(state.arrival) : '',
+      departure: state.departure ? formatEN(state.departure) : '',
+      nights: stay ? stay.nights : 0,
+      accommodation_eur: stay ? stay.total : 0,
+      season_breakdown: seasons.join(' | '),
+      cleaning_eur: CLEANING_FEE,
+      vehicle_interest: vehicleLabel[state.vehicle],
+      total_price_eur: grand,
+      inquiry_timestamp: new Date().toISOString(),
+      page: (typeof location!=='undefined' ? location.href : '')
+    };
+  }
+
+  var cachedPdfDoc = null;
+
+  function submit(){
+    var payload = buildPayload();
+    var nextBtn = $('fa-next');
+    nextBtn.disabled = true;
+    nextBtn.innerHTML = '<span class="fa-spinner"></span>Sending …';
+
+    fireLeadEvent(payload);
+
+    ensureJsPDF(function(ok){
+      var pdfBase64 = null, pdfFilename = null;
+      if(ok){
+        try{
+          cachedPdfDoc = buildPdfDoc(payload);
+          pdfFilename = 'Inquiry_'+OBJECT_NAME.replace(/[^a-zA-Z0-9]+/g,'_')+'_'+todayStr().replace(/\./g,'-')+'.pdf';
+          var dataUri = cachedPdfDoc.output('datauristring');
+          pdfBase64 = dataUri.split(';base64,').pop();
+        }catch(e){ /* PDF optional */ }
+      }
+      var versand = (window.Promise && Promise.allSettled)
+        ? Promise.allSettled([ sendToZapier(payload, pdfBase64, pdfFilename), sendToBackend() ])
+        : sendToZapier(payload, pdfBase64, pdfFilename);
+      Promise.resolve(versand).then(function(){ showSuccess(payload); }, function(){ showSuccess(payload); });
+    });
+  }
+
+  function showSuccess(payload){
+    var card=document.querySelector('#fa-wrap .fa-card');
+    card.innerHTML='<div style="text-align:center;padding:30px 10px;">'+
+      '<div style="font-size:40px;margin-bottom:10px;color:#681318;">✓</div>'+
+      '<p class="fa-q" style="font-size:22px;">Thank you, '+esc(payload.first_name)+'!</p>'+
+      '<p class="fa-sub" style="font-size:15px;">Your non-binding inquiry for €'+payload.total_price_eur+' has been received. We will get in touch with you as soon as possible. If you have any further questions in the meantime, please feel free to contact us directly at any time.</p>'+
+      '<p class="fa-sub" style="font-size:15px;margin-bottom:20px;">You can download a copy of your inquiry as a PDF here.</p>'+
+      '<button class="fa-btn fa-btn-next" id="fa-pdf" style="flex:none;display:inline-block;width:auto;padding:13px 26px;">Download PDF</button>'+
+      '<p class="fa-note" id="fa-pdf-note" style="text-align:center;display:none;">Creating PDF …</p>'+
+      '</div>';
+    document.getElementById('fa-pdf').addEventListener('click', function(){ downloadPdf(payload); });
+  }
+
+  function downloadPdf(payload){
+    var note=document.getElementById('fa-pdf-note');
+    var fname='Inquiry_'+OBJECT_NAME.replace(/[^a-zA-Z0-9]+/g,'_')+'_'+todayStr().replace(/\./g,'-')+'.pdf';
+    if(cachedPdfDoc){
+      cachedPdfDoc.save(fname);
+      return;
+    }
+    if(note){ note.style.display='block'; note.textContent='Creating PDF …'; }
+    ensureJsPDF(function(ok){
+      if(!ok){ if(note){ note.textContent='PDF could not be loaded. Please check your internet connection.'; } return; }
+      generatePdf(payload);
+      if(note){ note.style.display='none'; }
+    });
+  }
+
+  function ensureJsPDF(cb){
+    if(window.jspdf && window.jspdf.jsPDF){ cb(true); return; }
+    var s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload=function(){ cb(!!(window.jspdf && window.jspdf.jsPDF)); };
+    s.onerror=function(){ cb(false); };
+    document.head.appendChild(s);
+  }
+
+  function generatePdf(payload){
+    var doc = buildPdfDoc(payload);
+    var fname='Inquiry_'+OBJECT_NAME.replace(/[^a-zA-Z0-9]+/g,'_')+'_'+todayStr().replace(/\./g,'-')+'.pdf';
+    doc.save(fname);
+  }
+
+  function todayStr(){
+    var h=new Date();
+    return ('0'+h.getDate()).slice(-2)+'.'+('0'+(h.getMonth()+1)).slice(-2)+'.'+h.getFullYear();
+  }
+
+  function buildPdfDoc(payload){
+    var jsPDF=window.jspdf.jsPDF;
+    var doc=new jsPDF({unit:'mm', format:'a4'});
+    var W=210, M=20, x=M, y=22;
+    var line=function(h){ y+=h; };
+    var maroon=[104,19,24];
+
+    doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(maroon[0],maroon[1],maroon[2]);
+    doc.text(OBJECT_NAME, x, y);
+    doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(90);
+    line(7); doc.text('Summary of your non-binding inquiry', x, y);
+
+    var heute=new Date();
+    var dStr=('0'+heute.getDate()).slice(-2)+'/'+('0'+(heute.getMonth()+1)).slice(-2)+'/'+heute.getFullYear();
+    doc.setFontSize(10); doc.setTextColor(120);
+    doc.text('Date of inquiry: '+dStr, W-M, 22, {align:'right'});
+
+    line(6); doc.setDrawColor(maroon[0],maroon[1],maroon[2]); doc.setLineWidth(0.6); doc.line(x, y, W-M, y);
+    line(10);
+
+    var sectionTitle=function(t){
+      doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(maroon[0],maroon[1],maroon[2]);
+      doc.text(t, x, y); line(7);
+      doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(40);
+    };
+    var row=function(label, val){
+      doc.setTextColor(110); doc.text(label, x, y);
+      doc.setTextColor(30); doc.text(String(val), W-M, y, {align:'right'}); line(7);
+    };
+
+    sectionTitle('Guest contact details');
+    row('Name', (payload.first_name+' '+payload.last_name).trim());
+    row('Email', payload.email);
+
+    line(4); sectionTitle('Stay');
+    row('Guests', payload.guests);
+    if(payload.arrival){ row('Arrival', payload.arrival); }
+    if(payload.departure){ row('Departure', payload.departure); }
+    if(payload.nights){ row('Total nights', payload.nights); }
+    if(payload.season_breakdown){
+      doc.setTextColor(110); doc.text('Season breakdown', x, y); line(6);
+      doc.setTextColor(60); doc.setFontSize(10);
+      var segs=String(payload.season_breakdown).split(' | ');
+      for(var i=0;i<segs.length;i++){ doc.text('• '+segs[i], x+2, y); line(5); }
+      doc.setFontSize(11);
+      line(1);
+    }
+
+    line(4); sectionTitle('Services & Options');
+    if(payload.accommodation_eur){ row('Accommodation total', '€'+payload.accommodation_eur); }
+    row('Final cleaning', '€'+payload.cleaning_eur);
+    row('Vehicle / tour interest', payload.vehicle_interest);
+
+    line(2);
+    doc.setFillColor(maroon[0],maroon[1],maroon[2]);
+    doc.roundedRect(x, y, W-2*M, 14, 2, 2, 'F');
+    doc.setFont('helvetica','bold'); doc.setTextColor(255); doc.setFontSize(12);
+    doc.text('Estimated total price', x+5, y+9);
+    doc.setFontSize(14);
+    doc.text('€'+payload.total_price_eur, W-M-5, y+9, {align:'right'});
+    line(22);
+
+    doc.setFont('helvetica','italic'); doc.setFontSize(9); doc.setTextColor(120);
+    var note='This is a non-binding inquiry. Booking is not automatic. The price shown here is an estimated calculation based on your details. We will contact you personally as soon as possible and confirm availability and the binding final price.';
+    var nLines=doc.splitTextToSize(note, W-2*M);
+    doc.text(nLines, x, y); line(nLines.length*4+8);
+
+    doc.setDrawColor(210); doc.setLineWidth(0.3); doc.line(x, 270, W-M, 270);
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(maroon[0],maroon[1],maroon[2]);
+    doc.text('Your contact', x, 276);
+    doc.setFont('helvetica','normal'); doc.setTextColor(90); doc.setFontSize(8.5);
+    var fy=281;
+    doc.text(PROVIDER.name+'  ·  '+PROVIDER.contact, x, fy); fy+=4;
+    doc.text(PROVIDER.street+'  ·  '+PROVIDER.city+'  ·  '+PROVIDER.country, x, fy); fy+=4;
+    doc.text('Phone: '+PROVIDER.phone+'   Email: '+PROVIDER.email+'   Web: '+PROVIDER.web, x, fy);
+
+    return doc;
+  }
+
+  ladePreise();
+  ladeBelegung();
+  renderCal();
+  updateTotal();
+  showStep(0);
+})();
+</script>
