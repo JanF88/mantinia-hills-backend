@@ -14,6 +14,7 @@ import AngebotDialog from '../components/AngebotDialog'
 import AnzahlungDialog from '../components/AnzahlungDialog'
 import AbschlussDialog from '../components/AbschlussDialog'
 import StornoDialog from '../components/StornoDialog'
+import AbsageDialog from '../components/AbsageDialog'
 
 const TYP_LABEL = {
   angebot: 'Angebot',
@@ -28,7 +29,7 @@ export default function AnfrageDetail() {
   const [buchung, setBuchung] = useState<Buchung | null>(null)
   const [dokumente, setDokumente] = useState<Dokument[]>([])
   const [einstellungen, setEinstellungen] = useState<Einstellungen | null>(null)
-  const [dialog, setDialog] = useState<'angebot' | 'anzahlung' | 'abschluss' | 'storno' | null>(null)
+  const [dialog, setDialog] = useState<'angebot' | 'anzahlung' | 'abschluss' | 'storno' | 'absage' | null>(null)
   const [fehler, setFehler] = useState<string | null>(null)
   const [loeschBestaetigung, setLoeschBestaetigung] = useState(false)
   const [loescht, setLoescht] = useState(false)
@@ -229,8 +230,8 @@ export default function AnfrageDetail() {
           {kannStorno && (
             <button className="btn-gefahr" onClick={() => setDialog('storno')}>Stornieren</button>
           )}
-          {kannAblehnen && (
-            <button className="btn-gefahr" onClick={() => statusSetzen({ status: 'abgelehnt' })}>Ablehnen</button>
+          {kannAblehnen && einstellungen && (
+            <button className="btn-gefahr" onClick={() => setDialog('absage')}>Ablehnen</button>
           )}
           {s === 'abgeschlossen' || s === 'storniert' || s === 'abgelehnt' ? (
             <span style={{ color: 'var(--grau)', alignSelf: 'center', fontSize: 13 }}>
@@ -349,6 +350,14 @@ export default function AnfrageDetail() {
           buchung={buchung}
           angebot={juengstesAngebot}
           anzahlung={juengsteAnzahlung}
+          einstellungen={einstellungen}
+          onFertig={() => { setDialog(null); laden() }}
+          onAbbrechen={() => setDialog(null)}
+        />
+      )}
+      {dialog === 'absage' && einstellungen && (
+        <AbsageDialog
+          buchung={buchung}
           einstellungen={einstellungen}
           onFertig={() => { setDialog(null); laden() }}
           onAbbrechen={() => setDialog(null)}

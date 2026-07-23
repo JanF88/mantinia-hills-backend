@@ -14,6 +14,7 @@ export interface MailVorlagen {
   annahme: MailVorlage
   abschluss: MailVorlage
   storno: MailVorlage
+  absage: MailVorlage
 }
 
 /** Vorlagen je Sprache. */
@@ -75,6 +76,17 @@ Ihr Team vom Ferienhaus Mantinia Hills`,
 hiermit bestätigen wir die Stornierung Ihrer Buchung für den Zeitraum **{anreise}** bis **{abreise}**. Die Einzelheiten entnehmen Sie bitte der Stornorechnung im Anhang.
 
 Wir bedauern, dass Ihr Aufenthalt nicht zustande kommt, und würden uns freuen, Sie zu einem anderen Zeitpunkt begrüßen zu dürfen.
+
+Herzliche Grüße
+Ihr Team vom Ferienhaus Mantinia Hills`,
+  },
+  absage: {
+    betreff: 'Ihre Anfrage - Ferienhaus Mantinia Hills',
+    text: `Guten Tag {vorname} {nachname},
+
+vielen Dank für Ihr Interesse an einem Aufenthalt im Ferienhaus Mantinia Hills vom **{anreise}** bis **{abreise}**.
+
+Leider können wir Ihre Anfrage für diesen Zeitraum nicht bestätigen. Wir würden uns aber sehr freuen, Sie zu einem anderen Zeitpunkt als unsere Gäste begrüßen zu dürfen.
 
 Herzliche Grüße
 Ihr Team vom Ferienhaus Mantinia Hills`,
@@ -142,6 +154,17 @@ We are sorry that your stay will not take place and would be delighted to welcom
 Kind regards
 Your team at Ferienhaus Mantinia Hills`,
   },
+  absage: {
+    betreff: 'Your enquiry - Ferienhaus Mantinia Hills',
+    text: `Dear {vorname} {nachname},
+
+thank you for your interest in a stay at Ferienhaus Mantinia Hills from **{anreise}** to **{abreise}**.
+
+Unfortunately we are unable to confirm your enquiry for this period. However, we would be delighted to welcome you as our guests at another time.
+
+Kind regards
+Your team at Ferienhaus Mantinia Hills`,
+  },
 }
 
 // --- Griechische Erstübersetzung (bitte von Muttersprachler prüfen lassen) ---
@@ -205,6 +228,17 @@ const GR: MailVorlagen = {
 Με εγκάρδιους χαιρετισμούς
 Η ομάδα του Ferienhaus Mantinia Hills`,
   },
+  absage: {
+    betreff: 'Το αίτημά σας - Ferienhaus Mantinia Hills',
+    text: `Αγαπητέ/ή {vorname} {nachname},
+
+σας ευχαριστούμε για το ενδιαφέρον σας για διαμονή στο Ferienhaus Mantinia Hills από **{anreise}** έως **{abreise}**.
+
+Δυστυχώς δεν μπορούμε να επιβεβαιώσουμε το αίτημά σας για αυτό το διάστημα. Θα χαρούμε όμως πολύ να σας καλωσορίσουμε ως επισκέπτες μας σε άλλη χρονική στιγμή.
+
+Με εγκάρδιους χαιρετισμούς
+Η ομάδα του Ferienhaus Mantinia Hills`,
+  },
 }
 
 export const MAIL_VORLAGEN_DEFAULTS: MailVorlagen = DE
@@ -243,6 +277,11 @@ export const MAIL_VORLAGEN_INFO: Record<keyof MailVorlagen, { label: string; wan
     label: 'Stornierung',
     wann: 'beim Stornieren mit Stornorechnung',
     platzhalter: ['vorname', 'nachname', 'anreise', 'abreise', 'nummer'],
+  },
+  absage: {
+    label: 'Absage (Anfrage/Angebot abgelehnt)',
+    wann: 'beim Ablehnen einer Anfrage oder eines nicht angenommenen Angebots',
+    platzhalter: ['vorname', 'nachname', 'anreise', 'abreise'],
   },
 }
 
