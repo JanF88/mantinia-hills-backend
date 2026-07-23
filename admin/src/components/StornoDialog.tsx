@@ -41,8 +41,10 @@ export default function StornoDialog({ buchung, angebot, anzahlung, einstellunge
     setLaedt(true)
     setFehler(null)
     try {
+      let nummer: string | null = null
+      let bytes: Uint8Array | null = null
       if (!ohneRechnung) {
-        const nummer = await naechsteNummer('RE')
+        nummer = await naechsteNummer('RE')
         const datumISO = heuteISO()
         const storno = {
           prozent,
@@ -54,7 +56,7 @@ export default function StornoDialog({ buchung, angebot, anzahlung, einstellunge
           anzahlungNummer: !vollBezahlt && anzahlungEingegangen ? anzahlung.nummer : undefined,
           zahlungLabel: vollBezahlt ? 'Zahlungen' : undefined,
         }
-        const bytes = await stornorechnungPdf(buchung, nummer, datumISO, angebot.nummer, storno, einstellungen)
+        bytes = await stornorechnungPdf(buchung, nummer, datumISO, angebot.nummer, storno, einstellungen)
         await speichereDokument({
           buchungId: buchung.id,
           typ: 'stornorechnung',
@@ -78,41 +80,44 @@ export default function StornoDialog({ buchung, angebot, anzahlung, einstellunge
           pdfBytes: bytes,
         })
         downloadPdf(bytes, `${nummer}_Storno_Mantinia_Hills.pdf`)
-
-        if (senden) {
-          const { betreff, html } = renderMailVorlage(einstellungen.mail_vorlagen.storno, {
-            vorname: buchung.vorname,
-            nachname: buchung.nachname,
-            anreise: datumDE(buchung.anreise),
-            abreise: datumDE(buchung.abreise),
-            nummer,
-          })
-          try {
-            await sendeMail({
-              an: buchung.email,
-              betreff,
-              html: mailRahmen(html, einstellungen.anbieter),
-              anhangBytes: bytes,
-              anhangName: `${nummer}_Stornorechnung_Mantinia_Hills.pdf`,
-              kopieAnMich: true,
-            })
-          } catch (mailErr) {
-            await supabase.from('buchungen').update({ status: 'storniert', storniert_am: new Date().toISOString() }).eq('id', buchung.id)
-            setVersandHinweis(
-              'Die Buchung wurde storniert und die Stornorechnung erstellt, aber der E-Mail-Versand schlug fehl: ' +
-              (mailErr instanceof Error ? mailErr.message : String(mailErr)) +
-              ' — bitte das PDF manuell versenden.',
-            )
-            setLaedt(false)
-            return
-          }
-        }
       }
-      const { error } = await supabase
+
+      // Status SOFORT (vor dem Mailversand) setzen: sobald die Stornorechnung
+      // existiert, darf die Aktion nicht erneut laufen — sonst entstünden bei
+      // einem Fehler nach dem Versand eine zweite Rechnung und eine zweite Mail.
+      const { error: statusErr } = await supabase
         .from('buchungen')
         .update({ status: 'storniert', storniert_am: new Date().toISOString() })
         .eq('id', buchung.id)
-      if (error) throw error
+      if (statusErr) throw statusErr
+
+      if (!ohneRechnung && senden && nummer && bytes) {
+        const { betreff, html } = renderMailVorlage(einstellungen.mail_vorlagen.storno, {
+          vorname: buchung.vorname,
+          nachname: buchung.nachname,
+          anreise: datumDE(buchung.anreise),
+          abreise: datumDE(buchung.abreise),
+          nummer,
+        })
+        try {
+          await sendeMail({
+            an: buchung.email,
+            betreff,
+            html: mailRahmen(html, einstellungen.anbieter),
+            anhangBytes: bytes,
+            anhangName: `${nummer}_Stornorechnung_Mantinia_Hills.pdf`,
+            kopieAnMich: true,
+          })
+        } catch (mailErr) {
+          setVersandHinweis(
+            'Die Buchung wurde storniert und die Stornorechnung erstellt, aber der E-Mail-Versand schlug fehl: ' +
+            (mailErr instanceof Error ? mailErr.message : String(mailErr)) +
+            ' — bitte das PDF manuell versenden.',
+          )
+          setLaedt(false)
+          return
+        }
+      }
       onFertig()
     } catch (err) {
       setFehler('Fehler beim Stornieren: ' + (err instanceof Error ? err.message : String(err)))

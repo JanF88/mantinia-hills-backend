@@ -3,7 +3,7 @@ import { abschlussrechnungPdf } from '../pdf/dokumente'
 import { downloadPdf, naechsteNummer, speichereDokument } from '../lib/dokumentService'
 import { sendeMail, mailRahmen } from '../lib/mail'
 import { renderMailVorlage } from '../lib/mailVorlagen'
-import { datumDE, eur, heuteISO } from '../lib/format'
+import { datumDE, eur, heuteISO, lokalISO } from '../lib/format'
 import type { Buchung, Dokument, Einstellungen } from '../lib/types'
 
 interface Props {
@@ -25,7 +25,7 @@ export default function AbschlussDialog({ buchung, angebot, anzahlung, einstellu
   const faelligBis = useMemo(() => {
     const d = new Date(buchung.anreise + 'T00:00:00')
     d.setDate(d.getDate() - einstellungen.restzahlung_faellig_tage)
-    return d.toISOString().slice(0, 10)
+    return lokalISO(d)
   }, [buchung.anreise, einstellungen.restzahlung_faellig_tage])
 
   const [senden, setSenden] = useState(true)

@@ -55,13 +55,24 @@ Deno.serve(async (req) => {
   if (!input.an || !input.betreff || (!input.html && !input.text)) {
     return json(400, { error: "an, betreff und html/text sind erforderlich" });
   }
+  // Anhang-Größe begrenzen (Base64 ~ 4/3 der Rohgröße): max. ~10 MB Rohdaten.
+  if (input.anhang?.base64 && input.anhang.base64.length > 14_000_000) {
+    return json(413, { error: "Anhang zu groß (max. ca. 10 MB)." });
+  }
 
   const client = new SMTPClient({
     connection: { hostname: host, port, tls: true, auth: { username: user, password: pass } },
   });
 
+  // Hängenden SMTP-Server nicht unbegrenzt warten lassen — nach 25 s abbrechen.
+  const mitTimeout = <T>(p: Promise<T>, ms: number): Promise<T> =>
+    Promise.race([
+      p,
+      new Promise<T>((_, reject) => setTimeout(() => reject(new Error("SMTP-Timeout")), ms)),
+    ]);
+
   try {
-    await client.send({
+    await mitTimeout(client.send({
       from: `${fromName} <${from}>`,
       to: input.an,
       bcc: input.kopie_an_absender ? from : undefined,
@@ -77,7 +88,7 @@ Deno.serve(async (req) => {
           contentType: "application/pdf",
         }]
         : undefined,
-    });
+    }), 25_000);
     await client.close();
     return json(200, { ok: true });
   } catch (err) {

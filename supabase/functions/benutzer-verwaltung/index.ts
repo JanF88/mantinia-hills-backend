@@ -15,10 +15,13 @@ function json(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 }
 
+function jwtAusRequest(req: Request): string {
+  return (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+}
+
 /** Extrahiert die User-ID (sub) aus dem bereits vom Gateway geprüften JWT. */
 function callerId(req: Request): string | null {
-  const auth = req.headers.get("Authorization") ?? "";
-  const jwt = auth.replace(/^Bearer\s+/i, "");
+  const jwt = jwtAusRequest(req);
   const teile = jwt.split(".");
   if (teile.length !== 3) return null;
   try {
@@ -29,11 +32,41 @@ function callerId(req: Request): string | null {
   }
 }
 
+/**
+ * Prüft, dass der Aufrufer ein eingeloggter Admin ist. WICHTIG: verify_jwt=true
+ * am Gateway lässt JEDES gültige Projekt-JWT durch — auch den öffentlichen
+ * anon-Key (role="anon"), der im Website-Quelltext steht. Ohne diese Prüfung
+ * könnte damit jeder Admins auflisten/anlegen/löschen. Daher hier zwingend
+ * role="authenticated" verlangen und das Token gegen den Auth-Server verifizieren.
+ */
+async function istAdmin(
+  supabase: ReturnType<typeof createClient>,
+  req: Request,
+): Promise<boolean> {
+  const jwt = jwtAusRequest(req);
+  if (!jwt) return false;
+  const teile = jwt.split(".");
+  if (teile.length !== 3) return false;
+  try {
+    const payload = JSON.parse(atob(teile[1].replace(/-/g, "+").replace(/_/g, "/")));
+    if (payload.role !== "authenticated") return false;
+  } catch {
+    return false;
+  }
+  // Gegenprüfung: Token muss zu einem echten, gültigen Nutzer gehören.
+  const { data, error } = await supabase.auth.getUser(jwt);
+  return !error && !!data.user;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
   if (req.method !== "POST") return json(405, { error: "method not allowed" });
 
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+
+  if (!(await istAdmin(supabase, req))) {
+    return json(403, { error: "Nicht autorisiert. Bitte als Admin einloggen." });
+  }
 
   let body: { action?: string; email?: string; password?: string; id?: string };
   try {

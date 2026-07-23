@@ -36,8 +36,9 @@ export default function AnzahlungDialog({ buchung, angebot, einstellungen, onFer
   function betragAendern(wert: string) {
     const b = parseFloat(wert.replace(',', '.'))
     if (isNaN(b)) return
-    setBetrag(b)
-    setProzent(Math.round((b / basis) * 10000) / 100)
+    const gerundet = Math.round(b * 100) / 100 // auf Cent runden (sonst 1-Cent-Differenz zum Restbetrag)
+    setBetrag(gerundet)
+    setProzent(Math.round((gerundet / basis) * 10000) / 100)
   }
 
   async function erstellen() {

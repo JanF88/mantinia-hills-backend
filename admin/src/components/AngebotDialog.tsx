@@ -5,7 +5,7 @@ import { downloadPdf, naechsteNummer, speichereDokument } from '../lib/dokumentS
 import { sendeMail, mailRahmen } from '../lib/mail'
 import { renderMailVorlage } from '../lib/mailVorlagen'
 import { angebotPdf } from '../pdf/dokumente'
-import { datumDE, heuteISO } from '../lib/format'
+import { datumDE, heuteISO, lokalISO } from '../lib/format'
 import PositionenEditor from './PositionenEditor'
 import type { Buchung, Einstellungen, Position } from '../lib/types'
 
@@ -27,7 +27,7 @@ export default function AngebotDialog({ buchung, einstellungen, onFertig, onAbbr
   const [gueltigBis, setGueltigBis] = useState(() => {
     const d = new Date()
     d.setDate(d.getDate() + einstellungen.angebot_gueltig_tage)
-    return d.toISOString().slice(0, 10)
+    return lokalISO(d)
   })
   const [senden, setSenden] = useState(true)
   const [fehler, setFehler] = useState<string | null>(null)
@@ -61,7 +61,10 @@ export default function AngebotDialog({ buchung, einstellungen, onFertig, onAbbr
       downloadPdf(bytes, `${nummer}_Mantinia_Hills.pdf`)
 
       if (senden) {
-        const annahmeUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/angebot-annehmen?token=${token}`
+        // Auf die Bestätigungsseite der App verlinken (NICHT direkt auf die
+        // Funktion) — dort bestätigt der Gast bewusst per Klick. So nimmt kein
+        // automatischer Mail-/Virenscanner das Angebot versehentlich an.
+        const annahmeUrl = `${window.location.origin}/angebot-annehmen?token=${token}`
         const annahmeButton = `<table cellpadding="0" cellspacing="0" border="0" style="margin:22px 0"><tr><td style="border-radius:8px;background:#681318">
 <a href="${annahmeUrl}" target="_blank" style="display:inline-block;padding:14px 28px;color:#fff;font-weight:bold;font-size:15px;text-decoration:none;font-family:Arial,Helvetica,sans-serif">Angebot annehmen</a>
 </td></tr></table>

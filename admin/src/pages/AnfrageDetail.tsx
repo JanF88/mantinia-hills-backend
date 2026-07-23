@@ -98,7 +98,7 @@ export default function AnfrageDetail() {
         <StatusBadge status={s} />
       </div>
 
-      {restzahlungFaellig(buchung) && (
+      {restzahlungFaellig(buchung, einstellungen?.abschlussrechnung_tage_vorher) && (
         <div className="warnung">
           <strong>Abschlussrechnung / Restzahlung fällig:</strong> Die Anreise ({datumDE(buchung.anreise)}) rückt näher.
           {s === 'angezahlt'

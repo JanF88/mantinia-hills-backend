@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { ladeEinstellungen } from '../lib/einstellungen'
 import { datumDE, eur, zeitpunktDE } from '../lib/format'
 import { restzahlungFaellig } from '../lib/statistik'
 import type { Buchung, BuchungStatus } from '../lib/types'
@@ -26,6 +27,7 @@ export default function AnfragenListe() {
   const [suche, setSuche] = useState('')
   const [sortierung, setSortierung] = useState<Sortierung>('eingang')
   const [laedt, setLaedt] = useState(true)
+  const [tageVorher, setTageVorher] = useState(14)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -33,6 +35,9 @@ export default function AnfragenListe() {
       setAlle((data as Buchung[]) ?? [])
       setLaedt(false)
     })
+    ladeEinstellungen()
+      .then((e) => setTageVorher(e.abschlussrechnung_tage_vorher))
+      .catch(() => { /* Fallback: Standard 14 Tage */ })
   }, [])
 
   const buchungen = useMemo(() => {
@@ -63,7 +68,7 @@ export default function AnfragenListe() {
     return m
   }, [alle])
 
-  const faellig = useMemo(() => alle.filter((b) => restzahlungFaellig(b)), [alle])
+  const faellig = useMemo(() => alle.filter((b) => restzahlungFaellig(b, tageVorher)), [alle, tageVorher])
 
   return (
     <>
@@ -132,7 +137,7 @@ export default function AnfragenListe() {
                 <td className="rechts">{b.gesamtpreis_eur != null ? eur(b.gesamtpreis_eur) : '–'}</td>
                 <td>
                   <StatusBadge status={b.status} />
-                  {restzahlungFaellig(b) && (
+                  {restzahlungFaellig(b, tageVorher) && (
                     <div style={{ fontSize: 11, color: 'var(--rot)', fontWeight: 600, marginTop: 4 }}>⚠ Abschlussrechnung fällig</div>
                   )}
                 </td>

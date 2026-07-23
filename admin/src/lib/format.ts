@@ -25,9 +25,18 @@ export function zeitpunktDE(iso: string | null | undefined): string {
   })
 }
 
-export function heuteISO(): string {
-  const d = new Date()
+/**
+ * Date → lokales ISO "YYYY-MM-DD". WICHTIG statt `toISOString().slice(0,10)`:
+ * toISOString rechnet in UTC und liefert in Zeitzonen mit positivem Offset
+ * (DE/GR) für lokale Mitternacht den VORTAG → Fälligkeits-/Gültigkeitsdaten
+ * wären systematisch einen Tag zu früh.
+ */
+export function lokalISO(d: Date): string {
   const m = String(d.getMonth() + 1).padStart(2, '0')
   const t = String(d.getDate()).padStart(2, '0')
   return `${d.getFullYear()}-${m}-${t}`
+}
+
+export function heuteISO(): string {
+  return lokalISO(new Date())
 }
