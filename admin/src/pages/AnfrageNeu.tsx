@@ -123,7 +123,7 @@ export default function AnfrageNeu() {
           </div>
           <div>
             <label htmlFor="personen">Personen *</label>
-            <input id="personen" type="number" min={1} max={6} value={personen} onChange={(e) => setPersonen(parseInt(e.target.value, 10) || 1)} required />
+            <input id="personen" type="number" min={2} max={6} value={personen} onChange={(e) => setPersonen(Math.max(2, parseInt(e.target.value, 10) || 2))} required />
           </div>
         </div>
         <div className="zeile">
