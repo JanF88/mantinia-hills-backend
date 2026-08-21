@@ -254,12 +254,12 @@
 
     <div class="fa-step active" data-step="0">
       <p class="fa-q">Mit wie vielen Personen reisen Sie?</p>
-      <p class="fa-sub">Ab 5 Personen profitieren Sie von einem reduzierten Preis pro Person.</p>
+      <p class="fa-sub">Ab 5 Personen profitieren Sie von einem reduzierten Preis pro Person. Für Alleinreisende gilt der Preis für 2 Personen (Mindestpreis).</p>
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
         <label class="fa-flabel" style="margin:0;">Anzahl Personen</label>
         <span class="fa-people-out" id="fa-people-out">4</span>
       </div>
-      <input type="range" id="fa-people" min="2" max="6" value="4" step="1" />
+      <input type="range" id="fa-people" min="1" max="6" value="4" step="1" />
     </div>
 
     <div class="fa-step" data-step="1">
@@ -469,7 +469,8 @@
     while(d<dep){
       var s=monthToSeason[d.getMonth()];
       var pn=pricePerNight(d, state.people);
-      var nightTotal=pn*state.people;
+      var verrechnet=Math.max(2,state.people); /* Mindestpreis: Alleinreisende zahlen wie 2 Personen */
+      var nightTotal=pn*verrechnet;
       total+=nightTotal; nights++;
       if(!bySeason[s]) bySeason[s]={nights:0,sum:0};
       bySeason[s].nights++; bySeason[s].sum+=nightTotal;

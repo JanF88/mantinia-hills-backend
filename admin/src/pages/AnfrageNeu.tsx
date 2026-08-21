@@ -123,7 +123,7 @@ export default function AnfrageNeu() {
           </div>
           <div>
             <label htmlFor="personen">Personen *</label>
-            <input id="personen" type="number" min={2} max={6} value={personen} onChange={(e) => setPersonen(Math.max(2, parseInt(e.target.value, 10) || 2))} required />
+            <input id="personen" type="number" min={1} max={6} value={personen} onChange={(e) => setPersonen(Math.max(1, parseInt(e.target.value, 10) || 1))} required />
           </div>
         </div>
         <div className="zeile">
@@ -170,7 +170,7 @@ export default function AnfrageNeu() {
           <h2>Preisberechnung</h2>
           {kalk.segmente.map((s, i) => (
             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 14 }}>
-              <span>Übernachtung {s.saisonName} ({s.naechte} {s.naechte === 1 ? 'Nacht' : 'Nächte'} × {personen} Pers. × {s.satzProPersonNacht} €)</span>
+              <span>Übernachtung {s.saisonName} ({s.naechte} {s.naechte === 1 ? 'Nacht' : 'Nächte'} × {Math.max(2, personen)} Pers. × {s.satzProPersonNacht} €)</span>
               <strong>{eur(s.betrag)}</strong>
             </div>
           ))}

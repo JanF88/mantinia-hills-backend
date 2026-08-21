@@ -114,7 +114,10 @@ export default function AnfrageDetail() {
 
   return (
     <>
-      <p><Link to="/anfragen">← Zurück zur Liste</Link></p>
+      <p style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+        <Link to="/anfragen">← Zurück zur Liste</Link>
+        <Link to="/kalender">📅 Zum Kalender</Link>
+      </p>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
         <h2 style={{ margin: 0 }}>{buchung.vorname} {buchung.nachname}</h2>
         <StatusBadge status={s} />

@@ -49,6 +49,8 @@ export function berechneAufenthalt(
   if (!(abreise > anreise)) return null
 
   const reduziert = personen >= e.personen_schwelle
+  // Mindestpreis: Alleinreisende (1 Person) zahlen den Preis für 2 Personen.
+  const verrechnetePersonen = Math.max(2, personen)
   const segmente: SaisonSegment[] = []
   let naechte = 0
 
@@ -61,14 +63,14 @@ export function berechneAufenthalt(
     const letztes = segmente[segmente.length - 1]
     if (letztes && letztes.saison === saison && letztes.satzProPersonNacht === satz) {
       letztes.naechte++
-      letztes.betrag += satz * personen
+      letztes.betrag += satz * verrechnetePersonen
     } else {
       segmente.push({
         saison,
         saisonName: e.saison_namen[saison],
         naechte: 1,
         satzProPersonNacht: satz,
-        betrag: satz * personen,
+        betrag: satz * verrechnetePersonen,
       })
     }
     naechte++
@@ -92,8 +94,10 @@ export function angebotsPositionen(
   lang: Sprache = 'de',
 ): Position[] {
   const T = pdfT(lang)
+  // Mindestpreis: bei 1 Person weist die Position „× 2 Pers." aus (so stimmt die Rechnung).
+  const verrechnetePersonen = Math.max(2, personen)
   const positionen: Position[] = kalk.segmente.map((s) => ({
-    bezeichnung: T.uebernachtung(s.saisonName, s.naechte, personen, s.satzProPersonNacht),
+    bezeichnung: T.uebernachtung(s.saisonName, s.naechte, verrechnetePersonen, s.satzProPersonNacht),
     menge: 1,
     einzelpreis: s.betrag,
     betrag: s.betrag,
