@@ -5,6 +5,7 @@
 // Optional überschreibbar: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_FROM, SMTP_FROM_NAME.
 
 import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -33,9 +34,34 @@ interface MailInput {
   anhang?: MailAnhang;
 }
 
+/**
+ * Nur eingeloggte Admins dürfen senden. WICHTIG: verify_jwt=true am Gateway
+ * lässt JEDES gültige Projekt-JWT durch — auch den öffentlichen anon-Key aus
+ * dem Website-Quelltext. Ohne diese Prüfung wäre die Funktion ein offenes
+ * Spam-Relay. Daher role="authenticated" erzwingen und Token verifizieren.
+ */
+async function istAdmin(req: Request): Promise<boolean> {
+  const jwt = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+  const teile = jwt.split(".");
+  if (teile.length !== 3) return false;
+  try {
+    const payload = JSON.parse(atob(teile[1].replace(/-/g, "+").replace(/_/g, "/")));
+    if (payload.role !== "authenticated") return false;
+  } catch {
+    return false;
+  }
+  const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  const { data, error } = await supabase.auth.getUser(jwt);
+  return !error && !!data.user;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
   if (req.method !== "POST") return json(405, { error: "method not allowed" });
+
+  if (!(await istAdmin(req))) {
+    return json(403, { error: "Nicht autorisiert. Bitte als Admin einloggen." });
+  }
 
   const pass = Deno.env.get("SMTP_PASS");
   if (!pass) return json(500, { error: "SMTP_PASS nicht gesetzt" });

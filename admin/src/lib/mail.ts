@@ -46,7 +46,17 @@ export async function sendeMail(opts: {
   if (opts.anhangBytes && opts.anhangName) {
     body.anhang = { dateiname: opts.anhangName, base64: bytesZuBase64(opts.anhangBytes) }
   }
-  const { data, error } = await supabase.functions.invoke('sende-mail', { body })
+  let { data, error } = await supabase.functions.invoke('sende-mail', { body })
+  // Netzwerk-Abbruch (typisch mobil: Funkloch, Netzwechsel, Tab schlafen gelegt):
+  // die Anfrage kam gar nicht erst an — einmal automatisch wiederholen.
+  // (Im seltensten Fall, dass der erste Versuch doch durchging, entsteht eine
+  // doppelte Mail — das ist besser als gar keine.)
+  if (error && (error.name === 'FunctionsFetchError' || /Failed to send a request/i.test(error.message ?? ''))) {
+    await new Promise((r) => setTimeout(r, 2000))
+    const zweiter = await supabase.functions.invoke('sende-mail', { body })
+    data = zweiter.data
+    error = zweiter.error
+  }
   if (error) {
     let detail = error.message
     try {

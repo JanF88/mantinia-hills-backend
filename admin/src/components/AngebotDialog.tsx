@@ -85,9 +85,9 @@ export default function AngebotDialog({ buchung, einstellungen, onFertig, onAbbr
           await markiereVersendet(doc.id)
         } catch (mailErr) {
           setVersandHinweis(
-            'Das Angebot wurde erstellt und heruntergeladen, aber der E-Mail-Versand schlug fehl: ' +
+            'Das Angebot wurde erstellt, aber der E-Mail-Versand schlug fehl: ' +
             (mailErr instanceof Error ? mailErr.message : String(mailErr)) +
-            ' — bitte das PDF manuell versenden.',
+            ' — kein Problem: einfach in dieser Anfrage auf „Angebot erneut senden" tippen (bei stabiler Verbindung).',
           )
           setLaedt(false)
           return
