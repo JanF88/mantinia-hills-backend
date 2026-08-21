@@ -14,6 +14,23 @@ export default function Einstellungen() {
   const [fehler, setFehler] = useState<string | null>(null)
   const [laedt, setLaedt] = useState(false)
   const [mailSprache, setMailSprache] = useState<'de' | 'en' | 'gr'>('de')
+  const [syncStatus, setSyncStatus] = useState<string | null>(null)
+
+  const ICAL_KEY = '015681fdb57dfca7aaf38572f463bbcd'
+  const icalExportUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ical?key=${ICAL_KEY}`
+
+  async function jetztSynchronisieren() {
+    setSyncStatus('Synchronisiere …')
+    try {
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ical-sync?key=${ICAL_KEY}`, { method: 'POST' })
+      const j = await res.json()
+      setSyncStatus(res.ok
+        ? `✓ Booking: ${j.booking ?? '–'} · Airbnb: ${j.airbnb ?? '–'}`
+        : `✗ Fehler: ${j.error ?? res.status}`)
+    } catch (err) {
+      setSyncStatus('✗ ' + (err instanceof Error ? err.message : String(err)))
+    }
+  }
 
   useEffect(() => {
     ladeEinstellungen().then(setE).catch(() => setFehler('Einstellungen konnten nicht geladen werden.'))
@@ -236,6 +253,45 @@ export default function Einstellungen() {
           <div><label>IBAN</label><input value={e.anbieter.iban} onChange={(ev) => anbieterAendern('iban', ev.target.value)} /></div>
           <div><label>BIC</label><input value={e.anbieter.bic} onChange={(ev) => anbieterAendern('bic', ev.target.value)} /></div>
         </div>
+      </details>
+
+      <details className="card akkordeon">
+        <summary>Kalender-Sync (Booking / Airbnb)</summary>
+        <p style={{ fontSize: 13, color: 'var(--grau)', marginTop: 0 }}>
+          Belegungen werden per iCal in <strong>beide Richtungen</strong> abgeglichen: Buchungen von den Portalen
+          sperren automatisch euren Website-Kalender (Import läuft stündlich), und die Portale können eure
+          Direktbuchungen über die Export-URL unten blocken. Hinweis: iCal ist verzögert — die Portale
+          aktualisieren nur alle paar Stunden.
+        </p>
+        <div className="zeile">
+          <div>
+            <label>Booking.com iCal-URL (Export aus dem Booking-Extranet)</label>
+            <input
+              placeholder="https://ical.booking.com/v1/export?t=…"
+              value={e.ical_feeds.booking}
+              onChange={(ev) => set('ical_feeds', { ...e.ical_feeds, booking: ev.target.value.trim() })}
+            />
+          </div>
+        </div>
+        <div className="zeile">
+          <div>
+            <label>Airbnb iCal-URL (Kalender exportieren im Airbnb-Konto)</label>
+            <input
+              placeholder="https://www.airbnb.com/calendar/ical/….ics"
+              value={e.ical_feeds.airbnb}
+              onChange={(ev) => set('ical_feeds', { ...e.ical_feeds, airbnb: ev.target.value.trim() })}
+            />
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginTop: 4 }}>
+          <button className="btn-klein" onClick={jetztSynchronisieren}>⟳ Jetzt synchronisieren</button>
+          <span style={{ fontSize: 12.5, color: 'var(--grau)' }}>Erst „Alle Einstellungen speichern", dann synchronisieren.</span>
+        </div>
+        {syncStatus && <p className="hinweis" style={{ marginTop: 10, marginBottom: 0 }}>{syncStatus}</p>}
+        <p style={{ fontSize: 13, marginTop: 16, marginBottom: 0 }}>
+          <strong>Export-URL für Booking &amp; Airbnb</strong> (dort als „Kalender importieren" eintragen):<br />
+          <code style={{ fontSize: 12, wordBreak: 'break-all', userSelect: 'all' }}>{icalExportUrl}</code>
+        </p>
       </details>
 
       <details className="card akkordeon">

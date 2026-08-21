@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { MONATSNAMEN, belegungsArt, buchungenAmTag, findeAbstandsKonflikte, tagISO } from '../lib/statistik'
 import { datumDE, eur } from '../lib/format'
-import type { Buchung } from '../lib/types'
+import type { Buchung, IcalBlockierung } from '../lib/types'
 import StatusBadge from '../components/StatusBadge'
 
 const WOCHENTAGE = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
@@ -13,6 +13,7 @@ export default function Kalender() {
   const [jahr, setJahr] = useState(heute.getFullYear())
   const [monat0, setMonat0] = useState(heute.getMonth())
   const [buchungen, setBuchungen] = useState<Buchung[]>([])
+  const [extern, setExtern] = useState<IcalBlockierung[]>([])
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -25,6 +26,13 @@ export default function Kalender() {
       .lt('anreise', bis)
       .gt('abreise', von)
       .then(({ data }) => setBuchungen((data as Buchung[]) ?? []))
+    // Externe Buchungen (Booking/Airbnb aus dem iCal-Import)
+    supabase
+      .from('ical_blockierungen')
+      .select('*')
+      .lt('von', bis)
+      .gt('bis', von)
+      .then(({ data }) => setExtern((data as IcalBlockierung[]) ?? []))
   }, [jahr, monat0])
 
   function blaettern(delta: number) {
@@ -97,9 +105,19 @@ export default function Kalender() {
               if (!tag) return <div key={ti} className="kal-zelle kal-leer" />
               const iso = tagISO(tag)
               const belegt = buchungenAmTag(buchungen, iso)
+              const externHeute = extern.filter((x) => x.von <= iso && iso < x.bis)
               return (
                 <div key={ti} className={`kal-zelle${iso === heuteISO ? ' kal-heute' : ''}`}>
                   <div className="kal-tag">{tag.getDate()}</div>
+                  {externHeute.map((x) => (
+                    <div
+                      key={x.id}
+                      className="kal-belegung kal-extern"
+                      title={`Externe Buchung über ${x.quelle === 'booking' ? 'Booking.com' : x.quelle === 'airbnb' ? 'Airbnb' : x.quelle}`}
+                    >
+                      {x.von === iso ? '▸ ' : ''}{x.quelle === 'booking' ? 'Booking' : x.quelle === 'airbnb' ? 'Airbnb' : x.quelle}
+                    </div>
+                  ))}
                   {belegt.map((b) => {
                     const art = belegungsArt(b)!
                     const artLabel = art === 'gebucht' ? 'Gebucht' : art === 'reserviert' ? 'Reserviert' : 'Anfrage'
@@ -123,6 +141,7 @@ export default function Kalender() {
           <span><span className="kal-legende kal-gebucht" /> Gebucht (Anzahlung getätigt)</span>
           <span><span className="kal-legende kal-reserviert" /> Reserviert (Angebot versendet)</span>
           <span><span className="kal-legende kal-anfrage" /> Anfrage</span>
+          <span><span className="kal-legende kal-extern" /> Extern (Booking/Airbnb)</span>
           <span>▸ = Anreisetag · Abreisetag zählt nicht als belegt</span>
         </div>
 

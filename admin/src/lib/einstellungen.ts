@@ -19,6 +19,7 @@ const STANDARD_EINSTELLUNGEN: Record<string, unknown> = {
   restzahlung_faellig_tage: 7,
   storno_stufen: [{ min_tage: 60, prozent: 20 }, { min_tage: 30, prozent: 50 }, { min_tage: 7, prozent: 80 }, { min_tage: 0, prozent: 100 }],
   anbieter: { name: 'Ferienhaus Mantinia Hills', inhaber: '', strasse: '', ort: '', land: '', telefon: '', email: '', web: '', bank: '', iban: '', bic: '' },
+  ical_feeds: { booking: '', airbnb: '' },
 }
 
 /** Lädt alle Einstellungs-Keys als ein Objekt (Mail-Vorlagen mit Defaults aufgefüllt). */

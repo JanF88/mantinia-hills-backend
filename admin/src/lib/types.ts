@@ -47,6 +47,17 @@ export interface Buchung {
   annahme_token: string | null
 }
 
+/** Externe Kalender-Blockierung (Booking/Airbnb via iCal-Import). */
+export interface IcalBlockierung {
+  id: string
+  quelle: string
+  uid: string
+  von: string
+  bis: string
+  zusammenfassung: string | null
+  importiert_am: string
+}
+
 export interface Position {
   bezeichnung: string
   menge: number
@@ -118,5 +129,7 @@ export interface Einstellungen {
   restzahlung_faellig_tage: number
   storno_stufen: StornoStufe[]
   anbieter: Anbieter
+  /** iCal-Feed-URLs der Portale (Import Booking/Airbnb → eigener Kalender). */
+  ical_feeds: { booking: string; airbnb: string }
   mail_vorlagen: import('./mailVorlagen').MailVorlagenSprachen
 }
