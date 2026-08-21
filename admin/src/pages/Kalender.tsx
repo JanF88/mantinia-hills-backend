@@ -8,13 +8,33 @@ import StatusBadge from '../components/StatusBadge'
 
 const WOCHENTAGE = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
 
+/** Zuletzt angesehenen Monat aus der Sitzung lesen (Fallback: aktueller Monat). */
+function startMonat(): { jahr: number; monat0: number } {
+  const heute = new Date()
+  const gespeichert = sessionStorage.getItem('kalender-monat')
+  const m = gespeichert?.match(/^(\d{4})-(\d{1,2})$/)
+  if (m) {
+    const jahr = parseInt(m[1], 10)
+    const monat0 = parseInt(m[2], 10)
+    if (monat0 >= 0 && monat0 <= 11) return { jahr, monat0 }
+  }
+  return { jahr: heute.getFullYear(), monat0: heute.getMonth() }
+}
+
 export default function Kalender() {
   const heute = new Date()
-  const [jahr, setJahr] = useState(heute.getFullYear())
-  const [monat0, setMonat0] = useState(heute.getMonth())
+  const start = startMonat()
+  const [jahr, setJahr] = useState(start.jahr)
+  const [monat0, setMonat0] = useState(start.monat0)
   const [buchungen, setBuchungen] = useState<Buchung[]>([])
   const [extern, setExtern] = useState<IcalBlockierung[]>([])
   const navigate = useNavigate()
+
+  // Angesehenen Monat merken, damit „Zum Kalender" nach einem Kontakt-Besuch
+  // wieder hier landet (gilt für die aktuelle Browser-Sitzung).
+  useEffect(() => {
+    sessionStorage.setItem('kalender-monat', `${jahr}-${monat0}`)
+  }, [jahr, monat0])
 
   useEffect(() => {
     // Alle Buchungen mit Berührung des angezeigten Monats (inkl. Überhang aus Nachbarmonaten)
