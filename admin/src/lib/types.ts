@@ -9,7 +9,14 @@ export type BuchungStatus =
   | 'abgelehnt'
 
 export type DokumentTyp = 'angebot' | 'anzahlungsrechnung' | 'abschlussrechnung' | 'stornorechnung'
-export type AnfrageQuelle = 'webhook' | 'manuell'
+export type AnfrageQuelle = 'webhook' | 'manuell' | 'direktbuchung'
+
+/** Anzeigename je Quelle. */
+export const QUELLE_LABEL: Record<AnfrageQuelle, string> = {
+  webhook: 'Website',
+  manuell: 'Manuell',
+  direktbuchung: '⚡ Direktbuchung',
+}
 export type Sprache = 'de' | 'en' | 'gr'
 
 /** Anzeigename je Sprache. */

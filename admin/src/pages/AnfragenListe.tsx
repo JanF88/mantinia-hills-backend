@@ -5,9 +5,13 @@ import { ladeEinstellungen } from '../lib/einstellungen'
 import { datumDE, eur, zeitpunktDE } from '../lib/format'
 import { restzahlungFaellig } from '../lib/statistik'
 import type { Buchung, BuchungStatus } from '../lib/types'
+import { QUELLE_LABEL } from '../lib/types'
 import StatusBadge, { STATUS_LABEL } from '../components/StatusBadge'
 
-const FILTER: (BuchungStatus | 'alle')[] = [
+type FilterWert = BuchungStatus | 'alle' | 'aktiv'
+
+const FILTER: FilterWert[] = [
+  'aktiv',
   'alle',
   'neu',
   'angebot_erstellt',
@@ -19,6 +23,9 @@ const FILTER: (BuchungStatus | 'alle')[] = [
   'abgelehnt',
 ]
 
+/** „Aktiv" = alles, woran noch gearbeitet wird (Standardansicht). */
+const AKTIV_STATUS: BuchungStatus[] = ['neu', 'angebot_erstellt', 'bestaetigt', 'angezahlt', 'bezahlt']
+
 type Sortierung = 'eingang' | 'anreise' | 'preis' | 'name' | 'status'
 
 // Reihenfolge für die Status-Sortierung (entlang des Buchungs-Workflows).
@@ -28,7 +35,7 @@ const STATUS_REIHENFOLGE: BuchungStatus[] = [
 
 export default function AnfragenListe() {
   const [alle, setAlle] = useState<Buchung[]>([])
-  const [filter, setFilter] = useState<BuchungStatus | 'alle'>('alle')
+  const [filter, setFilter] = useState<FilterWert>('aktiv')
   const [suche, setSuche] = useState('')
   const [sortierung, setSortierung] = useState<Sortierung>('eingang')
   const [laedt, setLaedt] = useState(true)
@@ -36,10 +43,21 @@ export default function AnfragenListe() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    supabase.from('buchungen').select('*').then(({ data }) => {
-      setAlle((data as Buchung[]) ?? [])
-      setLaedt(false)
-    })
+    // Selbstpflegendes Archiv: komplett bezahlte Buchungen mit Abreise in der
+    // Vergangenheit automatisch abschließen, dann laden.
+    const heute = new Date()
+    const heuteISO = `${heute.getFullYear()}-${String(heute.getMonth() + 1).padStart(2, '0')}-${String(heute.getDate()).padStart(2, '0')}`
+    supabase
+      .from('buchungen')
+      .update({ status: 'abgeschlossen' })
+      .eq('status', 'bezahlt')
+      .lt('abreise', heuteISO)
+      .then(() => {
+        supabase.from('buchungen').select('*').then(({ data }) => {
+          setAlle((data as Buchung[]) ?? [])
+          setLaedt(false)
+        })
+      })
     ladeEinstellungen()
       .then((e) => setTageVorher(e.abschlussrechnung_tage_vorher))
       .catch(() => { /* Fallback: Standard 14 Tage */ })
@@ -48,7 +66,8 @@ export default function AnfragenListe() {
   const buchungen = useMemo(() => {
     const q = suche.trim().toLowerCase()
     let liste = alle.filter((b) => {
-      if (filter !== 'alle' && b.status !== filter) return false
+      if (filter === 'aktiv') { if (!AKTIV_STATUS.includes(b.status)) return false }
+      else if (filter !== 'alle' && b.status !== filter) return false
       if (q) {
         const heu = `${b.vorname} ${b.nachname} ${b.email}`.toLowerCase()
         if (!heu.includes(q)) return false
@@ -69,8 +88,11 @@ export default function AnfragenListe() {
 
   // Anzahl je Status für die Tab-Zähler
   const anzahl = useMemo(() => {
-    const m: Record<string, number> = { alle: alle.length }
-    for (const b of alle) m[b.status] = (m[b.status] ?? 0) + 1
+    const m: Record<string, number> = { alle: alle.length, aktiv: 0 }
+    for (const b of alle) {
+      m[b.status] = (m[b.status] ?? 0) + 1
+      if (AKTIV_STATUS.includes(b.status)) m.aktiv++
+    }
     return m
   }, [alle])
 
@@ -112,7 +134,7 @@ export default function AnfragenListe() {
       <div className="tabs">
         {FILTER.map((f) => (
           <button key={f} className={filter === f ? 'aktiv' : ''} onClick={() => setFilter(f)}>
-            {f === 'alle' ? 'Alle' : STATUS_LABEL[f]}
+            {f === 'aktiv' ? 'Aktiv' : f === 'alle' ? 'Alle' : STATUS_LABEL[f]}
             {anzahl[f] ? <span style={{ opacity: 0.6 }}> ({anzahl[f]})</span> : null}
           </button>
         ))}
@@ -147,7 +169,7 @@ export default function AnfragenListe() {
                     <div style={{ fontSize: 11, color: 'var(--rot)', fontWeight: 600, marginTop: 4 }}>⚠ Abschlussrechnung fällig</div>
                   )}
                 </td>
-                <td className="nur-desktop" style={{ fontSize: 13, color: 'var(--grau)' }}>{b.quelle === 'webhook' ? 'Website' : 'Manuell'}</td>
+                <td className="nur-desktop" style={{ fontSize: 13, color: 'var(--grau)' }}>{QUELLE_LABEL[b.quelle] ?? b.quelle}</td>
                 <td className="nur-desktop" style={{ fontSize: 13, color: 'var(--grau)' }}>{zeitpunktDE(b.created_at)}</td>
               </tr>
             ))}

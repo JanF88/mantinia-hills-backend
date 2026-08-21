@@ -313,8 +313,14 @@
       <p class="fa-q">Zusammenfassung Ihrer Anfrage</p>
       <p class="fa-sub">Bitte prüfen Sie Ihre Angaben und senden Sie die Anfrage unverbindlich ab.</p>
       <div id="fa-summary"></div>
-      <p class="fa-note">Unverbindlich &amp; kostenlos. Die Buchung erfolgt nicht über diese Seite – wir bestätigen
-        Ihnen Verfügbarkeit und den verbindlichen Endpreis per E-Mail. Ihre Daten werden vertraulich behandelt.</p>
+      <p class="fa-note">Unverbindliche Anfrage: kostenlos &amp; ohne Buchung – wir bestätigen Ihnen Verfügbarkeit
+        und den verbindlichen Endpreis per E-Mail. Ihre Daten werden vertraulich behandelt.</p>
+      <div id="fa-direkt-box" style="margin-top:16px;padding-top:16px;border-top:1px solid #e2ddd6;">
+        <button type="button" class="fa-btn fa-btn-next" id="fa-direkt" style="width:100%;">Jetzt verbindlich buchen</button>
+        <p class="fa-note" style="margin-top:8px;">Oder buchen Sie direkt: Die Verfügbarkeit wird sofort geprüft und Sie
+          erhalten umgehend die Buchungsbestätigung mit der Anzahlungsrechnung per E-Mail – ohne Wartezeit.</p>
+        <div class="fa-warn" id="fa-direkt-warn" style="display:none;"></div>
+      </div>
     </div>
 
     <div class="fa-nav">
@@ -596,6 +602,45 @@
     else { submit(); }
   });
   $('fa-back').addEventListener('click',function(){ if(step>0) showStep(step-1); });
+
+  /* ---- Direktbuchung: Verfügbarkeit + Buchung + Rechnung übernimmt das Backend ---- */
+  var DIREKT_URL = BACKEND + "/direkt-buchen?key=358df55578f41fd3941997948f028e8b";
+  var DIREKT_TXT = {
+    btn: 'Jetzt verbindlich buchen',
+    laedt: 'Wird gebucht …',
+    belegt: 'Dieser Zeitraum ist leider nicht mehr verfügbar. Bitte wählen Sie andere Daten oder senden Sie eine unverbindliche Anfrage.',
+    fehler: 'Die Buchung konnte gerade nicht verarbeitet werden. Bitte versuchen Sie es erneut oder senden Sie eine unverbindliche Anfrage.',
+    dankeTitel: function(v){ return 'Vielen Dank, '+v+' – Ihre Buchung ist bestätigt!'; },
+    dankeText: function(mail){ return 'Wir haben Ihnen soeben die Buchungsbestätigung mit der Anzahlungsrechnung an '+mail+' geschickt (bitte ggf. auch den Spam-Ordner prüfen). Mit Eingang der Anzahlung ist Ihr Aufenthalt fest reserviert.'; }
+  };
+  $('fa-direkt').addEventListener('click', function(){
+    var payload=buildPayload();
+    var btn=$('fa-direkt'), nextBtn=$('fa-next'), warn=$('fa-direkt-warn');
+    warn.style.display='none';
+    btn.disabled=true; nextBtn.disabled=true;
+    btn.innerHTML='<span class="fa-spinner"></span>'+DIREKT_TXT.laedt;
+    fireLeadEvent(payload);
+    var p=new URLSearchParams();
+    for(var k in payload){ if(payload.hasOwnProperty(k)) p.append(k, payload[k]); }
+    function reset(msg){
+      btn.disabled=false; nextBtn.disabled=false; btn.textContent=DIREKT_TXT.btn;
+      warn.style.display='block'; warn.textContent=msg;
+    }
+    fetch(DIREKT_URL,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:p.toString()})
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if(j && (j.status==='ok' || j.status==='ok_nomail')){
+          var card=document.querySelector('#fa-wrap .fa-card');
+          card.innerHTML='<div style="text-align:center;padding:30px 10px;">'+
+            '<div style="font-size:40px;margin-bottom:10px;color:#681318;">✓</div>'+
+            '<p class="fa-q" style="font-size:22px;">'+DIREKT_TXT.dankeTitel(esc(payload.vorname))+'</p>'+
+            '<p class="fa-sub" style="font-size:15px;">'+DIREKT_TXT.dankeText(esc(payload.email))+'</p>'+
+            '</div>';
+        } else if(j && j.status==='belegt'){ reset(DIREKT_TXT.belegt); }
+        else { reset(DIREKT_TXT.fehler); }
+      })
+      .catch(function(){ reset(DIREKT_TXT.fehler); });
+  });
 
   /* ---- Facebook Pixel Lead-Event (Basis-Pixel liegt global auf der Seite) ---- */
   function fireLeadEvent(payload){

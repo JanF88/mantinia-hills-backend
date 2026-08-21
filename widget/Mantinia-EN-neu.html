@@ -312,8 +312,14 @@
       <p class="fa-q">Summary of your inquiry</p>
       <p class="fa-sub">Please review your details and submit your inquiry without obligation.</p>
       <div id="fa-summary"></div>
-      <p class="fa-note">Free &amp; non-binding. Booking is not done through this site — we'll confirm availability and
+      <p class="fa-note">Non-binding enquiry: free &amp; without booking — we'll confirm availability and
         the binding final price by email. Your data will be treated confidentially.</p>
+      <div id="fa-direkt-box" style="margin-top:16px;padding-top:16px;border-top:1px solid #e2ddd6;">
+        <button type="button" class="fa-btn fa-btn-next" id="fa-direkt" style="width:100%;">Book bindingly now</button>
+        <p class="fa-note" style="margin-top:8px;">Or book directly: availability is checked instantly and you will
+          receive the booking confirmation with the deposit invoice by email right away.</p>
+        <div class="fa-warn" id="fa-direkt-warn" style="display:none;"></div>
+      </div>
     </div>
 
     <div class="fa-nav">
@@ -595,6 +601,52 @@
     else { submit(); }
   });
   $('fa-back').addEventListener('click',function(){ if(step>0) showStep(step-1); });
+
+  /* ---- Direct booking: availability, booking and invoice handled by the backend ---- */
+  var DIREKT_URL = BACKEND + "/direkt-buchen?key=358df55578f41fd3941997948f028e8b";
+  var DIREKT_TXT = {
+    btn: 'Book bindingly now',
+    laedt: 'Booking …',
+    belegt: 'Unfortunately this period is no longer available. Please choose different dates or send a non-binding enquiry.',
+    fehler: 'Your booking could not be processed right now. Please try again or send a non-binding enquiry.',
+    dankeTitel: function(v){ return 'Thank you, '+v+' – your booking is confirmed!'; },
+    dankeText: function(mail){ return 'We have just sent the booking confirmation with the deposit invoice to '+mail+' (please also check your spam folder). Once the deposit is received, your stay is firmly reserved.'; }
+  };
+  $('fa-direkt').addEventListener('click', function(){
+    var stay=calcStay(); if(!stay) return;
+    var btn=$('fa-direkt'), nextBtn=$('fa-next'), warn=$('fa-direkt-warn');
+    warn.style.display='none';
+    btn.disabled=true; nextBtn.disabled=true;
+    btn.innerHTML='<span class="fa-spinner"></span>'+DIREKT_TXT.laedt;
+    var grand=stay.total+CLEANING_FEE;
+    try{ if(typeof fbq==='function'){ fbq('track','Lead',{value:grand,currency:'EUR',content_name:'Direct booking Mantinia Hills',num_people:state.people,nights:stay.nights}); } }catch(e){}
+    var p=new URLSearchParams();
+    p.append('vorname', state.firstname); p.append('nachname', state.lastname); p.append('email', state.email);
+    p.append('personen', state.people);
+    p.append('anreise', formatDMY(state.arrival)); p.append('abreise', formatDMY(state.departure));
+    p.append('fahrzeug_interesse', vehicleLabel[state.vehicle]);
+    p.append('anfrage_zeitpunkt', new Date().toISOString());
+    p.append('seite', (typeof location!=='undefined'?location.href:''));
+    p.append('sprache', 'en');
+    function reset(msg){
+      btn.disabled=false; nextBtn.disabled=false; btn.textContent=DIREKT_TXT.btn;
+      warn.style.display='block'; warn.textContent=msg;
+    }
+    fetch(DIREKT_URL,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:p.toString()})
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if(j && (j.status==='ok' || j.status==='ok_nomail')){
+          var card=document.querySelector('#fa-wrap .fa-card');
+          card.innerHTML='<div style="text-align:center;padding:30px 10px;">'+
+            '<div style="font-size:40px;margin-bottom:10px;color:#681318;">✓</div>'+
+            '<p class="fa-q" style="font-size:22px;">'+DIREKT_TXT.dankeTitel(esc(state.firstname))+'</p>'+
+            '<p class="fa-sub" style="font-size:15px;">'+DIREKT_TXT.dankeText(esc(state.email))+'</p>'+
+            '</div>';
+        } else if(j && j.status==='belegt'){ reset(DIREKT_TXT.belegt); }
+        else { reset(DIREKT_TXT.fehler); }
+      })
+      .catch(function(){ reset(DIREKT_TXT.fehler); });
+  });
 
   function fireLeadEvent(payload){
     try{

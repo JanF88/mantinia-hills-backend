@@ -15,6 +15,7 @@ export interface MailVorlagen {
   abschluss: MailVorlage
   storno: MailVorlage
   absage: MailVorlage
+  direktbuchung: MailVorlage
 }
 
 /** Vorlagen je Sprache. */
@@ -87,6 +88,17 @@ Ihr Team vom Ferienhaus Mantinia Hills`,
 vielen Dank für Ihr Interesse an einem Aufenthalt im Ferienhaus Mantinia Hills vom **{anreise}** bis **{abreise}**.
 
 Leider können wir Ihre Anfrage für diesen Zeitraum nicht bestätigen. Wir würden uns aber sehr freuen, Sie zu einem anderen Zeitpunkt als unsere Gäste begrüßen zu dürfen.
+
+Herzliche Grüße
+Ihr Team vom Ferienhaus Mantinia Hills`,
+  },
+  direktbuchung: {
+    betreff: 'Buchungsbestätigung und Anzahlungsrechnung {nummer}',
+    text: `Guten Tag {vorname} {nachname},
+
+vielen Dank für Ihre Buchung! Ihr Aufenthalt vom **{anreise}** bis **{abreise}** ist damit bestätigt.
+
+Im Anhang finden Sie die Anzahlungsrechnung über **{betrag}**. Mit Eingang der Anzahlung ist Ihr Aufenthalt fest reserviert.
 
 Herzliche Grüße
 Ihr Team vom Ferienhaus Mantinia Hills`,
@@ -165,6 +177,17 @@ Unfortunately we are unable to confirm your enquiry for this period. However, we
 Kind regards
 Your team at Ferienhaus Mantinia Hills`,
   },
+  direktbuchung: {
+    betreff: 'Booking confirmation and deposit invoice {nummer}',
+    text: `Dear {vorname} {nachname},
+
+thank you for your booking! Your stay from **{anreise}** to **{abreise}** is hereby confirmed.
+
+Please find the deposit invoice for **{betrag}** attached. Once the deposit is received, your stay is firmly reserved.
+
+Kind regards
+Your team at Ferienhaus Mantinia Hills`,
+  },
 }
 
 // --- Griechische Erstübersetzung (bitte von Muttersprachler prüfen lassen) ---
@@ -239,6 +262,17 @@ const GR: MailVorlagen = {
 Με εγκάρδιους χαιρετισμούς
 Η ομάδα του Ferienhaus Mantinia Hills`,
   },
+  direktbuchung: {
+    betreff: 'Επιβεβαίωση κράτησης και τιμολόγιο προκαταβολής {nummer}',
+    text: `Αγαπητέ/ή {vorname} {nachname},
+
+σας ευχαριστούμε για την κράτησή σας! Η διαμονή σας από **{anreise}** έως **{abreise}** επιβεβαιώνεται.
+
+Στο συνημμένο θα βρείτε το τιμολόγιο προκαταβολής ύψους **{betrag}**. Μόλις λάβουμε την προκαταβολή, η διαμονή σας είναι οριστικά εξασφαλισμένη.
+
+Με εγκάρδιους χαιρετισμούς
+Η ομάδα του Ferienhaus Mantinia Hills`,
+  },
 }
 
 export const MAIL_VORLAGEN_DEFAULTS: MailVorlagen = DE
@@ -282,6 +316,11 @@ export const MAIL_VORLAGEN_INFO: Record<keyof MailVorlagen, { label: string; wan
     label: 'Absage (Anfrage/Angebot abgelehnt)',
     wann: 'beim Ablehnen einer Anfrage oder eines nicht angenommenen Angebots',
     platzhalter: ['vorname', 'nachname', 'anreise', 'abreise'],
+  },
+  direktbuchung: {
+    label: 'Direktbuchung (Website)',
+    wann: 'automatisch, wenn ein Gast auf der Website „Verbindlich buchen" nutzt',
+    platzhalter: ['vorname', 'nachname', 'anreise', 'abreise', 'nummer', 'betrag'],
   },
 }
 
