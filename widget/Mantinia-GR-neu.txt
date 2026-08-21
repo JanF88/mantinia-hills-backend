@@ -322,15 +322,17 @@
 
     <div class="fa-step" data-step="5">
       <p class="fa-q">Σύνοψη του αιτήματός σας</p>
-      <p class="fa-sub">Παρακαλούμε ελέγξτε τα στοιχεία σας και υποβάλετε το αίτημά σας χωρίς καμία δέσμευση.</p>
+      <p class="fa-sub">Παρακαλούμε ελέγξτε τα στοιχεία σας.</p>
       <div id="fa-summary"></div>
-      <p class="fa-note">Μη δεσμευτικό αίτημα: δωρεάν και χωρίς κράτηση — θα επιβεβαιώσουμε τη διαθεσιμότητα και την
-        οριστική τιμή μέσω email. Τα δεδομένα σας θα αντιμετωπιστούν με εμπιστευτικότητα.</p>
-      <div id="fa-direkt-box" style="margin-top:16px;padding-top:16px;border-top:1px solid #e2ddd6;">
-        <button type="button" class="fa-btn fa-btn-next" id="fa-direkt" style="width:100%;">Δεσμευτική κράτηση τώρα</button>
-        <p class="fa-note" style="margin-top:8px;">Ή κάντε απευθείας κράτηση: η διαθεσιμότητα ελέγχεται άμεσα και θα
-          λάβετε αμέσως την επιβεβαίωση κράτησης με το τιμολόγιο προκαταβολής μέσω email.</p>
+      <div id="fa-direkt-box" style="margin-top:6px;padding-top:18px;border-top:1px solid #d9d2c7;">
+        <button type="button" class="fa-btn fa-btn-next" id="fa-direkt" style="width:100%;">Κράτηση τώρα</button>
+        <p class="fa-note" style="margin-top:8px;">Δεσμευτική κράτηση — θα λάβετε αμέσως την επιβεβαίωση κράτησης
+          με το τιμολόγιο προκαταβολής μέσω email.</p>
         <div class="fa-warn" id="fa-direkt-warn" style="display:none;"></div>
+        <p class="fa-note" style="margin-top:18px;">Δεν θέλετε να κάνετε ακόμη δεσμευτική κράτηση; Στείλτε μας ένα
+          δωρεάν, μη δεσμευτικό αίτημα — θα επιβεβαιώσουμε τη διαθεσιμότητα και την τελική τιμή μέσω email.
+          Τα δεδομένα σας θα αντιμετωπιστούν με εμπιστευτικότητα.</p>
+        <button type="button" class="fa-btn fa-btn-back" id="fa-anfrage-klein" style="font-size:13.5px;padding:9px 16px;">Μη δεσμευτικό αίτημα</button>
       </div>
     </div>
 
@@ -586,7 +588,9 @@
     for(var j=0;j<dots.length;j++) dots[j].classList.toggle('active', j<=n);
     $('fa-back').style.display = n===0 ? 'none' : 'block';
     var next=$('fa-next');
-    next.textContent = n===TOTAL_STEPS-1 ? 'Υποβολή αιτήματος' : 'Επόμενο';
+    next.textContent = 'Επόμενο';
+    /* On the summary step the buttons in the direct-booking block take over */
+    next.style.display = n===TOTAL_STEPS-1 ? 'none' : '';
     if(n===TOTAL_STEPS-1) buildSummary();
     validate();
   }
@@ -657,8 +661,10 @@
 
   /* ---- Direct booking: availability, booking and invoice handled by the backend ---- */
   var DIREKT_URL = BACKEND + "/direkt-buchen?key=358df55578f41fd3941997948f028e8b";
+  $('fa-anfrage-klein').addEventListener('click', function(){ if(!this.disabled) submit(); });
+
   var DIREKT_TXT = {
-    btn: 'Δεσμευτική κράτηση τώρα',
+    btn: 'Κράτηση τώρα',
     laedt: 'Γίνεται κράτηση …',
     belegt: 'Δυστυχώς αυτό το διάστημα δεν είναι πλέον διαθέσιμο. Επιλέξτε άλλες ημερομηνίες ή στείλτε ένα μη δεσμευτικό αίτημα.',
     fehler: 'Η κράτησή σας δεν μπόρεσε να διεκπεραιωθεί αυτή τη στιγμή. Δοκιμάστε ξανά ή στείλτε ένα μη δεσμευτικό αίτημα.',
@@ -667,7 +673,7 @@
   };
   $('fa-direkt').addEventListener('click', function(){
     var stay=calcStay(); if(!stay) return;
-    var btn=$('fa-direkt'), nextBtn=$('fa-next'), warn=$('fa-direkt-warn');
+    var btn=$('fa-direkt'), nextBtn=$('fa-anfrage-klein'), warn=$('fa-direkt-warn');
     warn.style.display='none';
     btn.disabled=true; nextBtn.disabled=true;
     btn.innerHTML='<span class="fa-spinner"></span>'+DIREKT_TXT.laedt;
@@ -768,8 +774,9 @@
 
   function submit(){
     var payload = buildPayload();
-    var nextBtn = $('fa-next');
+    var nextBtn = $('fa-anfrage-klein') || $('fa-next');
     nextBtn.disabled = true;
+    var direktBtn = $('fa-direkt'); if(direktBtn) direktBtn.disabled = true;
     nextBtn.innerHTML = '<span class="fa-spinner"></span>Αποστολή …';
 
 

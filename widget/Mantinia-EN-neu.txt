@@ -310,15 +310,16 @@
 
     <div class="fa-step" data-step="5">
       <p class="fa-q">Summary of your inquiry</p>
-      <p class="fa-sub">Please review your details and submit your inquiry without obligation.</p>
+      <p class="fa-sub">Please review your details.</p>
       <div id="fa-summary"></div>
-      <p class="fa-note">Non-binding enquiry: free &amp; without booking — we'll confirm availability and
-        the binding final price by email. Your data will be treated confidentially.</p>
-      <div id="fa-direkt-box" style="margin-top:16px;padding-top:16px;border-top:1px solid #e2ddd6;">
-        <button type="button" class="fa-btn fa-btn-next" id="fa-direkt" style="width:100%;">Book bindingly now</button>
-        <p class="fa-note" style="margin-top:8px;">Or book directly: availability is checked instantly and you will
-          receive the booking confirmation with the deposit invoice by email right away.</p>
+      <div id="fa-direkt-box" style="margin-top:6px;padding-top:18px;border-top:1px solid #d9d2c7;">
+        <button type="button" class="fa-btn fa-btn-next" id="fa-direkt" style="width:100%;">Book now</button>
+        <p class="fa-note" style="margin-top:8px;">Binding booking — you will receive the booking confirmation
+          with the deposit invoice by email right away.</p>
         <div class="fa-warn" id="fa-direkt-warn" style="display:none;"></div>
+        <p class="fa-note" style="margin-top:18px;">Not ready to book yet? Send us a free, non-binding enquiry —
+          we'll confirm availability and the final price by email. Your data will be treated confidentially.</p>
+        <button type="button" class="fa-btn fa-btn-back" id="fa-anfrage-klein" style="font-size:13.5px;padding:9px 16px;">Send non-binding enquiry</button>
       </div>
     </div>
 
@@ -540,7 +541,9 @@
     for(var j=0;j<dots.length;j++) dots[j].classList.toggle('active', j<=n);
     $('fa-back').style.display = n===0 ? 'none' : 'block';
     var next=$('fa-next');
-    next.textContent = n===TOTAL_STEPS-1 ? 'Submit inquiry' : 'Next';
+    next.textContent = 'Next';
+    /* On the summary step the buttons in the direct-booking block take over */
+    next.style.display = n===TOTAL_STEPS-1 ? 'none' : '';
     if(n===TOTAL_STEPS-1) buildSummary();
     validate();
   }
@@ -604,8 +607,10 @@
 
   /* ---- Direct booking: availability, booking and invoice handled by the backend ---- */
   var DIREKT_URL = BACKEND + "/direkt-buchen?key=358df55578f41fd3941997948f028e8b";
+  $('fa-anfrage-klein').addEventListener('click', function(){ if(!this.disabled) submit(); });
+
   var DIREKT_TXT = {
-    btn: 'Book bindingly now',
+    btn: 'Book now',
     laedt: 'Booking …',
     belegt: 'Unfortunately this period is no longer available. Please choose different dates or send a non-binding enquiry.',
     fehler: 'Your booking could not be processed right now. Please try again or send a non-binding enquiry.',
@@ -614,7 +619,7 @@
   };
   $('fa-direkt').addEventListener('click', function(){
     var stay=calcStay(); if(!stay) return;
-    var btn=$('fa-direkt'), nextBtn=$('fa-next'), warn=$('fa-direkt-warn');
+    var btn=$('fa-direkt'), nextBtn=$('fa-anfrage-klein'), warn=$('fa-direkt-warn');
     warn.style.display='none';
     btn.disabled=true; nextBtn.disabled=true;
     btn.innerHTML='<span class="fa-spinner"></span>'+DIREKT_TXT.laedt;
@@ -710,8 +715,9 @@
 
   function submit(){
     var payload = buildPayload();
-    var nextBtn = $('fa-next');
+    var nextBtn = $('fa-anfrage-klein') || $('fa-next');
     nextBtn.disabled = true;
+    var direktBtn = $('fa-direkt'); if(direktBtn) direktBtn.disabled = true;
     nextBtn.innerHTML = '<span class="fa-spinner"></span>Sending …';
 
     fireLeadEvent(payload);
