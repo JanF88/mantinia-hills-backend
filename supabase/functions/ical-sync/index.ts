@@ -7,8 +7,16 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 const KEY = Deno.env.get("ICAL_KEY") ?? "015681fdb57dfca7aaf38572f463bbcd";
 
+// CORS nötig, weil auch der „Jetzt synchronisieren"-Button der Admin-App
+// (Browser) diese Funktion aufruft — nicht nur der pg_cron-Job.
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+  "Access-Control-Allow-Headers": "content-type",
+};
+
 function json(status: number, body: unknown): Response {
-  return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
+  return new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 }
 
 interface Ereignis { uid: string; von: string; bis: string; zusammenfassung: string | null }
@@ -45,6 +53,7 @@ function parseIcs(text: string): Ereignis[] {
 }
 
 Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
   const url = new URL(req.url);
   if (url.searchParams.get("key") !== KEY) return json(403, { error: "forbidden" });
 
