@@ -1,11 +1,25 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { eur } from '../lib/format'
+import { datumDE, eur, zeitpunktDE } from '../lib/format'
 import { MONATSNAMEN, jahresAuswertung } from '../lib/statistik'
-import type { Buchung, Dokument } from '../lib/types'
+import type { Buchung, Dokument, Feedback } from '../lib/types'
 
 function prozent(anteil: number): string {
   return (anteil * 100).toLocaleString('de-DE', { maximumFractionDigits: 1 }) + ' %'
+}
+
+/** Feedback inkl. eingebetteter Buchungsdaten (PostgREST-Relation). */
+type FeedbackMitBuchung = Feedback & {
+  buchungen: { vorname: string; nachname: string; anreise: string; abreise: string } | null
+}
+
+function Sterne({ n }: { n: number }) {
+  return (
+    <span style={{ color: '#e8a33d', letterSpacing: 2, whiteSpace: 'nowrap' }}>
+      {'★'.repeat(n)}<span style={{ color: 'var(--linie, #d9d2c7)' }}>{'★'.repeat(5 - n)}</span>
+    </span>
+  )
 }
 
 export default function Auswertung() {
@@ -13,18 +27,26 @@ export default function Auswertung() {
   const [jahr, setJahr] = useState(heute.getFullYear())
   const [buchungen, setBuchungen] = useState<Buchung[]>([])
   const [dokumente, setDokumente] = useState<Dokument[]>([])
+  const [feedbacks, setFeedbacks] = useState<FeedbackMitBuchung[]>([])
   const [laedt, setLaedt] = useState(true)
 
   useEffect(() => {
     Promise.all([
       supabase.from('buchungen').select('*'),
       supabase.from('dokumente').select('*'),
-    ]).then(([b, d]) => {
+      supabase.from('feedback').select('*, buchungen(vorname, nachname, anreise, abreise)').order('erstellt_am', { ascending: false }),
+    ]).then(([b, d, f]) => {
       setBuchungen((b.data as Buchung[]) ?? [])
       setDokumente((d.data as Dokument[]) ?? [])
+      setFeedbacks((f.data as FeedbackMitBuchung[]) ?? [])
       setLaedt(false)
     })
   }, [])
+
+  const feedbackSchnitt = useMemo(() => {
+    if (feedbacks.length === 0) return null
+    return feedbacks.reduce((s, f) => s + f.sterne, 0) / feedbacks.length
+  }, [feedbacks])
 
   const auswertung = useMemo(
     () => jahresAuswertung(jahr, buchungen, dokumente),
@@ -69,6 +91,13 @@ export default function Auswertung() {
               <span>{aktuellerMonat.belegteNaechte} von {aktuellerMonat.tageImMonat} Nächten</span>
             </div>
           </>
+        )}
+        {feedbackSchnitt != null && (
+          <div className="card kennzahl">
+            <dt>Gäste-Bewertung</dt>
+            <dd>{feedbackSchnitt.toLocaleString('de-DE', { maximumFractionDigits: 1 })} ★</dd>
+            <span>{feedbacks.length} {feedbacks.length === 1 ? 'Bewertung' : 'Bewertungen'}</span>
+          </div>
         )}
       </div>
 
@@ -118,6 +147,42 @@ export default function Auswertung() {
         Nächten auf die Aufenthaltsmonate verteilt, plus Stornogebühren im Monat der Stornierung.
         Auslastung = belegte Nächte ÷ Tage des Monats. Offene Anfragen zählen nicht.
       </p>
+
+      <div className="card">
+        <h2>Gäste-Feedback</h2>
+        {feedbacks.length === 0 ? (
+          <p className="leer" style={{ padding: '12px 0' }}>
+            Noch keine Bewertungen — Gäste werden 2 Tage nach der Abreise automatisch um Feedback gebeten.
+          </p>
+        ) : (
+          <div>
+            {feedbacks.map((f) => (
+              <div key={f.id} style={{ padding: '14px 0', borderBottom: '1px solid var(--linie, #e2ddd6)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 18 }}><Sterne n={f.sterne} /></span>
+                  <span style={{ fontSize: 13, color: 'var(--grau)' }}>{zeitpunktDE(f.erstellt_am)}</span>
+                </div>
+                <div style={{ fontSize: 14, marginTop: 4 }}>
+                  {f.buchungen ? (
+                    <Link to={`/anfragen/${f.buchung_id}`}>
+                      <strong>{f.buchungen.vorname} {f.buchungen.nachname}</strong>
+                    </Link>
+                  ) : <strong>Unbekannter Gast</strong>}
+                  {f.buchungen && (
+                    <span style={{ color: 'var(--grau)' }}> · {datumDE(f.buchungen.anreise)} – {datumDE(f.buchungen.abreise)}</span>
+                  )}
+                  <span style={{ fontSize: 12.5, color: 'var(--grau)' }}>
+                    {' '}· {f.veroeffentlichung_ok ? '✓ Veröffentlichung erlaubt' : 'nur intern'}
+                  </span>
+                </div>
+                {f.text && (
+                  <p style={{ fontSize: 14.5, lineHeight: 1.55, margin: '6px 0 0', whiteSpace: 'pre-wrap' }}>{f.text}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </>
   )
 }

@@ -286,7 +286,7 @@ export default function AnfrageDetail() {
 
       <div className="card">
         <h2>Dokumente</h2>
-        {dokumente.length === 0 ? (
+        {dokumente.length === 0 && !buchung.feedback_angefragt_am ? (
           <p className="leer" style={{ padding: '12px 0' }}>Noch keine Dokumente erstellt.</p>
         ) : (
           <table>
@@ -312,6 +312,18 @@ export default function AnfrageDetail() {
                   </td>
                 </tr>
               ))}
+              {buchung.feedback_angefragt_am && (
+                <tr>
+                  <td style={{ color: 'var(--grau)' }}>—</td>
+                  <td>Feedback-Anfrage{feedback ? ' (beantwortet)' : ''}</td>
+                  <td>{datumDE(buchung.feedback_angefragt_am)}</td>
+                  <td className="rechts">–</td>
+                  <td style={{ fontSize: 13 }}>
+                    <span style={{ color: 'var(--gruen, #1a7f37)' }}>✓ {datumDE(buchung.feedback_angefragt_am)}</span>
+                  </td>
+                  <td />
+                </tr>
+              )}
             </tbody>
           </table>
         )}
