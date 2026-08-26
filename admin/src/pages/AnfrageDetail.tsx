@@ -6,7 +6,7 @@ import { downloadArchiviertesPdf } from '../lib/dokumentService'
 import { sendeAngebotErneut } from '../lib/angebotMail'
 import { restzahlungFaellig } from '../lib/statistik'
 import { datumDE, eur, zeitpunktDE } from '../lib/format'
-import type { Buchung, Dokument, Einstellungen, Sprache } from '../lib/types'
+import type { Buchung, Dokument, Einstellungen, Feedback, Sprache } from '../lib/types'
 import { SPRACHE_LABEL, QUELLE_LABEL } from '../lib/types'
 import StatusBadge from '../components/StatusBadge'
 import MailTest from '../components/MailTest'
@@ -35,15 +35,18 @@ export default function AnfrageDetail() {
   const [loescht, setLoescht] = useState(false)
   const [angebotSenden, setAngebotSenden] = useState<'idle' | 'laedt' | 'ok' | 'fehler'>('idle')
   const [angebotSendenMeldung, setAngebotSendenMeldung] = useState('')
+  const [feedback, setFeedback] = useState<Feedback | null>(null)
 
   const laden = useCallback(async () => {
     if (!id) return
-    const [{ data: b }, { data: d }] = await Promise.all([
+    const [{ data: b }, { data: d }, { data: f }] = await Promise.all([
       supabase.from('buchungen').select('*').eq('id', id).single(),
       supabase.from('dokumente').select('*').eq('buchung_id', id).order('created_at', { ascending: false }),
+      supabase.from('feedback').select('*').eq('buchung_id', id).maybeSingle(),
     ])
     setBuchung(b as Buchung)
     setDokumente((d as Dokument[]) ?? [])
+    setFeedback((f as Feedback | null) ?? null)
   }, [id])
 
   useEffect(() => {
@@ -176,7 +179,7 @@ export default function AnfrageDetail() {
           </p>
         )}
 
-        {(buchung.angenommen_am || buchung.anzahlung_eingegangen_am || buchung.restzahlung_eingegangen_am || buchung.storniert_am) && (
+        {(buchung.angenommen_am || buchung.anzahlung_eingegangen_am || buchung.restzahlung_eingegangen_am || buchung.storniert_am || buchung.feedback_angefragt_am) && (
           <>
             <h3>Verlauf</h3>
             <dl className="meta-grid">
@@ -184,10 +187,29 @@ export default function AnfrageDetail() {
               {buchung.anzahlung_eingegangen_am && <div><dt>Anzahlung eingegangen</dt><dd>{zeitpunktDE(buchung.anzahlung_eingegangen_am)}</dd></div>}
               {buchung.restzahlung_eingegangen_am && <div><dt>Restzahlung eingegangen</dt><dd>{zeitpunktDE(buchung.restzahlung_eingegangen_am)}</dd></div>}
               {buchung.storniert_am && <div><dt>Storniert</dt><dd>{zeitpunktDE(buchung.storniert_am)}</dd></div>}
+              {buchung.feedback_angefragt_am && <div><dt>Feedback angefragt</dt><dd>{zeitpunktDE(buchung.feedback_angefragt_am)}</dd></div>}
             </dl>
           </>
         )}
       </div>
+
+      {feedback && (
+        <div className="card" style={{ borderColor: '#e8d9a8' }}>
+          <h2>Gäste-Feedback</h2>
+          <div style={{ fontSize: 26, letterSpacing: 3, color: '#e8a33d', marginBottom: 6 }}>
+            {'★'.repeat(feedback.sterne)}<span style={{ color: 'var(--linie, #d9d2c7)' }}>{'★'.repeat(5 - feedback.sterne)}</span>
+            <span style={{ fontSize: 14, color: 'var(--grau)', marginLeft: 10, letterSpacing: 0 }}>
+              {feedback.sterne}/5 · {zeitpunktDE(feedback.erstellt_am)}
+            </span>
+          </div>
+          {feedback.text && <p style={{ fontSize: 15, lineHeight: 1.6, whiteSpace: 'pre-wrap', margin: '8px 0 0' }}>{feedback.text}</p>}
+          <p style={{ fontSize: 12.5, color: 'var(--grau)', marginTop: 10, marginBottom: 0 }}>
+            {feedback.veroeffentlichung_ok
+              ? '✓ Veröffentlichung als Referenz erlaubt'
+              : 'Keine Einwilligung zur Veröffentlichung — nur intern verwenden'}
+          </p>
+        </div>
+      )}
 
       <div className="card">
         <h2>Aktionen</h2>

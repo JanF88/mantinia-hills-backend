@@ -167,6 +167,17 @@ Ja — in der Anfrage unter **Dokumente** liegt jedes erzeugte PDF dauerhaft ber
 
 ---
 
+## Gäste-Feedback (automatisch)
+
+Zwei Tage nach der Abreise erhält jeder Gast (Status „Komplett bezahlt" oder
+„Abgeschlossen") automatisch eine E-Mail in seiner Sprache mit der Bitte um eine
+Bewertung: **1–5 Sterne** plus Freitext, dazu eine Checkbox, ob das Feedback als
+Referenz veröffentlicht werden darf. Jeder Gast kann genau einmal bewerten.
+
+Das Ergebnis sehen Sie in der jeweiligen Anfrage als Karte **„Gäste-Feedback"**
+(Sterne, Text und ob die Veröffentlichung erlaubt ist). Der Mail-Text ist unter
+**Einstellungen → E-Mail-Texte → Feedback-Anfrage** anpassbar.
+
 ## 8. Technischer Steckbrief (für Ihre Unterlagen)
 
 - **Verwaltung/Website-Hosting:** die App liegt auf GitHub Pages, erreichbar unter

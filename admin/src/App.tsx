@@ -6,6 +6,7 @@ import Login from './pages/Login'
 import PasswortNeu from './pages/PasswortNeu'
 import AngebotAngenommen from './pages/AngebotAngenommen'
 import AngebotBestaetigen from './pages/AngebotBestaetigen'
+import FeedbackSeite from './pages/FeedbackSeite'
 import AnfragenListe from './pages/AnfragenListe'
 import AnfrageNeu from './pages/AnfrageNeu'
 import AnfrageDetail from './pages/AnfrageDetail'
@@ -36,6 +37,7 @@ export default function App() {
   // Angebots-Mail) und Dankesseite (nach erfolgter Annahme).
   if (window.location.pathname === '/angebot-annehmen') return <AngebotBestaetigen />
   if (window.location.pathname === '/angebot-angenommen') return <AngebotAngenommen />
+  if (window.location.pathname === '/feedback') return <FeedbackSeite />
 
   if (laedt) return null
   if (passwortReset) {

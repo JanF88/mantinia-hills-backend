@@ -16,6 +16,7 @@ export interface MailVorlagen {
   storno: MailVorlage
   absage: MailVorlage
   direktbuchung: MailVorlage
+  feedback: MailVorlage
 }
 
 /** Vorlagen je Sprache. */
@@ -99,6 +100,21 @@ Ihr Team vom Ferienhaus Mantinia Hills`,
 vielen Dank für Ihre Buchung! Ihr Aufenthalt vom **{anreise}** bis **{abreise}** ist damit bestätigt.
 
 Im Anhang finden Sie die Anzahlungsrechnung über **{betrag}**. Mit Eingang der Anzahlung ist Ihr Aufenthalt fest reserviert.
+
+Herzliche Grüße
+Ihr Team vom Ferienhaus Mantinia Hills`,
+  },
+  feedback: {
+    betreff: 'Wie war Ihr Aufenthalt? - Ferienhaus Mantinia Hills',
+    text: `Guten Tag {vorname} {nachname},
+
+wir hoffen, Sie sind gut nach Hause gekommen und hatten eine wunderbare Zeit im Ferienhaus Mantinia Hills.
+
+Über eine kurze Bewertung Ihres Aufenthalts vom **{anreise}** bis **{abreise}** würden wir uns sehr freuen — es dauert weniger als eine Minute:
+
+{button}
+
+Vielen Dank und hoffentlich bis bald!
 
 Herzliche Grüße
 Ihr Team vom Ferienhaus Mantinia Hills`,
@@ -188,6 +204,21 @@ Please find the deposit invoice for **{betrag}** attached. Once the deposit is r
 Kind regards
 Your team at Ferienhaus Mantinia Hills`,
   },
+  feedback: {
+    betreff: 'How was your stay? - Ferienhaus Mantinia Hills',
+    text: `Dear {vorname} {nachname},
+
+we hope you had a safe journey home and a wonderful time at Ferienhaus Mantinia Hills.
+
+We would love a short review of your stay from **{anreise}** to **{abreise}** — it takes less than a minute:
+
+{button}
+
+Thank you very much, and we hope to see you again!
+
+Kind regards
+Your team at Ferienhaus Mantinia Hills`,
+  },
 }
 
 // --- Griechische Erstübersetzung (bitte von Muttersprachler prüfen lassen) ---
@@ -273,6 +304,21 @@ const GR: MailVorlagen = {
 Με εγκάρδιους χαιρετισμούς
 Η ομάδα του Ferienhaus Mantinia Hills`,
   },
+  feedback: {
+    betreff: 'Πώς ήταν η διαμονή σας; - Ferienhaus Mantinia Hills',
+    text: `Αγαπητέ/ή {vorname} {nachname},
+
+ελπίζουμε να φτάσατε καλά στο σπίτι σας και να περάσατε υπέροχα στο Ferienhaus Mantinia Hills.
+
+Θα χαιρόμασταν πολύ με μια σύντομη αξιολόγηση της διαμονής σας από **{anreise}** έως **{abreise}** — διαρκεί λιγότερο από ένα λεπτό:
+
+{button}
+
+Σας ευχαριστούμε πολύ και ελπίζουμε να σας ξαναδούμε!
+
+Με εγκάρδιους χαιρετισμούς
+Η ομάδα του Ferienhaus Mantinia Hills`,
+  },
 }
 
 export const MAIL_VORLAGEN_DEFAULTS: MailVorlagen = DE
@@ -321,6 +367,11 @@ export const MAIL_VORLAGEN_INFO: Record<keyof MailVorlagen, { label: string; wan
     label: 'Direktbuchung (Website)',
     wann: 'automatisch, wenn ein Gast auf der Website „Verbindlich buchen" nutzt',
     platzhalter: ['vorname', 'nachname', 'anreise', 'abreise', 'nummer', 'betrag'],
+  },
+  feedback: {
+    label: 'Feedback-Anfrage (nach dem Aufenthalt)',
+    wann: 'automatisch 2 Tage nach der Abreise (bei Status Komplett bezahlt/Abgeschlossen)',
+    platzhalter: ['vorname', 'nachname', 'anreise', 'abreise', 'button'],
   },
 }
 

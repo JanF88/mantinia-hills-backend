@@ -52,6 +52,20 @@ export interface Buchung {
   restzahlung_eingegangen_am: string | null
   storniert_am: string | null
   annahme_token: string | null
+  /** Einweg-Token für die Feedback-Seite; null = nicht angefragt oder bereits abgegeben. */
+  feedback_token: string | null
+  /** Wann die Feedback-Mail versendet wurde (automatisch 2 Tage nach Abreise). */
+  feedback_angefragt_am: string | null
+}
+
+/** Gäste-Feedback nach dem Aufenthalt (1–5 Sterne + Freitext). */
+export interface Feedback {
+  id: string
+  buchung_id: string
+  sterne: number
+  text: string | null
+  veroeffentlichung_ok: boolean
+  erstellt_am: string
 }
 
 /** Externe Kalender-Blockierung (Booking/Airbnb via iCal-Import). */
