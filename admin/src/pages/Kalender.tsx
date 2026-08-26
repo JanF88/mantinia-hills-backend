@@ -129,15 +129,27 @@ export default function Kalender() {
               return (
                 <div key={ti} className={`kal-zelle${iso === heuteISO ? ' kal-heute' : ''}`}>
                   <div className="kal-tag">{tag.getDate()}</div>
-                  {externHeute.map((x) => (
-                    <div
-                      key={x.id}
-                      className="kal-belegung kal-extern"
-                      title={`Externe Buchung über ${x.quelle === 'booking' ? 'Booking.com' : x.quelle === 'airbnb' ? 'Airbnb' : x.quelle}`}
-                    >
-                      {x.von === iso ? '▸ ' : ''}{x.quelle === 'booking' ? 'Booking' : x.quelle === 'airbnb' ? 'Airbnb' : x.quelle}
-                    </div>
-                  ))}
+                  {externHeute.map((x) => {
+                    // Portale exportieren Buchungen UND Sperren/Schließungen —
+                    // die Beschriftung des Feeds verrät, was es ist.
+                    const z = x.zusammenfassung ?? ''
+                    const istSperre = /not available|closed/i.test(z) && !/reserved/i.test(z)
+                    const portal = x.quelle === 'booking' ? 'Booking' : x.quelle === 'airbnb' ? 'Airbnb' : x.quelle
+                    const label = istSperre ? `${portal} gesperrt` : portal
+                    const titel = istSperre
+                      ? `${portal}: Zeitraum dort gesperrt/geschlossen (keine Buchung)`
+                      : `Buchung über ${x.quelle === 'booking' ? 'Booking.com' : portal}`
+                    return (
+                      <div
+                        key={x.id}
+                        className="kal-belegung kal-extern"
+                        style={istSperre ? { opacity: 0.55 } : undefined}
+                        title={titel}
+                      >
+                        {x.von === iso ? '▸ ' : ''}{label}
+                      </div>
+                    )
+                  })}
                   {belegt.map((b) => {
                     const art = belegungsArt(b)!
                     const artLabel = art === 'gebucht' ? 'Gebucht' : art === 'reserviert' ? 'Reserviert' : 'Anfrage'
@@ -161,7 +173,7 @@ export default function Kalender() {
           <span><span className="kal-legende kal-gebucht" /> Gebucht (Anzahlung getätigt)</span>
           <span><span className="kal-legende kal-reserviert" /> Reserviert (Angebot versendet)</span>
           <span><span className="kal-legende kal-anfrage" /> Anfrage</span>
-          <span><span className="kal-legende kal-extern" /> Extern (Booking/Airbnb)</span>
+          <span><span className="kal-legende kal-extern" /> Extern (Booking/Airbnb) — „gesperrt" = dort geschlossen, keine Buchung</span>
           <span>▸ = Anreisetag · Abreisetag zählt nicht als belegt</span>
         </div>
 
