@@ -51,7 +51,7 @@ const VORLAGEN_DEFAULT: Record<"de" | "en" | "gr", { betreff: string; text: stri
 
 vielen Dank – wir haben Ihre Annahme des Angebots {angebot_nummer} erhalten. Ihre Buchung für den Zeitraum **{anreise}** bis **{abreise}** ist damit bestätigt.
 
-Im Anhang finden Sie die Anzahlungsrechnung über **{betrag}**. Mit Eingang der Anzahlung ist Ihr Aufenthalt fest reserviert.
+Im Anhang finden Sie die Anzahlungsrechnung über **{betrag}**, zahlbar innerhalb von 7 Tagen. Erst mit Eingang der Anzahlung ist Ihr Aufenthalt fest reserviert und der Zeitraum verbindlich für Sie geblockt.
 
 Herzliche Grüße
 Ihr Team vom Ferienhaus Mantinia Hills`,
@@ -62,7 +62,7 @@ Ihr Team vom Ferienhaus Mantinia Hills`,
 
 thank you – we have received your acceptance of offer {angebot_nummer}. Your booking for the period **{anreise}** to **{abreise}** is hereby confirmed.
 
-Please find the deposit invoice for **{betrag}** attached. Once the deposit is received, your stay is firmly reserved.
+Please find the deposit invoice for **{betrag}** attached — payable within 7 days. Only once the deposit has been received is your stay firmly reserved and the period bindingly blocked for you.
 
 Kind regards
 Your team at Ferienhaus Mantinia Hills`,
@@ -73,7 +73,7 @@ Your team at Ferienhaus Mantinia Hills`,
 
 σας ευχαριστούμε – λάβαμε την αποδοχή της προσφοράς {angebot_nummer}. Η κράτησή σας για το διάστημα **{anreise}** έως **{abreise}** επιβεβαιώνεται.
 
-Στο συνημμένο θα βρείτε το τιμολόγιο προκαταβολής ύψους **{betrag}**. Μόλις λάβουμε την προκαταβολή, η διαμονή σας είναι οριστικά εξασφαλισμένη.
+Στο συνημμένο θα βρείτε το τιμολόγιο προκαταβολής ύψους **{betrag}**, πληρωτέο εντός 7 ημερών. Μόνο μετά την είσπραξη της προκαταβολής η διαμονή σας είναι οριστικά εξασφαλισμένη και η περίοδος δεσμεύεται για εσάς.
 
 Με εγκάρδιους χαιρετισμούς
 Η ομάδα του Ferienhaus Mantinia Hills`,

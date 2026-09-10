@@ -17,6 +17,7 @@ export interface MailVorlagen {
   absage: MailVorlage
   direktbuchung: MailVorlage
   feedback: MailVorlage
+  angebot_erinnerung: MailVorlage
 }
 
 /** Vorlagen je Sprache. */
@@ -44,7 +45,7 @@ Ihr Team vom Ferienhaus Mantinia Hills`,
 
 vielen Dank für die Annahme unseres Angebots. Zur verbindlichen Reservierung Ihres Aufenthalts vom **{anreise}** bis **{abreise}** erhalten Sie im Anhang die Anzahlungsrechnung über **{betrag}**.
 
-Bitte überweisen Sie den Betrag unter Angabe der Rechnungsnummer {nummer}. Sobald die Anzahlung bei uns eingegangen ist, ist Ihre Buchung fest reserviert.
+Bitte überweisen Sie den Betrag innerhalb von 7 Tagen unter Angabe der Rechnungsnummer {nummer}. Erst mit Eingang der Anzahlung ist Ihre Buchung fest reserviert und der Zeitraum verbindlich für Sie geblockt.
 
 Herzliche Grüße
 Ihr Team vom Ferienhaus Mantinia Hills`,
@@ -55,7 +56,7 @@ Ihr Team vom Ferienhaus Mantinia Hills`,
 
 vielen Dank – wir haben Ihre Annahme des Angebots {angebot_nummer} erhalten. Ihre Buchung für den Zeitraum **{anreise}** bis **{abreise}** ist damit bestätigt.
 
-Im Anhang finden Sie die Anzahlungsrechnung über **{betrag}**. Mit Eingang der Anzahlung ist Ihr Aufenthalt fest reserviert.
+Im Anhang finden Sie die Anzahlungsrechnung über **{betrag}**, zahlbar innerhalb von 7 Tagen. Erst mit Eingang der Anzahlung ist Ihr Aufenthalt fest reserviert und der Zeitraum verbindlich für Sie geblockt.
 
 Herzliche Grüße
 Ihr Team vom Ferienhaus Mantinia Hills`,
@@ -99,7 +100,24 @@ Ihr Team vom Ferienhaus Mantinia Hills`,
 
 vielen Dank für Ihre Buchung! Ihr Aufenthalt vom **{anreise}** bis **{abreise}** ist damit bestätigt.
 
-Im Anhang finden Sie die Anzahlungsrechnung über **{betrag}**. Mit Eingang der Anzahlung ist Ihr Aufenthalt fest reserviert.
+Im Anhang finden Sie die Anzahlungsrechnung über **{betrag}**, zahlbar innerhalb von 7 Tagen. Erst mit Eingang der Anzahlung ist Ihr Aufenthalt fest reserviert und der Zeitraum verbindlich für Sie geblockt.
+
+Herzliche Grüße
+Ihr Team vom Ferienhaus Mantinia Hills`,
+  },
+  angebot_erinnerung: {
+    betreff: 'Erinnerung: Ihr Angebot {nummer} läuft bald ab - Ferienhaus Mantinia Hills',
+    text: `Guten Tag {vorname} {nachname},
+
+vor einigen Tagen haben wir Ihnen unser Angebot {nummer} für Ihren Aufenthalt vom **{anreise}** bis **{abreise}** geschickt — vielleicht ist es im Alltag untergegangen.
+
+Bitte beachten Sie: Das Angebot ist nur noch bis zum **{gueltig_bis}** gültig. Danach können wir den Zeitraum leider nicht weiter für Sie freihalten.
+
+Mit einem Klick nehmen Sie das Angebot verbindlich an:
+
+{button}
+
+Bei Fragen antworten Sie einfach auf diese E-Mail — wir helfen gerne.
 
 Herzliche Grüße
 Ihr Team vom Ferienhaus Mantinia Hills`,
@@ -144,7 +162,7 @@ Your team at Ferienhaus Mantinia Hills`,
 
 thank you for accepting our offer. To bindingly reserve your stay from **{anreise}** to **{abreise}**, please find the deposit invoice for **{betrag}** attached.
 
-Please transfer the amount quoting the invoice number {nummer}. As soon as we receive the deposit, your booking is firmly reserved.
+Please transfer the amount within 7 days, quoting the invoice number {nummer}. Only once the deposit has been received is your booking firmly reserved and the period bindingly blocked for you.
 
 Kind regards
 Your team at Ferienhaus Mantinia Hills`,
@@ -155,7 +173,7 @@ Your team at Ferienhaus Mantinia Hills`,
 
 thank you – we have received your acceptance of offer {angebot_nummer}. Your booking for the period **{anreise}** to **{abreise}** is hereby confirmed.
 
-Please find the deposit invoice for **{betrag}** attached. Once the deposit is received, your stay is firmly reserved.
+Please find the deposit invoice for **{betrag}** attached — payable within 7 days. Only once the deposit has been received is your stay firmly reserved and the period bindingly blocked for you.
 
 Kind regards
 Your team at Ferienhaus Mantinia Hills`,
@@ -199,7 +217,24 @@ Your team at Ferienhaus Mantinia Hills`,
 
 thank you for your booking! Your stay from **{anreise}** to **{abreise}** is hereby confirmed.
 
-Please find the deposit invoice for **{betrag}** attached. Once the deposit is received, your stay is firmly reserved.
+Please find the deposit invoice for **{betrag}** attached — payable within 7 days. Only once the deposit has been received is your stay firmly reserved and the period bindingly blocked for you.
+
+Kind regards
+Your team at Ferienhaus Mantinia Hills`,
+  },
+  angebot_erinnerung: {
+    betreff: 'Reminder: your offer {nummer} expires soon - Ferienhaus Mantinia Hills',
+    text: `Dear {vorname} {nachname},
+
+a few days ago we sent you our offer {nummer} for your stay from **{anreise}** to **{abreise}** — perhaps it slipped through in the daily routine.
+
+Please note: the offer is only valid until **{gueltig_bis}**. After that we can unfortunately no longer hold the period for you.
+
+Accept the offer bindingly with one click:
+
+{button}
+
+If you have any questions, simply reply to this email — we are happy to help.
 
 Kind regards
 Your team at Ferienhaus Mantinia Hills`,
@@ -244,7 +279,7 @@ const GR: MailVorlagen = {
 
 σας ευχαριστούμε για την αποδοχή της προσφοράς μας. Για την οριστική κράτηση της διαμονής σας από **{anreise}** έως **{abreise}** θα βρείτε στο συνημμένο το τιμολόγιο προκαταβολής ύψους **{betrag}**.
 
-Παρακαλούμε καταβάλετε το ποσό αναφέροντας τον αριθμό τιμολογίου {nummer}. Μόλις λάβουμε την προκαταβολή, η κράτησή σας είναι οριστικά εξασφαλισμένη.
+Παρακαλούμε καταβάλετε το ποσό εντός 7 ημερών, αναφέροντας τον αριθμό τιμολογίου {nummer}. Μόνο μετά την είσπραξη της προκαταβολής η κράτησή σας είναι οριστικά εξασφαλισμένη και η περίοδος δεσμεύεται για εσάς.
 
 Με εγκάρδιους χαιρετισμούς
 Η ομάδα του Ferienhaus Mantinia Hills`,
@@ -255,7 +290,7 @@ const GR: MailVorlagen = {
 
 σας ευχαριστούμε – λάβαμε την αποδοχή της προσφοράς {angebot_nummer}. Η κράτησή σας για το διάστημα **{anreise}** έως **{abreise}** επιβεβαιώνεται.
 
-Στο συνημμένο θα βρείτε το τιμολόγιο προκαταβολής ύψους **{betrag}**. Μόλις λάβουμε την προκαταβολή, η διαμονή σας είναι οριστικά εξασφαλισμένη.
+Στο συνημμένο θα βρείτε το τιμολόγιο προκαταβολής ύψους **{betrag}**, πληρωτέο εντός 7 ημερών. Μόνο μετά την είσπραξη της προκαταβολής η διαμονή σας είναι οριστικά εξασφαλισμένη και η περίοδος δεσμεύεται για εσάς.
 
 Με εγκάρδιους χαιρετισμούς
 Η ομάδα του Ferienhaus Mantinia Hills`,
@@ -299,7 +334,24 @@ const GR: MailVorlagen = {
 
 σας ευχαριστούμε για την κράτησή σας! Η διαμονή σας από **{anreise}** έως **{abreise}** επιβεβαιώνεται.
 
-Στο συνημμένο θα βρείτε το τιμολόγιο προκαταβολής ύψους **{betrag}**. Μόλις λάβουμε την προκαταβολή, η διαμονή σας είναι οριστικά εξασφαλισμένη.
+Στο συνημμένο θα βρείτε το τιμολόγιο προκαταβολής ύψους **{betrag}**, πληρωτέο εντός 7 ημερών. Μόνο μετά την είσπραξη της προκαταβολής η διαμονή σας είναι οριστικά εξασφαλισμένη και η περίοδος δεσμεύεται για εσάς.
+
+Με εγκάρδιους χαιρετισμούς
+Η ομάδα του Ferienhaus Mantinia Hills`,
+  },
+  angebot_erinnerung: {
+    betreff: 'Υπενθύμιση: η προσφορά σας {nummer} λήγει σύντομα - Ferienhaus Mantinia Hills',
+    text: `Αγαπητέ/ή {vorname} {nachname},
+
+πριν από μερικές ημέρες σας στείλαμε την προσφορά μας {nummer} για τη διαμονή σας από **{anreise}** έως **{abreise}** — ίσως να σας διέφυγε στην καθημερινότητα.
+
+Παρακαλούμε σημειώστε: η προσφορά ισχύει μόνο έως **{gueltig_bis}**. Μετά δεν μπορούμε δυστυχώς να κρατήσουμε άλλο την περίοδο για εσάς.
+
+Αποδεχθείτε την προσφορά δεσμευτικά με ένα κλικ:
+
+{button}
+
+Για ερωτήσεις απαντήστε απλώς σε αυτό το email — θα χαρούμε να βοηθήσουμε.
 
 Με εγκάρδιους χαιρετισμούς
 Η ομάδα του Ferienhaus Mantinia Hills`,
@@ -372,6 +424,11 @@ export const MAIL_VORLAGEN_INFO: Record<keyof MailVorlagen, { label: string; wan
     label: 'Feedback-Anfrage (nach dem Aufenthalt)',
     wann: 'automatisch 2 Tage nach der Abreise (bei Status Komplett bezahlt/Abgeschlossen)',
     platzhalter: ['vorname', 'nachname', 'anreise', 'abreise', 'button'],
+  },
+  angebot_erinnerung: {
+    label: 'Angebots-Erinnerung',
+    wann: 'automatisch 7 Tage nach Angebots-Versand, falls noch nicht angenommen und noch gültig',
+    platzhalter: ['vorname', 'nachname', 'nummer', 'anreise', 'abreise', 'gueltig_bis', 'button'],
   },
 }
 

@@ -52,6 +52,8 @@ export interface Buchung {
   restzahlung_eingegangen_am: string | null
   storniert_am: string | null
   annahme_token: string | null
+  /** Wann die automatische Angebots-Erinnerung versendet wurde (7 Tage nach Angebots-Versand). */
+  angebot_erinnert_am: string | null
   /** Einweg-Token für die Feedback-Seite; null = nicht angefragt oder bereits abgegeben. */
   feedback_token: string | null
   /** Wann die Feedback-Mail versendet wurde (automatisch 2 Tage nach Abreise). */

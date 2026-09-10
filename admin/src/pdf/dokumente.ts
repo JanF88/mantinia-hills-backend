@@ -11,6 +11,13 @@ function empfaenger(b: Buchung) {
   return { name: `${b.vorname} ${b.nachname}`, email: b.email }
 }
 
+/** ISO-Datum + n Tage (UTC-sicher, kein Zeitzonen-Off-by-one). */
+function plusTage(iso: string, tage: number): string {
+  const d = new Date(`${iso}T12:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + tage)
+  return d.toISOString().slice(0, 10)
+}
+
 /** Giro-Code für den zu zahlenden Betrag; Empfänger = Kontoinhaber (Namensabgleich der Banken). */
 function girocode(e: Einstellungen, betrag: number, nummer: string): Girocode | undefined {
   if (!e.anbieter.iban || betrag <= 0) return undefined
@@ -83,6 +90,7 @@ export async function anzahlungsrechnungPdf(
     summen: [{ label: T.zuZahlenderBetrag, betrag: anzahlungBetrag, fett: true }],
     hinweise: [
       e.anbieter.iban ? T.bitteUeberweisenIban(e.anbieter.iban, nummer) : T.bitteUeberweisenOhne(nummer),
+      T.anzahlungFaellig(datumL(plusTage(datumISO, 7), L)),
       T.restVorAnreise(eur(restbetrag)),
     ],
     girocode: girocode(e, anzahlungBetrag, nummer),

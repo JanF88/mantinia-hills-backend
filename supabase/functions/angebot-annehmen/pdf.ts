@@ -218,6 +218,7 @@ const TX = {
     iban: (iban: string, n: string) => `Bitte überweisen Sie den Betrag auf das unten angegebene Konto (IBAN ${iban}) unter Angabe der Rechnungsnummer ${n}.`,
     ohne: (n: string) => `Bitte überweisen Sie den Betrag unter Angabe der Rechnungsnummer ${n}.`,
     rest: (r: string) => `Der Restbetrag von ${r} wird vor Anreise fällig.`,
+    faellig: (d: string) => `Die Anzahlung ist zahlbar innerhalb von 7 Tagen, bis spätestens ${d}. Erst mit Zahlungseingang ist Ihre Reservierung verbindlich und der Zeitraum fest für Sie geblockt.`,
   },
   en: {
     titel: (n: string) => `Deposit invoice ${n}`,
@@ -228,6 +229,7 @@ const TX = {
     iban: (iban: string, n: string) => `Please transfer the amount to the account below (IBAN ${iban}), quoting invoice number ${n}.`,
     ohne: (n: string) => `Please transfer the amount quoting invoice number ${n}.`,
     rest: (r: string) => `The remaining balance of ${r} is due before arrival.`,
+    faellig: (d: string) => `The deposit is payable within 7 days, by ${d} at the latest. Only once payment has been received is your reservation binding and the period firmly blocked for you.`,
   },
 };
 
@@ -284,6 +286,10 @@ export function anzahlungInhalt(opts: {
   const t = TX[lang];
   const restbetrag = opts.angebotGesamt - opts.anzahlungBetrag;
   const zeitraum = `${datumL(opts.anreiseISO, lang)} – ${datumL(opts.abreiseISO, lang)}`;
+  // Fälligkeit der Anzahlung: 7 Tage ab Rechnungsdatum (UTC-sicher).
+  const faelligD = new Date(`${opts.datumISO}T12:00:00Z`);
+  faelligD.setUTCDate(faelligD.getUTCDate() + 7);
+  const faelligISO = faelligD.toISOString().slice(0, 10);
   return {
     lang,
     titel: t.titel(opts.nummer),
@@ -298,6 +304,7 @@ export function anzahlungInhalt(opts: {
     summen: [{ label: t.zuZahlen, betrag: opts.anzahlungBetrag, fett: true }],
     hinweise: [
       opts.anbieter.iban ? t.iban(opts.anbieter.iban, opts.nummer) : t.ohne(opts.nummer),
+      t.faellig(datumL(faelligISO, lang)),
       t.rest(eurPdf(restbetrag)),
     ],
     girocode: opts.anbieter.iban && opts.anzahlungBetrag > 0
