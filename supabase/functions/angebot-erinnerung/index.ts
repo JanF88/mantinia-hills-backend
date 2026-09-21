@@ -137,6 +137,21 @@ Deno.serve(async (req) => {
     if (error) throw error;
     if (!kandidaten || kandidaten.length === 0) return json(200, { ok: true, versendet: 0 });
 
+    // Feste Belegung (eigene verbindliche Buchungen + Booking/Airbnb-Sperren):
+    // Angebote mit Belegungskonflikt werden NICHT erinnert — sonst würden wir
+    // aktiv zur Annahme eines kollidierenden Angebots auffordern.
+    const tage = (isoA: string, isoB: string) => Math.round((Date.parse(isoB) - Date.parse(isoA)) / 86_400_000);
+    const { data: eigene } = await supabase.from("buchungen")
+      .select("anreise, abreise")
+      .in("status", ["bestaetigt", "angezahlt", "bezahlt", "abgeschlossen"]);
+    const { data: extern } = await supabase.from("ical_blockierungen").select("von, bis");
+    const festBelegt = [
+      ...(eigene ?? []).map((b) => ({ von: b.anreise as string, bis: b.abreise as string })),
+      ...(extern ?? []).map((b) => ({ von: b.von as string, bis: b.bis as string })),
+    ];
+    const hatKonflikt = (anreise: string, abreise: string) =>
+      festBelegt.some((b) => !(tage(abreise, b.von) >= 1 || tage(b.bis, anreise) >= 1));
+
     const { data: vRow } = await supabase.from("einstellungen").select("value").eq("key", "mail_vorlagen").maybeSingle();
     const alleVorlagen = (vRow?.value ?? {}) as Record<string, { angebot_erinnerung?: { betreff?: string; text?: string } }>;
     const { data: aRow } = await supabase.from("einstellungen").select("value").eq("key", "anbieter").maybeSingle();
@@ -171,6 +186,7 @@ Deno.serve(async (req) => {
         gueltigBis = g.toISOString().slice(0, 10);
       }
       if (gueltigBis < heuteISO) continue; // bereits abgelaufen — keine Erinnerung mehr
+      if (hatKonflikt(b.anreise, b.abreise)) continue; // Zeitraum inzwischen fest belegt
 
       const sprache = (["de", "en", "gr"].includes(b.sprache) ? b.sprache : "de") as "de" | "en" | "gr";
       const basis = VORLAGEN_DEFAULT[sprache];

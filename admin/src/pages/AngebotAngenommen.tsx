@@ -22,6 +22,7 @@ const TX: Record<'de' | 'en' | 'gr', Record<string, Eintrag>> = {
     },
     ok_nomail: { titel: 'Vielen Dank – Buchung bestätigt!', text: 'Ihre Buchung ist bestätigt. Die Anzahlungsrechnung senden wir Ihnen in Kürze per E-Mail zu.', ok: true },
     bereits: { titel: 'Bereits bearbeitet', text: 'Dieses Angebot wurde bereits angenommen oder ist nicht mehr offen. Bei Fragen melden Sie sich jederzeit gern bei uns.', ok: true },
+    konflikt: { titel: 'Zeitraum zwischenzeitlich belegt', text: 'Es tut uns sehr leid: Der angefragte Zeitraum ist zwischenzeitlich anderweitig belegt worden. Bitte antworten Sie einfach auf unsere Angebots-E-Mail oder schreiben Sie an info@mantinia-hills.com – wir finden gemeinsam einen passenden Alternativtermin.', ok: false },
     fehler: { titel: 'Etwas ist schiefgelaufen', text: 'Ihre Annahme konnte nicht verarbeitet werden. Bitte kontaktieren Sie uns direkt – wir kümmern uns umgehend darum.', ok: false },
   },
   en: {
@@ -34,6 +35,7 @@ const TX: Record<'de' | 'en' | 'gr', Record<string, Eintrag>> = {
     },
     ok_nomail: { titel: 'Thank you – booking confirmed!', text: 'Your booking is confirmed. We will email you the deposit invoice shortly.', ok: true },
     bereits: { titel: 'Already processed', text: 'This offer has already been accepted or is no longer open. If you have any questions, please get in touch.', ok: true },
+    konflikt: { titel: 'Period no longer available', text: 'We are very sorry: the requested period has meanwhile been booked otherwise. Please simply reply to our offer email or write to info@mantinia-hills.com – together we will find a suitable alternative.', ok: false },
     fehler: { titel: 'Something went wrong', text: 'Your acceptance could not be processed. Please contact us directly – we will take care of it right away.', ok: false },
   },
   gr: {
@@ -46,6 +48,7 @@ const TX: Record<'de' | 'en' | 'gr', Record<string, Eintrag>> = {
     },
     ok_nomail: { titel: 'Ευχαριστούμε – η κράτηση επιβεβαιώθηκε!', text: 'Η κράτησή σας επιβεβαιώθηκε. Θα σας στείλουμε σύντομα με email το τιμολόγιο προκαταβολής.', ok: true },
     bereits: { titel: 'Έχει ήδη διεκπεραιωθεί', text: 'Η προσφορά έχει ήδη γίνει αποδεκτή ή δεν είναι πλέον ενεργή. Για οποιαδήποτε απορία επικοινωνήστε μαζί μας.', ok: true },
+    konflikt: { titel: 'Η περίοδος δεν είναι πλέον διαθέσιμη', text: 'Λυπούμαστε πολύ: η ζητούμενη περίοδος έχει εν τω μεταξύ δεσμευθεί. Απαντήστε απλώς στο email της προσφοράς μας ή γράψτε στο info@mantinia-hills.com – θα βρούμε μαζί μια κατάλληλη εναλλακτική.', ok: false },
     fehler: { titel: 'Κάτι πήγε στραβά', text: 'Η αποδοχή σας δεν μπόρεσε να διεκπεραιωθεί. Επικοινωνήστε απευθείας μαζί μας – θα το φροντίσουμε άμεσα.', ok: false },
   },
 }

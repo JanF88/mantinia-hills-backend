@@ -235,6 +235,8 @@
     #fa-wrap .fa-cal-wd { text-align:center; font-size:11px; color:#999; padding:4px 0; }
     #fa-wrap .fa-cal-day { border:none; background:none; padding:9px 0; font-size:14px; border-radius:6px; cursor:pointer; color:#2c2c2a; text-align:center; font-family:inherit; }
     #fa-wrap .fa-cal-day:disabled { color:#cfcac3; cursor:not-allowed; text-decoration:line-through; }
+    #fa-wrap .fa-cal-status { margin-top:8px; font-size:12.5px; color:#8a8378; }
+    #fa-wrap .fa-cal-status.fehler { color:#9a3b2e; }
     #fa-wrap .fa-cal-day.empty { visibility:hidden; }
     #fa-wrap .fa-cal-day.range { background:#f0d6d8; }
     #fa-wrap .fa-cal-day.end { background:#681318; color:#fff; font-weight:bold; }
@@ -426,15 +428,25 @@
   function pad2(n){ return ('0'+n).slice(-2); }
   function ymd(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
   function todayMid(){ var t=new Date(); t.setHours(0,0,0,0); return t; }
-  function ladeBelegung(){
-    fetch(BACKEND + "/belegung").then(function(r){return r.json();}).then(function(data){
+  /* Belegung mit automatischem Neuversuch. Solange sie laedt, sind keine Tage
+     waehlbar; schlaegt sie endgueltig fehl, wird ein sichtbarer Hinweis gezeigt
+     (statt kommentarlos alle Termine freizugeben). */
+  var belegungStatus = 'laedt';
+  var BELEGUNG_TXT = { laedt: "Φόρτωση διαθεσιμότητας …", fehler: "Η ζωντανή διαθεσιμότητα δεν ήταν δυνατό να φορτωθεί. Μπορείτε να επιλέξετε τις ημερομηνίες σας – θα επιβεβαιώσουμε τη διαθεσιμότητα μέσω email." };
+  function ladeBelegung(versuch){
+    versuch = versuch || 1;
+    fetch(BACKEND + "/belegung").then(function(r){ if(!r.ok){ throw new Error('http'); } return r.json(); }).then(function(data){
       blocked = {};
       (data && data.belegt ? data.belegt : []).forEach(function(b){
         var von=parseDate(b.von), bis=parseDate(b.bis); if(!von||!bis) return;
         var d=new Date(von); while(d<=bis){ blocked[ymd(d)]=true; d.setDate(d.getDate()+1); }
       });
+      belegungStatus = 'ok';
       renderCal();
-    }).catch(function(){ renderCal(); });
+    }).catch(function(){
+      if(versuch < 3){ setTimeout(function(){ ladeBelegung(versuch + 1); }, 1500); }
+      else { belegungStatus = 'fehler'; renderCal(); }
+    });
   }
   function spanFrei(aStr,bStr){ var a=parseDate(aStr), b=parseDate(bStr); var d=new Date(a); while(d<=b){ if(blocked[ymd(d)]) return false; d.setDate(d.getDate()+1); } return true; }
   function waehleTag(dstr){
@@ -457,12 +469,13 @@
     for(var i=0;i<off;i++){ h+='<span class="fa-cal-day empty"></span>'; }
     var days=new Date(y,m+1,0).getDate();
     for(var t=1;t<=days;t++){
-      var dd=new Date(y,m,t); var ds=ymd(dd); var cls='fa-cal-day'; var dis=(dd<todayMid())||blocked[ds];
+      var dd=new Date(y,m,t); var ds=ymd(dd); var cls='fa-cal-day'; var dis=(dd<todayMid())||blocked[ds]||belegungStatus==='laedt';
       if(state.arrival && state.departure && ds>=state.arrival && ds<=state.departure){ cls+=(ds===state.arrival||ds===state.departure)?' end':' range'; }
       else if(ds===state.arrival){ cls+=' end'; }
       h+='<button type="button" class="'+cls+'"'+(dis?' disabled':' data-d="'+ds+'"')+'>'+t+'</button>';
     }
     h+='</div>';
+    if(belegungStatus!=='ok'){ h+='<div class="fa-cal-status'+(belegungStatus==='fehler'?' fehler':'')+'">'+(belegungStatus==='laedt'?BELEGUNG_TXT.laedt:BELEGUNG_TXT.fehler)+'</div>'; }
     wrap.innerHTML=h;
     $('fa-cal-arr').textContent = state.arrival ? formatEN(state.arrival) : '\u2013';
     $('fa-cal-dep').textContent = state.departure ? formatEN(state.departure) : '\u2013';

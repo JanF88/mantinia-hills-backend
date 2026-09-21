@@ -62,6 +62,26 @@ export function tageZwischen(isoA: string, isoB: string): number {
   )
 }
 
+/**
+ * Kollidiert der Zeitraum einer OFFENEN Anfrage (neu/Angebot) mit fest
+ * belegten Zeiträumen — eigenen verbindlichen Buchungen oder externen
+ * Booking/Airbnb-Sperren? (Regel: mind. 1 freier Tag Abstand.)
+ */
+export function belegungsKonflikt(
+  b: Buchung,
+  alle: Buchung[],
+  extern: { von: string; bis: string }[],
+  mindestFreieTage = 1,
+): boolean {
+  if (b.status !== 'neu' && b.status !== 'angebot_erstellt') return false
+  if (pruefeZeitraum(alle, b.anreise, b.abreise, b.id, mindestFreieTage).length > 0) return true
+  return extern.some((x) => {
+    const genugDavor = tageZwischen(b.abreise, x.von) >= mindestFreieTage
+    const genugDanach = tageZwischen(x.bis, b.anreise) >= mindestFreieTage
+    return !(genugDavor || genugDanach)
+  })
+}
+
 export interface AbstandsKonflikt {
   frueher: Buchung
   spaeter: Buchung

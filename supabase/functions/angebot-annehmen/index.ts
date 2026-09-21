@@ -143,6 +143,32 @@ Deno.serve(async (req) => {
 
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
+  // VERFÜGBARKEIT VOR ANNAHME: Ist der Zeitraum inzwischen anderweitig fest
+  // belegt (eigene verbindliche Buchung oder Booking/Airbnb-Sperre, Regel
+  // „mind. 1 freier Tag"), wird NICHT angenommen — der Gast bekommt eine
+  // freundliche Konflikt-Seite statt einer Doppelbuchung.
+  const tage = (isoA: string, isoB: string) => Math.round((Date.parse(isoB) - Date.parse(isoA)) / 86_400_000);
+  const { data: kandidat } = await supabase
+    .from("buchungen")
+    .select("id, anreise, abreise")
+    .eq("annahme_token", token)
+    .eq("status", "angebot_erstellt")
+    .maybeSingle();
+  if (kandidat) {
+    const { data: eigene } = await supabase.from("buchungen")
+      .select("id, anreise, abreise")
+      .in("status", ["bestaetigt", "angezahlt", "bezahlt", "abgeschlossen"]);
+    const { data: extern } = await supabase.from("ical_blockierungen").select("von, bis");
+    const belegt = [
+      ...(eigene ?? []).filter((b) => b.id !== kandidat.id).map((b) => ({ von: b.anreise as string, bis: b.abreise as string })),
+      ...(extern ?? []).map((b) => ({ von: b.von as string, bis: b.bis as string })),
+    ];
+    const konflikt = belegt.some((b) =>
+      !(tage(kandidat.abreise, b.von) >= 1 || tage(b.bis, kandidat.anreise) >= 1)
+    );
+    if (konflikt) return json(200, { status: "konflikt" });
+  }
+
   // ATOMARER CLAIM: Status setzen + Token löschen in EINEM bedingten Update.
   // Nur der Request, der tatsächlich eine Zeile trifft (status war noch
   // "angebot_erstellt" und Token passte), gewinnt und macht weiter.

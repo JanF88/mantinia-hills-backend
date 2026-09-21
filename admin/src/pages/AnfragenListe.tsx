@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { ladeEinstellungen } from '../lib/einstellungen'
 import { datumDE, eur, zeitpunktDE } from '../lib/format'
-import { restzahlungFaellig } from '../lib/statistik'
-import type { Buchung, BuchungStatus } from '../lib/types'
+import { belegungsKonflikt, restzahlungFaellig } from '../lib/statistik'
+import type { Buchung, BuchungStatus, IcalBlockierung } from '../lib/types'
 import { QUELLE_LABEL } from '../lib/types'
 import StatusBadge, { STATUS_LABEL } from '../components/StatusBadge'
 
@@ -40,6 +40,7 @@ export default function AnfragenListe() {
   const [sortierung, setSortierung] = useState<Sortierung>('eingang')
   const [laedt, setLaedt] = useState(true)
   const [tageVorher, setTageVorher] = useState(14)
+  const [extern, setExtern] = useState<IcalBlockierung[]>([])
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -61,6 +62,9 @@ export default function AnfragenListe() {
     ladeEinstellungen()
       .then((e) => setTageVorher(e.abschlussrechnung_tage_vorher))
       .catch(() => { /* Fallback: Standard 14 Tage */ })
+    // Externe Sperren (Booking/Airbnb) für die Konflikt-Kennzeichnung offener Anfragen
+    supabase.from('ical_blockierungen').select('*')
+      .then(({ data }) => setExtern((data as IcalBlockierung[]) ?? []))
   }, [])
 
   const buchungen = useMemo(() => {
@@ -160,7 +164,16 @@ export default function AnfragenListe() {
                   <strong>{b.vorname} {b.nachname}</strong>
                   <div style={{ fontSize: 12, color: 'var(--grau)' }}>{b.email}</div>
                 </td>
-                <td>{datumDE(b.anreise)} – {datumDE(b.abreise)}<div style={{ fontSize: 12, color: 'var(--grau)' }}>{b.naechte} Nächte</div></td>
+                <td>
+                  {datumDE(b.anreise)} – {datumDE(b.abreise)}
+                  <div style={{ fontSize: 12, color: 'var(--grau)' }}>{b.naechte} Nächte</div>
+                  {belegungsKonflikt(b, alle, extern) && (
+                    <div style={{ fontSize: 11, color: 'var(--rot)', fontWeight: 600, marginTop: 4 }}
+                      title="Der Zeitraum kollidiert mit einer festen Buchung oder einer Booking/Airbnb-Sperre (inkl. 1 Puffertag).">
+                      ⚠ Zeitraum belegt
+                    </div>
+                  )}
+                </td>
                 <td className="rechts">{b.personen}</td>
                 <td className="rechts">{b.gesamtpreis_eur != null ? eur(b.gesamtpreis_eur) : '–'}</td>
                 <td>

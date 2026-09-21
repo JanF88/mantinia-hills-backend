@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import { ladeEinstellungen } from '../lib/einstellungen'
 import { downloadArchiviertesPdf } from '../lib/dokumentService'
 import { sendeAngebotErneut } from '../lib/angebotMail'
-import { restzahlungFaellig } from '../lib/statistik'
+import { belegungsKonflikt, restzahlungFaellig } from '../lib/statistik'
 import { datumDE, eur, zeitpunktDE } from '../lib/format'
 import type { Buchung, Dokument, Einstellungen, Feedback, Sprache } from '../lib/types'
 import { SPRACHE_LABEL, QUELLE_LABEL } from '../lib/types'
@@ -36,17 +36,25 @@ export default function AnfrageDetail() {
   const [angebotSenden, setAngebotSenden] = useState<'idle' | 'laedt' | 'ok' | 'fehler'>('idle')
   const [angebotSendenMeldung, setAngebotSendenMeldung] = useState('')
   const [feedback, setFeedback] = useState<Feedback | null>(null)
+  const [konflikt, setKonflikt] = useState(false)
 
   const laden = useCallback(async () => {
     if (!id) return
-    const [{ data: b }, { data: d }, { data: f }] = await Promise.all([
+    const [{ data: b }, { data: d }, { data: f }, { data: alleB }, { data: ext }] = await Promise.all([
       supabase.from('buchungen').select('*').eq('id', id).single(),
       supabase.from('dokumente').select('*').eq('buchung_id', id).order('created_at', { ascending: false }),
       supabase.from('feedback').select('*').eq('buchung_id', id).maybeSingle(),
+      supabase.from('buchungen').select('id, status, anreise, abreise').in('status', ['bestaetigt', 'angezahlt', 'bezahlt', 'abgeschlossen']),
+      supabase.from('ical_blockierungen').select('von, bis'),
     ])
     setBuchung(b as Buchung)
     setDokumente((d as Dokument[]) ?? [])
     setFeedback((f as Feedback | null) ?? null)
+    setKonflikt(belegungsKonflikt(
+      b as Buchung,
+      (alleB as Buchung[]) ?? [],
+      (ext as { von: string; bis: string }[]) ?? [],
+    ))
   }, [id])
 
   useEffect(() => {
@@ -125,6 +133,16 @@ export default function AnfrageDetail() {
         <h2 style={{ margin: 0 }}>{buchung.vorname} {buchung.nachname}</h2>
         <StatusBadge status={s} />
       </div>
+
+      {konflikt && (
+        <div className="warnung">
+          <strong>⚠ Zeitraum belegt:</strong> {datumDE(buchung.anreise)} – {datumDE(buchung.abreise)} kollidiert
+          mit einer festen Buchung oder einer Booking/Airbnb-Sperre (inkl. 1 Puffertag).
+          {s === 'angebot_erstellt'
+            ? ' Der Annahme-Link ist automatisch gesperrt — der Gast sieht bei Klick eine Konflikt-Seite. Empfehlung: ablehnen oder Alternativtermin anbieten.'
+            : ' Empfehlung: ablehnen oder dem Gast einen Alternativtermin anbieten.'}
+        </div>
+      )}
 
       {restzahlungFaellig(buchung, einstellungen?.abschlussrechnung_tage_vorher) && (
         <div className="warnung">
