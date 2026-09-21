@@ -53,7 +53,11 @@ export async function angebotPdf(
     ],
     positionen,
     summen: [{ label: T.gesamtbetrag, betrag: gesamt, fett: true }],
-    hinweise: [T.angebotGueltig(datumL(gueltigBisISO, L)), T.angebotAnnahme],
+    hinweise: [
+      T.angebotGueltig(datumL(gueltigBisISO, L)),
+      T.angebotAnnahme,
+      T.agbHinweis(L === 'de' ? 'https://mantinia-hills.com/agb' : 'https://mantinia-hills.com/agb-eng'),
+    ],
     anbieter: e.anbieter,
   })
 }

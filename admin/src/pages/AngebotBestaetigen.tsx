@@ -15,6 +15,9 @@ const TX = {
   de: {
     titel: 'Angebot verbindlich annehmen',
     text: 'Mit einem Klick auf den Button nehmen Sie Ihr Angebot verbindlich an. Sie erhalten dann umgehend die Anzahlungsrechnung per E-Mail.',
+    agbVor: 'Mit der Annahme akzeptieren Sie unsere',
+    agbLink: 'Buchungs- und Stornobedingungen',
+    agbUrl: 'https://mantinia-hills.com/agb',
     button: 'Jetzt verbindlich annehmen',
     laedt: 'Wird verarbeitet …',
     fehler: 'Die Verbindung ist fehlgeschlagen. Bitte versuchen Sie es erneut oder kontaktieren Sie uns direkt.',
@@ -24,6 +27,9 @@ const TX = {
   en: {
     titel: 'Accept offer bindingly',
     text: 'Click the button to accept your offer bindingly. You will then receive the deposit invoice by email right away.',
+    agbVor: 'By accepting you agree to our',
+    agbLink: 'booking and cancellation terms',
+    agbUrl: 'https://mantinia-hills.com/agb-eng',
     button: 'Accept bindingly now',
     laedt: 'Processing …',
     fehler: 'The connection failed. Please try again or contact us directly.',
@@ -33,6 +39,9 @@ const TX = {
   gr: {
     titel: 'Δεσμευτική αποδοχή προσφοράς',
     text: 'Με ένα κλικ στο κουμπί αποδέχεστε δεσμευτικά την προσφορά σας. Θα λάβετε αμέσως το τιμολόγιο προκαταβολής μέσω email.',
+    agbVor: 'Με την αποδοχή αποδέχεστε τους',
+    agbLink: 'όρους κράτησης και ακύρωσης (στα αγγλικά)',
+    agbUrl: 'https://mantinia-hills.com/agb-eng',
     button: 'Δεσμευτική αποδοχή τώρα',
     laedt: 'Επεξεργασία …',
     fehler: 'Η σύνδεση απέτυχε. Δοκιμάστε ξανά ή επικοινωνήστε απευθείας μαζί μας.',
@@ -101,6 +110,10 @@ export default function AngebotBestaetigen() {
         >
           {laedt ? t.laedt : t.button}
         </button>
+        <p style={{ fontSize: 13, color: '#666', marginTop: 14, lineHeight: 1.5 }}>
+          {t.agbVor}{' '}
+          <a href={t.agbUrl} target="_blank" rel="noopener" style={{ color: '#681318' }}>{t.agbLink}</a>.
+        </p>
         {fehler && <p style={{ color: '#b00020', fontSize: 14, marginTop: 18 }}>{fehler}</p>}
         <p style={{ marginTop: 28, fontSize: 13, color: '#888' }}>
           Ferienhaus Mantinia Hills · <a href="https://mantinia-hills.com" style={{ color: '#681318' }}>www.mantinia-hills.com</a>

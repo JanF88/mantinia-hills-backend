@@ -48,6 +48,7 @@ export interface PdfTexte {
   angebotZeitraum: (von: string, bis: string, naechteN: number, personenN: number) => string
   gesamtbetrag: string
   angebotGueltig: (bis: string) => string
+  agbHinweis: (url: string) => string
   angebotAnnahme: string
   // Rechnungs-Nummernlabel
   rechnung: (n: string) => string
@@ -104,6 +105,7 @@ const DE: PdfTexte = {
   angebotZeitraum: (von, bis, n, p) => `Zeitraum: ${von} – ${bis} (${naechte(n, 'de')}) · ${personen(p, 'de')}`,
   gesamtbetrag: 'Gesamtbetrag',
   angebotGueltig: (bis) => `Dieses Angebot ist freibleibend und gültig bis ${bis}.`,
+  agbHinweis: (url) => `Es gelten unsere Buchungs- und Stornobedingungen (Stornogebühren gestaffelt nach Nähe zur Anreise): ${url}`,
   angebotAnnahme: 'Zur Annahme genügt eine kurze Bestätigung per E-Mail. Nach Annahme erhalten Sie eine Anzahlungsrechnung; mit Eingang der Anzahlung ist Ihre Buchung verbindlich reserviert.',
   rechnung: (n) => `Rechnung ${n}`,
   anzahlungTitel: (n) => `Anzahlungsrechnung ${n}`,
@@ -156,6 +158,7 @@ const EN: PdfTexte = {
   angebotZeitraum: (von, bis, n, p) => `Period: ${von} – ${bis} (${naechte(n, 'en')}) · ${personen(p, 'en')}`,
   gesamtbetrag: 'Total amount',
   angebotGueltig: (bis) => `This offer is without obligation and valid until ${bis}.`,
+  agbHinweis: (url) => `Our booking and cancellation terms apply (cancellation fees staggered by proximity to arrival): ${url}`,
   angebotAnnahme: 'A short confirmation by email is enough to accept. After acceptance you will receive a deposit invoice; once the deposit is received, your booking is bindingly reserved.',
   rechnung: (n) => `Invoice ${n}`,
   anzahlungTitel: (n) => `Deposit invoice ${n}`,
@@ -208,6 +211,7 @@ const GR: PdfTexte = {
   angebotZeitraum: (von, bis, n, p) => `Διάστημα: ${von} – ${bis} (${naechte(n, 'gr')}) · ${personen(p, 'gr')}`,
   gesamtbetrag: 'Συνολικό ποσό',
   angebotGueltig: (bis) => `Η παρούσα προσφορά είναι χωρίς δέσμευση και ισχύει έως ${bis}.`,
+  agbHinweis: (url) => `Ισχύουν οι όροι κράτησης και ακύρωσής μας (χρεώσεις ακύρωσης κλιμακωτά ανάλογα με την εγγύτητα στην άφιξη): ${url}`,
   angebotAnnahme: 'Για την αποδοχή αρκεί μια σύντομη επιβεβαίωση μέσω email. Μετά την αποδοχή θα λάβετε τιμολόγιο προκαταβολής· με την είσπραξη της προκαταβολής η κράτησή σας είναι δεσμευτικά εξασφαλισμένη.',
   rechnung: (n) => `Τιμολόγιο ${n}`,
   anzahlungTitel: (n) => `Τιμολόγιο προκαταβολής ${n}`,

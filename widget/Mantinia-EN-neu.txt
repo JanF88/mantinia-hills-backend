@@ -318,6 +318,7 @@
         <button type="button" class="fa-btn fa-btn-next" id="fa-direkt" style="width:100%;">Book now</button>
         <p class="fa-note" style="margin-top:8px;">Binding booking — you will receive the booking confirmation
           with the deposit invoice by email right away.</p>
+        <p class="fa-note" style="margin-top:6px;">By clicking “Book now” you accept our <a class="fa-link" href="https://mantinia-hills.com/agb-eng" target="_blank" rel="noopener">booking and cancellation terms</a>.</p>
         <div class="fa-warn" id="fa-direkt-warn" style="display:none;"></div>
         <p class="fa-note" style="margin-top:18px;">Not ready to book yet? Send us a free, non-binding enquiry —
           we'll confirm availability and the final price by email. Your data will be treated confidentially.</p>

@@ -8,12 +8,20 @@ import { ladePdfBytes, markiereVersendet } from './dokumentService'
 import { datumDE, lokalISO } from './format'
 import type { Buchung, Dokument, Einstellungen } from './types'
 
+// AGB-Hinweis unter dem Annahme-Button (Einbeziehung der Stornobedingungen vor Vertragsschluss).
+const AGB_ZEILE: Record<string, string> = {
+  de: 'Mit der Annahme akzeptieren Sie unsere <a href="https://mantinia-hills.com/agb" target="_blank" style="color:#681318">Buchungs- und Stornobedingungen</a>.',
+  en: 'By accepting you agree to our <a href="https://mantinia-hills.com/agb-eng" target="_blank" style="color:#681318">booking and cancellation terms</a>.',
+  gr: 'Με την αποδοχή αποδέχεστε τους <a href="https://mantinia-hills.com/agb-eng" target="_blank" style="color:#681318">όρους κράτησης και ακύρωσης</a> (στα αγγλικά).',
+}
+
 /** HTML-Button, der auf die Bestätigungsseite (…/angebot-annehmen?token=…&lang=…) führt. */
 export function annahmeButtonHtml(token: string, lang: string = 'de'): string {
   const url = `${window.location.origin}/angebot-annehmen?token=${token}&lang=${lang}`
   return `<table cellpadding="0" cellspacing="0" border="0" style="margin:22px 0"><tr><td style="border-radius:8px;background:#681318">
 <a href="${url}" target="_blank" style="display:inline-block;padding:14px 28px;color:#fff;font-weight:bold;font-size:15px;text-decoration:none;font-family:Arial,Helvetica,sans-serif">Angebot annehmen</a>
 </td></tr></table>
+<p style="font-size:12.5px;color:#666;margin:0 0 10px">${AGB_ZEILE[lang] ?? AGB_ZEILE.de}</p>
 <p style="font-size:13px;color:#666">Falls der Button nicht funktioniert, kopieren Sie bitte diesen Link in Ihren Browser:<br><a href="${url}">${url}</a></p>`
 }
 
