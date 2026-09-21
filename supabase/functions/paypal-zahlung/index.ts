@@ -37,6 +37,15 @@ function statusSeite(status: string, lang: string, extra = ""): Response {
   return weiter(`${APP_BASE}/zahlung?status=${status}&lang=${encodeURIComponent(lang)}${extra}`);
 }
 
+/** PAYPAL_SECRET tolerant auflösen (akzeptiert auch z. B. "paypal secret"). */
+function findeSecret(): string | undefined {
+  const direkt = Deno.env.get("PAYPAL_SECRET");
+  if (direkt) return direkt;
+  const env = Deno.env.toObject();
+  const key = Object.keys(env).find((k) => /paypal/i.test(k) && /secret/i.test(k));
+  return key ? env[key] : undefined;
+}
+
 async function paypalToken(secret: string): Promise<string> {
   const res = await fetch(`${PAYPAL_API}/v1/oauth2/token`, {
     method: "POST",
@@ -99,7 +108,7 @@ Deno.serve(async (req) => {
     if (!rechnung || !(Number(rechnung.gesamt) > 0)) return statusSeite("fehler", lang);
     const betrag = Number(rechnung.gesamt).toFixed(2);
 
-    const secret = Deno.env.get("PAYPAL_SECRET");
+    const secret = findeSecret();
     if (!secret) {
       console.error("PAYPAL_SECRET nicht gesetzt");
       return statusSeite("inaktiv", lang);
