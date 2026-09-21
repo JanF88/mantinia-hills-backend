@@ -21,8 +21,9 @@ import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const APP_BASE = "https://clients.mantinia-hills.com";
 const PAYPAL_API = Deno.env.get("PAYPAL_API") ?? "https://api-m.paypal.com";
+// Live-Client-ID der PayPal-App "Mantinia Hills" (öffentlich; per Env überschreibbar).
 const CLIENT_ID = Deno.env.get("PAYPAL_CLIENT_ID") ??
-  "AcrWcJr2zUqTyH4x1jq1bhYRhY2JRNAEOIZCXd0Fm9wuD_ic1YigFxGE6EvLzqCHFo2dlfiHBb0M6OkN";
+  "BAAOhlDIdwmMKwMCK3vxwKrlS2Sd_1iSZBhCBUcmMfJ9QiobP_5oV9Zt2mpqjn0Tc9ytF5xkZcB6ruVSm0";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -37,13 +38,18 @@ function statusSeite(status: string, lang: string, extra = ""): Response {
   return weiter(`${APP_BASE}/zahlung?status=${status}&lang=${encodeURIComponent(lang)}${extra}`);
 }
 
-/** PAYPAL_SECRET tolerant auflösen (akzeptiert auch z. B. "paypal secret"). */
+/**
+ * PAYPAL_SECRET tolerant auflösen: akzeptiert auch abweichende Namen
+ * (z. B. "paypal secret") und entfernt beim Kopieren eingeschleppte
+ * Leerzeichen/Zeilenumbrüche (führte real zu 401 bei PayPal).
+ */
 function findeSecret(): string | undefined {
   const direkt = Deno.env.get("PAYPAL_SECRET");
-  if (direkt) return direkt;
+  if (direkt?.trim()) return direkt.trim();
   const env = Deno.env.toObject();
   const key = Object.keys(env).find((k) => /paypal/i.test(k) && /secret/i.test(k));
-  return key ? env[key] : undefined;
+  const wert = key ? env[key].trim() : "";
+  return wert || undefined;
 }
 
 async function paypalToken(secret: string): Promise<string> {
