@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { anzahlungsrechnungPdf } from '../pdf/dokumente'
 import { downloadPdf, naechsteNummer, speichereDokument, markiereVersendet } from '../lib/dokumentService'
-import { sendeMail, mailRahmen } from '../lib/mail'
+import { sendeMail, mailRahmen, paypalZahlungBlock } from '../lib/mail'
 import { renderMailVorlage } from '../lib/mailVorlagen'
 import { datumDE, eur, heuteISO } from '../lib/format'
 import type { Buchung, Dokument, Einstellungen } from '../lib/types'
@@ -84,7 +84,7 @@ export default function AnzahlungDialog({ buchung, angebot, einstellungen, onFer
           await sendeMail({
             an: buchung.email,
             betreff,
-            html: mailRahmen(html, einstellungen.anbieter),
+            html: mailRahmen(html + paypalZahlungBlock(buchung.zahlung_token, buchung.sprache), einstellungen.anbieter),
             anhangBytes: bytes,
             anhangName: `${nummer}_Anzahlung_Mantinia_Hills.pdf`,
             kopieAnMich: true,

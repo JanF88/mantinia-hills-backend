@@ -203,7 +203,15 @@ export default function AnfrageDetail() {
             <dl className="meta-grid">
               {buchung.angebot_erinnert_am && <div><dt>Angebots-Erinnerung gesendet</dt><dd>{zeitpunktDE(buchung.angebot_erinnert_am)}</dd></div>}
               {buchung.angenommen_am && <div><dt>Angebot angenommen</dt><dd>{zeitpunktDE(buchung.angenommen_am)}</dd></div>}
-              {buchung.anzahlung_eingegangen_am && <div><dt>Anzahlung eingegangen</dt><dd>{zeitpunktDE(buchung.anzahlung_eingegangen_am)}</dd></div>}
+              {buchung.anzahlung_eingegangen_am && (
+                <div>
+                  <dt>Anzahlung eingegangen</dt>
+                  <dd>
+                    {zeitpunktDE(buchung.anzahlung_eingegangen_am)}
+                    {buchung.zahlung_referenz && <span style={{ color: 'var(--grau)' }}> · {buchung.zahlung_referenz}</span>}
+                  </dd>
+                </div>
+              )}
               {buchung.restzahlung_eingegangen_am && <div><dt>Restzahlung eingegangen</dt><dd>{zeitpunktDE(buchung.restzahlung_eingegangen_am)}</dd></div>}
               {buchung.storniert_am && <div><dt>Storniert</dt><dd>{zeitpunktDE(buchung.storniert_am)}</dd></div>}
               {buchung.feedback_angefragt_am && <div><dt>Feedback angefragt</dt><dd>{zeitpunktDE(buchung.feedback_angefragt_am)}</dd></div>}

@@ -54,6 +54,10 @@ export interface Buchung {
   annahme_token: string | null
   /** Wann die automatische Angebots-Erinnerung versendet wurde (7 Tage nach Angebots-Versand). */
   angebot_erinnert_am: string | null
+  /** Unerratbarer Token für den PayPal-Zahlungslink der Anzahlung. */
+  zahlung_token: string | null
+  /** Zahlungsreferenz bei Online-Zahlung, z. B. "PayPal <Capture-ID>". */
+  zahlung_referenz: string | null
   /** Einweg-Token für die Feedback-Seite; null = nicht angefragt oder bereits abgegeben. */
   feedback_token: string | null
   /** Wann die Feedback-Mail versendet wurde (automatisch 2 Tage nach Abreise). */

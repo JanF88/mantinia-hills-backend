@@ -96,3 +96,20 @@ ${inhaltHtml}
 </table>
 </div>`
 }
+
+/** PayPal-Zahlungsblock für die Anzahlungs-Mail (nur Anzahlung; Überweisung bleibt möglich). */
+const PP_TXT: Record<'de' | 'en' | 'gr', { btn: string; hinweis: string }> = {
+  de: { btn: 'Anzahlung jetzt mit PayPal zahlen', hinweis: 'Oder überweisen Sie den Betrag klassisch — alle Angaben stehen in der Rechnung.' },
+  en: { btn: 'Pay deposit now with PayPal', hinweis: 'Or transfer the amount by bank — all details are in the invoice.' },
+  gr: { btn: 'Πληρωμή προκαταβολής μέσω PayPal', hinweis: 'Ή εμβάστε το ποσό μέσω τράπεζας — όλα τα στοιχεία βρίσκονται στο τιμολόγιο.' },
+}
+
+export function paypalZahlungBlock(zahlungToken: string | null, sprache: 'de' | 'en' | 'gr'): string {
+  if (!zahlungToken) return ''
+  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/paypal-zahlung?token=${zahlungToken}`
+  const t = PP_TXT[sprache]
+  return `<table cellpadding="0" cellspacing="0" border="0" style="margin:22px 0 6px"><tr><td style="border-radius:8px;background:#681318">
+<a href="${url}" target="_blank" style="display:inline-block;padding:14px 28px;color:#fff;font-weight:bold;font-size:15px;text-decoration:none;font-family:Arial,Helvetica,sans-serif">${t.btn}</a>
+</td></tr></table>
+<p style="font-size:13px;color:#666;margin:0 0 12px">${t.hinweis}</p>`
+}

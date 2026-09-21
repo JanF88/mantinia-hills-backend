@@ -51,6 +51,22 @@ function bytesZuBase64(bytes: Uint8Array): string {
   return btoa(bin);
 }
 
+// PayPal-Zahlungsblock für die Anzahlungs-Mail (nur Anzahlung; Überweisung bleibt möglich).
+const PP_TXT: Record<"de" | "en" | "gr", { btn: string; hinweis: string }> = {
+  de: { btn: "Anzahlung jetzt mit PayPal zahlen", hinweis: "Oder überweisen Sie den Betrag klassisch — alle Angaben stehen in der Rechnung." },
+  en: { btn: "Pay deposit now with PayPal", hinweis: "Or transfer the amount by bank — all details are in the invoice." },
+  gr: { btn: "Πληρωμή προκαταβολής μέσω PayPal", hinweis: "Ή εμβάστε το ποσό μέσω τράπεζας — όλα τα στοιχεία βρίσκονται στο τιμολόγιο." },
+};
+function zahlungBlockHtml(zahlungToken: string | null, sprache: "de" | "en" | "gr"): string {
+  if (!zahlungToken) return "";
+  const url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/paypal-zahlung?token=${zahlungToken}`;
+  const t = PP_TXT[sprache];
+  return `<table cellpadding="0" cellspacing="0" border="0" style="margin:22px 0 6px"><tr><td style="border-radius:8px;background:#681318">
+<a href="${url}" target="_blank" style="display:inline-block;padding:14px 28px;color:#fff;font-weight:bold;font-size:15px;text-decoration:none;font-family:Arial,Helvetica,sans-serif">${t.btn}</a>
+</td></tr></table>
+<p style="font-size:13px;color:#666;margin:0 0 12px">${t.hinweis}</p>`;
+}
+
 function ersetzePlatzhalter(text: string, werte: Record<string, string>): string {
   return text.replace(/\{(\w+)\}/g, (voll, name) => (name in werte ? werte[name] : voll));
 }
@@ -311,6 +327,7 @@ Deno.serve(async (req) => {
       const betreff = betreffAsciiSicher(ersetzePlatzhalter(vorlage.betreff, werte));
       const html = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#2c2c2a;line-height:1.55">
 ${textZuMailHtml(ersetzePlatzhalter(vorlage.text, werte))}
+${zahlungBlockHtml(buchung.zahlung_token, sprache)}
 <table cellpadding="0" cellspacing="0" border="0" style="margin-top:24px;border-top:1px solid #e2ddd6;padding-top:16px">
 <tr><td style="padding:0 0 8px 0"><img src="${logo}" width="200" height="50" alt="${anbieter.name}" style="display:block;border:0"></td></tr>
 <tr><td style="font-size:13px"><span style="font-weight:bold;color:#681318">${anbieter.name}</span><br>
