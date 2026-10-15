@@ -7,6 +7,7 @@ import { sendeMail, mailRahmen } from '../lib/mail'
 import { renderMailVorlage } from '../lib/mailVorlagen'
 import { datumDE } from '../lib/format'
 import type { Buchung, Einstellungen } from '../lib/types'
+import { ABLEHNUNGSGRUND_LABEL } from '../lib/types'
 
 interface Props {
   buchung: Buchung
@@ -15,18 +16,28 @@ interface Props {
   onAbbrechen: () => void
 }
 
+// Manuell wählbare Absagegründe („abgelaufen" vergibt nur der Auto-Ablauf).
+const ABLEHNUNGSGRUENDE = Object.entries(ABLEHNUNGSGRUND_LABEL)
+  .filter(([wert]) => wert !== 'abgelaufen')
+  .map(([wert, label]) => ({ wert, label }))
+
 export default function AbsageDialog({ buchung, einstellungen, onFertig, onAbbrechen }: Props) {
   const [senden, setSenden] = useState(true)
+  const [grund, setGrund] = useState('')
   const [fehler, setFehler] = useState<string | null>(null)
   const [versandHinweis, setVersandHinweis] = useState<string | null>(null)
   const [laedt, setLaedt] = useState(false)
 
   async function ablehnen() {
+    if (!grund) {
+      setFehler('Bitte einen Grund auswählen — das macht die Auswertung der Absagen möglich.')
+      return
+    }
     setLaedt(true)
     setFehler(null)
     try {
       // Status zuerst setzen — dann darf die Aktion nicht mehr doppelt laufen.
-      const { error } = await supabase.from('buchungen').update({ status: 'abgelehnt' }).eq('id', buchung.id)
+      const { error } = await supabase.from('buchungen').update({ status: 'abgelehnt', ablehnungsgrund: grund }).eq('id', buchung.id)
       if (error) throw error
 
       if (senden) {
@@ -82,6 +93,11 @@ export default function AbsageDialog({ buchung, einstellungen, onFertig, onAbbre
           Die Anfrage von <strong>{buchung.vorname} {buchung.nachname}</strong> wird auf „Abgelehnt" gesetzt.
           Auf Wunsch senden wir eine freundliche Absage in der Sprache des Gastes.
         </p>
+        <label htmlFor="absage-grund" style={{ display: 'block', marginTop: 12, fontSize: 14 }}>Grund der Absage</label>
+        <select id="absage-grund" value={grund} onChange={(e) => { setGrund(e.target.value); setFehler(null) }}>
+          <option value="">Bitte wählen …</option>
+          {ABLEHNUNGSGRUENDE.map((g) => <option key={g.wert} value={g.wert}>{g.label}</option>)}
+        </select>
         <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
           <input type="checkbox" style={{ width: 'auto' }} checked={senden} onChange={(e) => setSenden(e.target.checked)} />
           Absage-E-Mail an <strong>{buchung.email}</strong> senden (Kopie an dich)

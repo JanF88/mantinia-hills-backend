@@ -6,6 +6,7 @@
 // Function-Secret ANFRAGE_WEBHOOK_KEY.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const WEBHOOK_KEY = Deno.env.get("ANFRAGE_WEBHOOK_KEY") ??
   "358df55578f41fd3941997948f028e8b";
@@ -30,6 +31,16 @@ function parseGermanDate(v: string | null): string | null {
   if (!m) return null;
   const iso = `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
   return isNaN(Date.parse(iso)) ? null : iso;
+}
+
+/** Betreff mail-sicher: DE-Umlaute transliterieren, sonst RFC-2047 (UTF-8/Base64). */
+function betreffAsciiSicher(s: string): string {
+  const ascii = s
+    .replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue")
+    .replace(/Ä/g, "Ae").replace(/Ö/g, "Oe").replace(/Ü/g, "Ue")
+    .replace(/ß/g, "ss").replace(/[–—]/g, "-");
+  if (/^[\x20-\x7E]*$/.test(ascii)) return ascii;
+  return "=?UTF-8?B?" + btoa(String.fromCharCode(...new TextEncoder().encode(s))) + "?=";
 }
 
 function num(v: string | null): number | null {
@@ -98,7 +109,7 @@ Deno.serve(async (req) => {
     return json(200, { ok: true, duplicate: true });
   }
 
-  const { error } = await supabase.from("buchungen").insert({
+  const { data: neu, error } = await supabase.from("buchungen").insert({
     status: "neu",
     quelle: "webhook",
     vorname: p.get("vorname")!.trim(),
@@ -118,11 +129,55 @@ Deno.serve(async (req) => {
     seite: p.get("seite"),
     sprache,
     raw_payload: raw,
-  });
+  }).select("id").single();
 
   if (error) {
     console.error("insert failed:", error.message);
     return json(500, { error: "insert failed" });
   }
+
+  // Lead-Mail an den Eigentümer — direkt aus dem Backend, unabhängig von
+  // Zapier (ein Kanal = eine Wahrheit; Fehler hier sind nicht fatal).
+  const smtpPass = Deno.env.get("SMTP_PASS");
+  if (smtpPass) {
+    try {
+      const user = Deno.env.get("SMTP_USER") ?? "info@mantinia-hills.com";
+      const from = Deno.env.get("SMTP_FROM") ?? user;
+      const vorname = p.get("vorname")!.trim();
+      const nachname = p.get("nachname")!.trim();
+      const gesamt = p.get("gesamtpreis_eur") ? `${p.get("gesamtpreis_eur")} €` : "–";
+      const link = `https://clients.mantinia-hills.com/anfragen/${neu?.id ?? ""}`;
+      const inhalt = [
+        `Neue Buchungsanfrage über die Website (${sprache.toUpperCase()}):`,
+        ``,
+        `Gast:      ${vorname} ${nachname}`,
+        `E-Mail:    ${email}`,
+        `Zeitraum:  ${p.get("anreise")} bis ${p.get("abreise")} (${p.get("naechte") ?? "?"} Nächte)`,
+        `Personen:  ${personen}`,
+        `Gesamt:    ${gesamt}`,
+        `Transfer:  ${p.get("flughafentransfer") ?? "–"}`,
+        `Fahrzeug:  ${p.get("fahrzeug_interesse") ?? "–"}`,
+        `Quelle:    ${p.get("seite") ?? "–"}`,
+        ``,
+        `Direkt zur Anfrage: ${link}`,
+      ].join("\n");
+      const client = new SMTPClient({
+        connection: { hostname: Deno.env.get("SMTP_HOST") ?? "smtp.hostinger.com", port: parseInt(Deno.env.get("SMTP_PORT") ?? "465", 10), tls: true, auth: { username: user, password: smtpPass } },
+      });
+      await Promise.race([
+        client.send({
+          from: `Ferienhaus Mantinia Hills <${from}>`,
+          to: from,
+          subject: betreffAsciiSicher(`Neue Anfrage: ${vorname} ${nachname} (${p.get("anreise")} - ${p.get("abreise")})`),
+          content: inhalt,
+        }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("SMTP-Timeout")), 20_000)),
+      ]);
+      await client.close();
+    } catch (err) {
+      console.error("Lead-Mail fehlgeschlagen:", err instanceof Error ? err.message : String(err));
+    }
+  }
+
   return json(200, { ok: true });
 });

@@ -5,3 +5,4 @@ dist/
 .env.deploy
 .DS_Store
 *.log
+admin/public/widget/

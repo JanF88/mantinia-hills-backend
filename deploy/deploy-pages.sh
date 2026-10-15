@@ -7,6 +7,9 @@ export PATH="$HOME/.local/node-v22.14.0-darwin-arm64/bin:$PATH"
 cd "$(dirname "$0")/.."
 REPO_URL=$(git remote get-url origin)
 
+echo "→ Widget-Loader generieren …"
+node deploy/widget-build.mjs
+
 echo "→ Build …"
 (cd admin && npm run build)
 

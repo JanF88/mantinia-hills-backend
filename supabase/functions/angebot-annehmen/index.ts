@@ -313,11 +313,11 @@ ${zahlungBlockHtml(buchung.zahlung_token, sprache)}
       } catch (err) {
         console.error("Mailversand fehlgeschlagen:", err instanceof Error ? err.message : String(err));
         // Rechnung liegt in DB/Storage — Admin kann sie manuell nachsenden.
-        return json(200, { status: "ok_nomail", betrag });
+        return json(200, { status: "ok_nomail", betrag, zahlung_token: buchung.zahlung_token });
       }
     }
 
-    return json(200, { status: "ok", betrag });
+    return json(200, { status: "ok", betrag, zahlung_token: buchung.zahlung_token });
   } catch (err) {
     console.error("angebot-annehmen Fehler nach Claim:", err instanceof Error ? err.message : String(err));
     return json(200, { status: "ok_nomail" });

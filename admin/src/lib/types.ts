@@ -12,6 +12,16 @@ export type DokumentTyp = 'angebot' | 'anzahlungsrechnung' | 'abschlussrechnung'
 export type AnfrageQuelle = 'webhook' | 'manuell' | 'direktbuchung'
 
 /** Anzeigename je Quelle. */
+/** Anzeige-Labels der Absagegründe (inkl. automatischem Ablauf). */
+export const ABLEHNUNGSGRUND_LABEL: Record<string, string> = {
+  belegt: 'Zeitraum belegt',
+  keine_reaktion: 'Gast reagiert nicht',
+  preis: 'Preis / zu teuer',
+  storniert_durch_gast: 'Gast hat abgesagt',
+  abgelaufen: 'Angebot abgelaufen (automatisch)',
+  sonstiges: 'Sonstiges',
+}
+
 export const QUELLE_LABEL: Record<AnfrageQuelle, string> = {
   webhook: 'Website',
   manuell: 'Manuell',
@@ -52,12 +62,16 @@ export interface Buchung {
   restzahlung_eingegangen_am: string | null
   storniert_am: string | null
   annahme_token: string | null
-  /** Wann die automatische Angebots-Erinnerung versendet wurde (7 Tage nach Angebots-Versand). */
+  /** Wann Erinnerung 1 versendet wurde (3 Tage nach Angebots-Versand). */
   angebot_erinnert_am: string | null
+  /** Wann Erinnerung 2 ("letzte Chance", 3 Tage vor Ablauf) versendet wurde. */
+  angebot_erinnert2_am: string | null
   /** Unerratbarer Token für den PayPal-Zahlungslink der Anzahlung. */
   zahlung_token: string | null
   /** Zahlungsreferenz bei Online-Zahlung, z. B. "PayPal <Capture-ID>". */
   zahlung_referenz: string | null
+  /** Warum abgelehnt? (belegt | keine_reaktion | preis | storniert_durch_gast | abgelaufen | sonstiges) */
+  ablehnungsgrund: string | null
   /** Einweg-Token für die Feedback-Seite; null = nicht angefragt oder bereits abgegeben. */
   feedback_token: string | null
   /** Wann die Feedback-Mail versendet wurde (automatisch 2 Tage nach Abreise). */

@@ -333,7 +333,7 @@
         <p class="fa-note" style="margin-top:6px;">Με κλικ στο «Κράτηση τώρα» αποδέχεστε τους <a class="fa-link" href="https://mantinia-hills.com/agb-eng" target="_blank" rel="noopener">όρους κράτησης και ακύρωσης</a> (στα αγγλικά).</p>
         <div class="fa-warn" id="fa-direkt-warn" style="display:none;"></div>
         <p class="fa-note" style="margin-top:18px;">Δεν θέλετε να κάνετε ακόμη δεσμευτική κράτηση; Στείλτε μας ένα
-          δωρεάν, μη δεσμευτικό αίτημα — θα επιβεβαιώσουμε τη διαθεσιμότητα και την τελική τιμή μέσω email.
+          δωρεάν, μη δεσμευτικό αίτημα — κατά κανόνα θα λάβετε την προσωπική σας προσφορά εντός λίγων ωρών μέσω email – με ισχύ 14 ημερών.
           Τα δεδομένα σας θα αντιμετωπιστούν με εμπιστευτικότητα.</p>
         <button type="button" class="fa-btn fa-btn-back" id="fa-anfrage-klein" style="font-size:13.5px;padding:9px 16px;">Μη δεσμευτικό αίτημα</button>
       </div>
@@ -486,6 +486,17 @@
     var btns=wrap.querySelectorAll('.fa-cal-day[data-d]');
     for(var k=0;k<btns.length;k++){ btns[k].addEventListener('click',function(){ waehleTag(this.getAttribute('data-d')); }); }
   }
+  /* POST an den Webhook mit bis zu 3 Versuchen — ein einzelner Funkausfall
+     (z. B. In-App-Browser) darf keinen Lead mehr verlieren. */
+  function postMitWiederholung(body, versuch){
+    versuch = versuch || 1;
+    return fetch(BACKEND_WEBHOOK, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'}, body:body, keepalive:true })
+      .then(function(r){ if(!r.ok){ throw new Error('http'); } })
+      .catch(function(){
+        if(versuch < 3){ return new Promise(function(res){ setTimeout(res, 1500); }).then(function(){ return postMitWiederholung(body, versuch+1); }); }
+      });
+  }
+
   function sendToBackend(){
     var stay=calcStay(); if(!stay) return Promise.resolve();
     var grand=stay.total+CLEANING_FEE;
@@ -501,7 +512,7 @@
     p.append('anfrage_zeitpunkt', new Date().toISOString());
     p.append('seite', (typeof location!=='undefined'?location.href:''));
     p.append('sprache', 'gr');
-    return fetch(BACKEND_WEBHOOK, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'}, body:p.toString(), keepalive:true }).catch(function(){});
+    return postMitWiederholung(p.toString());
   }
 
 
@@ -685,6 +696,8 @@
     dankeTitel: function(v){ return 'Ευχαριστούμε, '+v+' – η κράτησή σας επιβεβαιώθηκε!'; },
     dankeText: function(mail){ return 'Μόλις στείλαμε την επιβεβαίωση κράτησης με το τιμολόγιο προκαταβολής στο '+mail+' (ελέγξτε και τον φάκελο ανεπιθύμητης αλληλογραφίας). Μόλις λάβουμε την προκαταβολή, η διαμονή σας είναι οριστικά εξασφαλισμένη.'; }
   };
+  DIREKT_TXT.paypalBtn = 'Πληρωμή προκαταβολής μέσω PayPal';
+  DIREKT_TXT.paypalHinweis = 'Ή με τραπεζικό έμβασμα – όλα τα στοιχεία βρίσκονται στο email.';
   $('fa-direkt').addEventListener('click', function(){
     var stay=calcStay(); if(!stay) return;
     var btn=$('fa-direkt'), nextBtn=$('fa-anfrage-klein'), warn=$('fa-direkt-warn');
@@ -714,6 +727,7 @@
             '<div style="font-size:40px;margin-bottom:10px;color:#681318;">✓</div>'+
             '<p class="fa-q" style="font-size:22px;">'+DIREKT_TXT.dankeTitel(esc(state.firstname))+'</p>'+
             '<p class="fa-sub" style="font-size:15px;">'+DIREKT_TXT.dankeText(esc(state.email))+'</p>'+
+            (j.zahlung_token ? '<a href="'+BACKEND+'/paypal-zahlung?token='+j.zahlung_token+'" style="display:inline-block;margin-top:18px;background:#681318;color:#fff;border-radius:8px;padding:14px 28px;font-size:15px;font-weight:bold;text-decoration:none;">'+DIREKT_TXT.paypalBtn+'</a><p class="fa-note" style="margin-top:8px;">'+DIREKT_TXT.paypalHinweis+'</p>' : '')+
             '</div>';
         } else if(j && j.status==='belegt'){ reset(DIREKT_TXT.belegt); }
         else { reset(DIREKT_TXT.fehler); }

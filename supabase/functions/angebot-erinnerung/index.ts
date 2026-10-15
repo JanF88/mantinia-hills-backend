@@ -8,8 +8,12 @@ import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const KEY = Deno.env.get("ICAL_KEY") ?? "015681fdb57dfca7aaf38572f463bbcd";
 const APP_BASE = "https://clients.mantinia-hills.com";
-/** Erinnerung ab so vielen Tagen nach Angebots-Versand. */
-const ERINNERN_NACH_TAGEN = 7;
+/** Erinnerung 1 ab so vielen Tagen nach Angebots-Versand. */
+const ERINNERN_NACH_TAGEN = 3;
+/** Erinnerung 2 ("letzte Chance") so viele Tage VOR Ablauf der Gültigkeit. */
+const ERINNERUNG2_TAGE_VOR_ABLAUF = 3;
+/** Mindestabstand zwischen Erinnerung 1 und 2. */
+const MIN_ABSTAND_TAGE = 2;
 /** Fallback-Gültigkeit, falls am Dokument kein gueltig_bis vermerkt ist. */
 const GUELTIG_TAGE_FALLBACK = 14;
 
@@ -85,6 +89,57 @@ Your team at Ferienhaus Mantinia Hills`,
   },
 };
 
+const VORLAGEN2_DEFAULT: Record<"de" | "en" | "gr", { betreff: string; text: string; button: string }> = {
+  de: {
+    betreff: "Letzte Chance: Ihr Angebot {nummer} l\u00e4uft am {gueltig_bis} ab",
+    text: `Guten Tag {vorname} {nachname},
+
+nur ein kurzer Hinweis: Ihr Angebot {nummer} f\u00fcr den Aufenthalt vom **{anreise}** bis **{abreise}** l\u00e4uft am **{gueltig_bis}** ab. Danach geben wir den Zeitraum wieder f\u00fcr andere G\u00e4ste frei.
+
+Wenn Sie dabei sein m\u00f6chten, gen\u00fcgt ein Klick:
+
+{button}
+
+Falls es diesmal nicht passt: gar kein Problem \u2014 wir freuen uns auf ein anderes Mal.
+
+Herzliche Gr\u00fc\u00dfe
+Ihr Team vom Ferienhaus Mantinia Hills`,
+    button: "Angebot annehmen",
+  },
+  en: {
+    betreff: "Last chance: your offer {nummer} expires on {gueltig_bis}",
+    text: `Dear {vorname} {nachname},
+
+just a quick note: your offer {nummer} for the stay from **{anreise}** to **{abreise}** expires on **{gueltig_bis}**. After that we will release the period for other guests.
+
+If you would like to join us, one click is all it takes:
+
+{button}
+
+If it does not work out this time: no problem at all \u2014 we would be happy to welcome you another time.
+
+Kind regards
+Your team at Ferienhaus Mantinia Hills`,
+    button: "Accept offer",
+  },
+  gr: {
+    betreff: "\u03a4\u03b5\u03bb\u03b5\u03c5\u03c4\u03b1\u03af\u03b1 \u03b5\u03c5\u03ba\u03b1\u03b9\u03c1\u03af\u03b1: \u03b7 \u03c0\u03c1\u03bf\u03c3\u03c6\u03bf\u03c1\u03ac {nummer} \u03bb\u03ae\u03b3\u03b5\u03b9 \u03c3\u03c4\u03b9\u03c2 {gueltig_bis}",
+    text: `\u0391\u03b3\u03b1\u03c0\u03b7\u03c4\u03ad/\u03ae {vorname} {nachname},
+
+\u03bc\u03b9\u03b1 \u03c3\u03cd\u03bd\u03c4\u03bf\u03bc\u03b7 \u03c5\u03c0\u03b5\u03bd\u03b8\u03cd\u03bc\u03b9\u03c3\u03b7: \u03b7 \u03c0\u03c1\u03bf\u03c3\u03c6\u03bf\u03c1\u03ac {nummer} \u03b3\u03b9\u03b1 \u03c4\u03b7 \u03b4\u03b9\u03b1\u03bc\u03bf\u03bd\u03ae \u03b1\u03c0\u03cc **{anreise}** \u03ad\u03c9\u03c2 **{abreise}** \u03bb\u03ae\u03b3\u03b5\u03b9 \u03c3\u03c4\u03b9\u03c2 **{gueltig_bis}**. \u039c\u03b5\u03c4\u03ac \u03b8\u03b1 \u03b4\u03b9\u03b1\u03b8\u03ad\u03c3\u03bf\u03c5\u03bc\u03b5 \u03c4\u03b7\u03bd \u03c0\u03b5\u03c1\u03af\u03bf\u03b4\u03bf \u03c3\u03b5 \u03ac\u03bb\u03bb\u03bf\u03c5\u03c2 \u03b5\u03c0\u03b9\u03c3\u03ba\u03ad\u03c0\u03c4\u03b5\u03c2.
+
+\u0391\u03bd \u03b8\u03ad\u03bb\u03b5\u03c4\u03b5 \u03bd\u03b1 \u03ad\u03c1\u03b8\u03b5\u03c4\u03b5, \u03b1\u03c1\u03ba\u03b5\u03af \u03ad\u03bd\u03b1 \u03ba\u03bb\u03b9\u03ba:
+
+{button}
+
+\u0391\u03bd \u03b4\u03b5\u03bd \u03c4\u03b1\u03b9\u03c1\u03b9\u03ac\u03b6\u03b5\u03b9 \u03b1\u03c5\u03c4\u03ae \u03c4\u03b7 \u03c6\u03bf\u03c1\u03ac: \u03ba\u03b1\u03bd\u03ad\u03bd\u03b1 \u03c0\u03c1\u03cc\u03b2\u03bb\u03b7\u03bc\u03b1 \u2014 \u03b8\u03b1 \u03c7\u03b1\u03c1\u03bf\u03cd\u03bc\u03b5 \u03bc\u03b9\u03b1 \u03ac\u03bb\u03bb\u03b7 \u03c6\u03bf\u03c1\u03ac.
+
+\u039c\u03b5 \u03b5\u03b3\u03ba\u03ac\u03c1\u03b4\u03b9\u03bf\u03c5\u03c2 \u03c7\u03b1\u03b9\u03c1\u03b5\u03c4\u03b9\u03c3\u03bc\u03bf\u03cd\u03c2
+\u0397 \u03bf\u03bc\u03ac\u03b4\u03b1 \u03c4\u03bf\u03c5 Ferienhaus Mantinia Hills`,
+    button: "\u0391\u03c0\u03bf\u03b4\u03bf\u03c7\u03ae \u03c0\u03c1\u03bf\u03c3\u03c6\u03bf\u03c1\u03ac\u03c2",
+  },
+};
+
 function ersetzePlatzhalter(text: string, werte: Record<string, string>): string {
   return text.replace(/\{(\w+)\}/g, (voll, name) => (name in werte ? werte[name] : voll));
 }
@@ -123,14 +178,11 @@ Deno.serve(async (req) => {
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
     const heuteISO = new Date().toISOString().slice(0, 10);
-    const cutoff = new Date();
-    cutoff.setUTCDate(cutoff.getUTCDate() - ERINNERN_NACH_TAGEN);
 
     const { data: kandidaten, error } = await supabase
       .from("buchungen")
-      .select("id, vorname, nachname, email, anreise, abreise, sprache, annahme_token")
+      .select("id, vorname, nachname, email, anreise, abreise, sprache, annahme_token, angebot_erinnert_am, angebot_erinnert2_am")
       .eq("status", "angebot_erstellt")
-      .is("angebot_erinnert_am", null)
       .not("annahme_token", "is", null)
       .not("email", "is", null)
       .limit(20);
@@ -153,7 +205,7 @@ Deno.serve(async (req) => {
       festBelegt.some((b) => !(tage(abreise, b.von) >= 1 || tage(b.bis, anreise) >= 1));
 
     const { data: vRow } = await supabase.from("einstellungen").select("value").eq("key", "mail_vorlagen").maybeSingle();
-    const alleVorlagen = (vRow?.value ?? {}) as Record<string, { angebot_erinnerung?: { betreff?: string; text?: string } }>;
+    const alleVorlagen = (vRow?.value ?? {}) as Record<string, { angebot_erinnerung?: { betreff?: string; text?: string }; angebot_erinnerung2?: { betreff?: string; text?: string } }>;
     const { data: aRow } = await supabase.from("einstellungen").select("value").eq("key", "anbieter").maybeSingle();
     const anbieter = (aRow?.value ?? {}) as Record<string, string>;
 
@@ -176,7 +228,6 @@ Deno.serve(async (req) => {
         .limit(1)
         .maybeSingle();
       if (!angebot?.versendet_am) continue;
-      if (new Date(angebot.versendet_am) > cutoff) continue; // noch keine 7 Tage her
 
       const meta = (angebot.meta ?? {}) as Record<string, unknown>;
       let gueltigBis = typeof meta.gueltig_bis === "string" ? meta.gueltig_bis.slice(0, 10) : "";
@@ -188,9 +239,24 @@ Deno.serve(async (req) => {
       if (gueltigBis < heuteISO) continue; // bereits abgelaufen — keine Erinnerung mehr
       if (hatKonflikt(b.anreise, b.abreise)) continue; // Zeitraum inzwischen fest belegt
 
+      // Welche Stufe ist fällig? 1 = sanfte Erinnerung (3 Tage nach Versand),
+      // 2 = "letzte Chance" (3 Tage vor Ablauf, mind. 2 Tage nach Stufe 1).
+      const tageSeitVersand = (Date.now() - new Date(angebot.versendet_am).getTime()) / 86_400_000;
+      let stufe: 1 | 2 | null = null;
+      if (!b.angebot_erinnert_am) {
+        if (tageSeitVersand >= ERINNERN_NACH_TAGEN) stufe = 1;
+      } else if (!b.angebot_erinnert2_am) {
+        const grenze = new Date(`${gueltigBis}T12:00:00Z`);
+        grenze.setUTCDate(grenze.getUTCDate() - ERINNERUNG2_TAGE_VOR_ABLAUF);
+        const tageSeitE1 = (Date.now() - new Date(b.angebot_erinnert_am).getTime()) / 86_400_000;
+        if (heuteISO >= grenze.toISOString().slice(0, 10) && tageSeitE1 >= MIN_ABSTAND_TAGE) stufe = 2;
+      }
+      if (!stufe) continue;
+
       const sprache = (["de", "en", "gr"].includes(b.sprache) ? b.sprache : "de") as "de" | "en" | "gr";
-      const basis = VORLAGEN_DEFAULT[sprache];
-      const vorlage = { ...basis, ...alleVorlagen?.[sprache]?.angebot_erinnerung };
+      const basis = stufe === 1 ? VORLAGEN_DEFAULT[sprache] : VORLAGEN2_DEFAULT[sprache];
+      const override = stufe === 1 ? alleVorlagen?.[sprache]?.angebot_erinnerung : alleVorlagen?.[sprache]?.angebot_erinnerung2;
+      const vorlage = { ...basis, ...override };
       const link = `${APP_BASE}/angebot-annehmen?token=${b.annahme_token}&lang=${sprache}`;
       const werte = {
         vorname: b.vorname, nachname: b.nachname, nummer: angebot.nummer,
@@ -220,7 +286,7 @@ ${html}
           new Promise((_, reject) => setTimeout(() => reject(new Error("SMTP-Timeout")), 25_000)),
         ]);
         await client.close();
-        await supabase.from("buchungen").update({ angebot_erinnert_am: new Date().toISOString() }).eq("id", b.id);
+        await supabase.from("buchungen").update(stufe === 1 ? { angebot_erinnert_am: new Date().toISOString() } : { angebot_erinnert2_am: new Date().toISOString() }).eq("id", b.id);
         versendet++;
       } catch (err) {
         fehler.push(`${b.email}: ${err instanceof Error ? err.message : String(err)}`);

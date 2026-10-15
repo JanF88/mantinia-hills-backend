@@ -321,7 +321,7 @@
         <p class="fa-note" style="margin-top:6px;">By clicking “Book now” you accept our <a class="fa-link" href="https://mantinia-hills.com/agb-eng" target="_blank" rel="noopener">booking and cancellation terms</a>.</p>
         <div class="fa-warn" id="fa-direkt-warn" style="display:none;"></div>
         <p class="fa-note" style="margin-top:18px;">Not ready to book yet? Send us a free, non-binding enquiry —
-          we'll confirm availability and the final price by email. Your data will be treated confidentially.</p>
+          you will usually receive your personal offer within a few hours by email – valid for 14 days. Your data will be treated confidentially.</p>
         <button type="button" class="fa-btn fa-btn-back" id="fa-anfrage-klein" style="font-size:13.5px;padding:9px 16px;">Send non-binding enquiry</button>
       </div>
     </div>
@@ -446,6 +446,17 @@
     var btns=wrap.querySelectorAll('.fa-cal-day[data-d]');
     for(var k=0;k<btns.length;k++){ btns[k].addEventListener('click',function(){ waehleTag(this.getAttribute('data-d')); }); }
   }
+  /* POST an den Webhook mit bis zu 3 Versuchen — ein einzelner Funkausfall
+     (z. B. In-App-Browser) darf keinen Lead mehr verlieren. */
+  function postMitWiederholung(body, versuch){
+    versuch = versuch || 1;
+    return fetch(BACKEND_WEBHOOK, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'}, body:body, keepalive:true })
+      .then(function(r){ if(!r.ok){ throw new Error('http'); } })
+      .catch(function(){
+        if(versuch < 3){ return new Promise(function(res){ setTimeout(res, 1500); }).then(function(){ return postMitWiederholung(body, versuch+1); }); }
+      });
+  }
+
   function sendToBackend(){
     var stay=calcStay(); if(!stay) return Promise.resolve();
     var grand=stay.total+CLEANING_FEE;
@@ -461,7 +472,7 @@
     p.append('anfrage_zeitpunkt', new Date().toISOString());
     p.append('seite', (typeof location!=='undefined'?location.href:''));
     p.append('sprache', 'en');
-    return fetch(BACKEND_WEBHOOK, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'}, body:p.toString(), keepalive:true }).catch(function(){});
+    return postMitWiederholung(p.toString());
   }
 
   function isoOf(date){ var m=('0'+(date.getMonth()+1)).slice(-2), t=('0'+date.getDate()).slice(-2); return date.getFullYear()+'-'+m+'-'+t; }
@@ -631,6 +642,8 @@
     dankeTitel: function(v){ return 'Thank you, '+v+' – your booking is confirmed!'; },
     dankeText: function(mail){ return 'We have just sent the booking confirmation with the deposit invoice to '+mail+' (please also check your spam folder). Once the deposit is received, your stay is firmly reserved.'; }
   };
+  DIREKT_TXT.paypalBtn = 'Pay deposit now with PayPal';
+  DIREKT_TXT.paypalHinweis = 'Or by bank transfer – all details are in the email.';
   $('fa-direkt').addEventListener('click', function(){
     var stay=calcStay(); if(!stay) return;
     var btn=$('fa-direkt'), nextBtn=$('fa-anfrage-klein'), warn=$('fa-direkt-warn');
@@ -660,6 +673,7 @@
             '<div style="font-size:40px;margin-bottom:10px;color:#681318;">✓</div>'+
             '<p class="fa-q" style="font-size:22px;">'+DIREKT_TXT.dankeTitel(esc(state.firstname))+'</p>'+
             '<p class="fa-sub" style="font-size:15px;">'+DIREKT_TXT.dankeText(esc(state.email))+'</p>'+
+            (j.zahlung_token ? '<a href="'+BACKEND+'/paypal-zahlung?token='+j.zahlung_token+'" style="display:inline-block;margin-top:18px;background:#681318;color:#fff;border-radius:8px;padding:14px 28px;font-size:15px;font-weight:bold;text-decoration:none;">'+DIREKT_TXT.paypalBtn+'</a><p class="fa-note" style="margin-top:8px;">'+DIREKT_TXT.paypalHinweis+'</p>' : '')+
             '</div>';
         } else if(j && j.status==='belegt'){ reset(DIREKT_TXT.belegt); }
         else { reset(DIREKT_TXT.fehler); }

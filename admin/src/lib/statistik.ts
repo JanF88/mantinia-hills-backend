@@ -63,6 +63,24 @@ export function tageZwischen(isoA: string, isoB: string): number {
 }
 
 /**
+ * Kampagnen-Herkunft aus der gespeicherten Seiten-URL einer Website-Anfrage
+ * (utm_source/utm_campaign der Facebook-Ads; fbclid ohne Tags = Facebook organisch/untagged).
+ */
+export function kampagneAus(seite: string | null): string {
+  if (!seite) return 'Direkt / unbekannt'
+  try {
+    const u = new URL(seite)
+    const quelle = u.searchParams.get('utm_source')
+    const kampagne = u.searchParams.get('utm_campaign')
+    if (quelle || kampagne) return `${quelle ?? '?'} · Kampagne ${kampagne ?? '?'}`
+    if (u.searchParams.get('fbclid')) return 'Facebook (ohne Kampagnen-Tag)'
+    return 'Website direkt'
+  } catch {
+    return 'Website direkt'
+  }
+}
+
+/**
  * Kollidiert der Zeitraum einer OFFENEN Anfrage (neu/Angebot) mit fest
  * belegten Zeiträumen — eigenen verbindlichen Buchungen oder externen
  * Booking/Airbnb-Sperren? (Regel: mind. 1 freier Tag Abstand.)

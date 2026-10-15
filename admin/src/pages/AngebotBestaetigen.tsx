@@ -76,7 +76,8 @@ export default function AngebotBestaetigen() {
       const data = await res.json().catch(() => ({} as Record<string, unknown>))
       const status = (data?.status as string) ?? 'fehler'
       const betrag = data?.betrag != null ? `&betrag=${data.betrag}` : ''
-      window.location.href = `/angebot-angenommen?status=${status}&lang=${lang}${betrag}`
+      const zt = data?.zahlung_token ? `&zt=${data.zahlung_token}` : ''
+      window.location.href = `/angebot-angenommen?status=${status}&lang=${lang}${betrag}${zt}`
     } catch {
       setFehler(t.fehler)
       setLaedt(false)

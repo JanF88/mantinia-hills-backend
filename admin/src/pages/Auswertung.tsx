@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { datumDE, eur, zeitpunktDE } from '../lib/format'
-import { MONATSNAMEN, jahresAuswertung } from '../lib/statistik'
+import { MONATSNAMEN, jahresAuswertung, kampagneAus } from '../lib/statistik'
 import type { Buchung, Dokument, Feedback } from '../lib/types'
+import { ABLEHNUNGSGRUND_LABEL } from '../lib/types'
 
 function prozent(anteil: number): string {
   return (anteil * 100).toLocaleString('de-DE', { maximumFractionDigits: 1 }) + ' %'
@@ -42,6 +43,34 @@ export default function Auswertung() {
       setLaedt(false)
     })
   }, [])
+
+  // Absagegründe (nur abgelehnte Vorgänge), absteigend nach Häufigkeit.
+  const absageGruende = useMemo(() => {
+    const zaehler = new Map<string, number>()
+    for (const b of buchungen) {
+      if (b.status !== 'abgelehnt') continue
+      const g = b.ablehnungsgrund ?? 'nicht_erfasst'
+      zaehler.set(g, (zaehler.get(g) ?? 0) + 1)
+    }
+    return [...zaehler.entries()].sort((a, b) => b[1] - a[1])
+  }, [buchungen])
+
+  // Herkunft der Website-Anfragen: welche Kampagne liefert zahlende Gäste?
+  const herkunft = useMemo(() => {
+    const angebotJeBuchung = new Set(dokumente.filter((d) => d.typ === 'angebot').map((d) => d.buchung_id))
+    const gruppen = new Map<string, { anfragen: number; angebote: number; angenommen: number; zahlend: number }>()
+    for (const b of buchungen) {
+      if (b.quelle !== 'webhook' && b.quelle !== 'direktbuchung') continue
+      const k = kampagneAus(b.seite)
+      const g = gruppen.get(k) ?? { anfragen: 0, angebote: 0, angenommen: 0, zahlend: 0 }
+      g.anfragen++
+      if (angebotJeBuchung.has(b.id)) g.angebote++
+      if (b.angenommen_am) g.angenommen++
+      if (b.anzahlung_eingegangen_am) g.zahlend++
+      gruppen.set(k, g)
+    }
+    return [...gruppen.entries()].sort((a, b) => b[1].zahlend - a[1].zahlend || b[1].anfragen - a[1].anfragen)
+  }, [buchungen, dokumente])
 
   const feedbackSchnitt = useMemo(() => {
     if (feedbacks.length === 0) return null
@@ -147,6 +176,58 @@ export default function Auswertung() {
         Nächten auf die Aufenthaltsmonate verteilt, plus Stornogebühren im Monat der Stornierung.
         Auslastung = belegte Nächte ÷ Tage des Monats. Offene Anfragen zählen nicht.
       </p>
+
+      <div className="card">
+        <h2>Herkunft &amp; Wirkung der Website-Anfragen</h2>
+        {herkunft.length === 0 ? (
+          <p className="leer" style={{ padding: '12px 0' }}>Noch keine Website-Anfragen.</p>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table>
+              <thead>
+                <tr>
+                  <th>Quelle / Kampagne</th>
+                  <th className="rechts">Anfragen</th>
+                  <th className="rechts">Angebote</th>
+                  <th className="rechts">Angenommen</th>
+                  <th className="rechts">Angezahlt</th>
+                </tr>
+              </thead>
+              <tbody>
+                {herkunft.map(([k, g]) => (
+                  <tr key={k}>
+                    <td style={{ fontSize: 13, wordBreak: 'break-all' }}>{k}</td>
+                    <td className="rechts">{g.anfragen}</td>
+                    <td className="rechts">{g.angebote}</td>
+                    <td className="rechts">{g.angenommen}</td>
+                    <td className="rechts"><strong>{g.zahlend}</strong></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <p style={{ fontSize: 13, color: 'var(--grau)', marginBottom: 0 }}>
+          Kampagnen-IDs stammen aus den utm-Parametern eurer Anzeigen (im Meta-Werbeanzeigenmanager nachschlagbar).
+          Entscheidend ist die Spalte „Angezahlt" — sie zeigt, welche Quelle zahlende Gäste bringt.
+        </p>
+      </div>
+
+      <div className="card">
+        <h2>Absagegründe</h2>
+        {absageGruende.length === 0 ? (
+          <p className="leer" style={{ padding: '12px 0' }}>Noch keine Absagen erfasst.</p>
+        ) : (
+          <div>
+            {absageGruende.map(([g, n]) => (
+              <div key={g} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--linie, #e2ddd6)', fontSize: 14 }}>
+                <span>{g === 'nicht_erfasst' ? 'Ohne Grund erfasst (vor Einführung)' : (ABLEHNUNGSGRUND_LABEL[g] ?? g)}</span>
+                <strong>{n}</strong>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       <div className="card">
         <h2>Gäste-Feedback</h2>

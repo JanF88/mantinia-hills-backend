@@ -7,7 +7,7 @@ import { sendeAngebotErneut } from '../lib/angebotMail'
 import { belegungsKonflikt, restzahlungFaellig } from '../lib/statistik'
 import { datumDE, eur, zeitpunktDE } from '../lib/format'
 import type { Buchung, Dokument, Einstellungen, Feedback, Sprache } from '../lib/types'
-import { SPRACHE_LABEL, QUELLE_LABEL } from '../lib/types'
+import { ABLEHNUNGSGRUND_LABEL, SPRACHE_LABEL, QUELLE_LABEL } from '../lib/types'
 import StatusBadge from '../components/StatusBadge'
 import MailTest from '../components/MailTest'
 import AngebotDialog from '../components/AngebotDialog'
@@ -131,7 +131,14 @@ export default function AnfrageDetail() {
       </p>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
         <h2 style={{ margin: 0 }}>{buchung.vorname} {buchung.nachname}</h2>
-        <StatusBadge status={s} />
+        <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {s === 'abgelehnt' && buchung.ablehnungsgrund && (
+            <span style={{ fontSize: 13, color: 'var(--grau)' }}>
+              Grund: {ABLEHNUNGSGRUND_LABEL[buchung.ablehnungsgrund] ?? buchung.ablehnungsgrund}
+            </span>
+          )}
+          <StatusBadge status={s} />
+        </span>
       </div>
 
       {konflikt && (
@@ -201,7 +208,8 @@ export default function AnfrageDetail() {
           <>
             <h3>Verlauf</h3>
             <dl className="meta-grid">
-              {buchung.angebot_erinnert_am && <div><dt>Angebots-Erinnerung gesendet</dt><dd>{zeitpunktDE(buchung.angebot_erinnert_am)}</dd></div>}
+              {buchung.angebot_erinnert_am && <div><dt>Erinnerung 1 gesendet</dt><dd>{zeitpunktDE(buchung.angebot_erinnert_am)}</dd></div>}
+              {buchung.angebot_erinnert2_am && <div><dt>Erinnerung 2 gesendet (letzte Chance)</dt><dd>{zeitpunktDE(buchung.angebot_erinnert2_am)}</dd></div>}
               {buchung.angenommen_am && <div><dt>Angebot angenommen</dt><dd>{zeitpunktDE(buchung.angenommen_am)}</dd></div>}
               {buchung.anzahlung_eingegangen_am && (
                 <div>

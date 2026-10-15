@@ -18,6 +18,7 @@ export interface MailVorlagen {
   direktbuchung: MailVorlage
   feedback: MailVorlage
   angebot_erinnerung: MailVorlage
+  angebot_erinnerung2: MailVorlage
 }
 
 /** Vorlagen je Sprache. */
@@ -118,6 +119,21 @@ Mit einem Klick nehmen Sie das Angebot verbindlich an:
 {button}
 
 Bei Fragen antworten Sie einfach auf diese E-Mail — wir helfen gerne.
+
+Herzliche Grüße
+Ihr Team vom Ferienhaus Mantinia Hills`,
+  },
+  angebot_erinnerung2: {
+    betreff: 'Letzte Chance: Ihr Angebot {nummer} läuft am {gueltig_bis} ab',
+    text: `Guten Tag {vorname} {nachname},
+
+nur ein kurzer Hinweis: Ihr Angebot {nummer} für den Aufenthalt vom **{anreise}** bis **{abreise}** läuft am **{gueltig_bis}** ab. Danach geben wir den Zeitraum wieder für andere Gäste frei.
+
+Wenn Sie dabei sein möchten, genügt ein Klick:
+
+{button}
+
+Falls es diesmal nicht passt: gar kein Problem — wir freuen uns auf ein anderes Mal.
 
 Herzliche Grüße
 Ihr Team vom Ferienhaus Mantinia Hills`,
@@ -239,6 +255,21 @@ If you have any questions, simply reply to this email — we are happy to help.
 Kind regards
 Your team at Ferienhaus Mantinia Hills`,
   },
+  angebot_erinnerung2: {
+    betreff: 'Last chance: your offer {nummer} expires on {gueltig_bis}',
+    text: `Dear {vorname} {nachname},
+
+just a quick note: your offer {nummer} for the stay from **{anreise}** to **{abreise}** expires on **{gueltig_bis}**. After that we will release the period for other guests.
+
+If you would like to join us, one click is all it takes:
+
+{button}
+
+If it does not work out this time: no problem at all — we would be happy to welcome you another time.
+
+Kind regards
+Your team at Ferienhaus Mantinia Hills`,
+  },
   feedback: {
     betreff: 'How was your stay? - Ferienhaus Mantinia Hills',
     text: `Dear {vorname} {nachname},
@@ -356,6 +387,21 @@ const GR: MailVorlagen = {
 Με εγκάρδιους χαιρετισμούς
 Η ομάδα του Ferienhaus Mantinia Hills`,
   },
+  angebot_erinnerung2: {
+    betreff: 'Τελευταία ευκαιρία: η προσφορά {nummer} λήγει στις {gueltig_bis}',
+    text: `Αγαπητέ/ή {vorname} {nachname},
+
+μια σύντομη υπενθύμιση: η προσφορά {nummer} για τη διαμονή από **{anreise}** έως **{abreise}** λήγει στις **{gueltig_bis}**. Μετά θα διαθέσουμε την περίοδο σε άλλους επισκέπτες.
+
+Αν θέλετε να έρθετε, αρκεί ένα κλικ:
+
+{button}
+
+Αν δεν ταιριάζει αυτή τη φορά: κανένα πρόβλημα — θα χαρούμε μια άλλη φορά.
+
+Με εγκάρδιους χαιρετισμούς
+Η ομάδα του Ferienhaus Mantinia Hills`,
+  },
   feedback: {
     betreff: 'Πώς ήταν η διαμονή σας; - Ferienhaus Mantinia Hills',
     text: `Αγαπητέ/ή {vorname} {nachname},
@@ -426,8 +472,13 @@ export const MAIL_VORLAGEN_INFO: Record<keyof MailVorlagen, { label: string; wan
     platzhalter: ['vorname', 'nachname', 'anreise', 'abreise', 'button'],
   },
   angebot_erinnerung: {
-    label: 'Angebots-Erinnerung',
-    wann: 'automatisch 7 Tage nach Angebots-Versand, falls noch nicht angenommen und noch gültig',
+    label: 'Angebots-Erinnerung (Stufe 1)',
+    wann: 'automatisch 3 Tage nach Angebots-Versand, falls noch nicht angenommen und noch gültig',
+    platzhalter: ['vorname', 'nachname', 'nummer', 'anreise', 'abreise', 'gueltig_bis', 'button'],
+  },
+  angebot_erinnerung2: {
+    label: 'Angebots-Erinnerung (Stufe 2, letzte Chance)',
+    wann: 'automatisch 3 Tage vor Ablauf der Gültigkeit (mind. 2 Tage nach Stufe 1)',
     platzhalter: ['vorname', 'nachname', 'nummer', 'anreise', 'abreise', 'gueltig_bis', 'button'],
   },
 }

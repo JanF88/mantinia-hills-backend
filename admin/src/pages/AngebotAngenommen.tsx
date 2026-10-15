@@ -4,8 +4,15 @@
 const params = new URLSearchParams(window.location.search)
 const status = params.get('status') ?? 'ok'
 const betrag = params.get('betrag')
+const zahlungToken = params.get('zt')
 const langRaw = params.get('lang') ?? 'de'
 const lang = (['de', 'en', 'gr'].includes(langRaw) ? langRaw : 'de') as 'de' | 'en' | 'gr'
+
+const PP_TXT: Record<'de' | 'en' | 'gr', { btn: string; hinweis: string }> = {
+  de: { btn: 'Anzahlung jetzt mit PayPal zahlen', hinweis: 'Oder in Ruhe per Überweisung — alle Angaben stehen in der Rechnungs-E-Mail.' },
+  en: { btn: 'Pay deposit now with PayPal', hinweis: 'Or by bank transfer — all details are in the invoice email.' },
+  gr: { btn: 'Πληρωμή προκαταβολής μέσω PayPal', hinweis: 'Ή με τραπεζικό έμβασμα — όλα τα στοιχεία βρίσκονται στο email με το τιμολόγιο.' },
+}
 
 const betragFmt = betrag ? `${Number(betrag).toLocaleString('de-DE', { minimumFractionDigits: 2 })} €` : null
 
@@ -60,6 +67,20 @@ export default function AngebotAngenommen() {
       <div style={{ background: '#fff', border: '1px solid #e2ddd6', borderRadius: 14, padding: 40, maxWidth: 480, textAlign: 'center' }}>
         <h1 style={{ color: inhalt.ok ? '#681318' : '#b00020', fontSize: 24, margin: '0 0 14px' }}>{inhalt.titel}</h1>
         <p style={{ fontSize: 15, lineHeight: 1.6, color: '#2c2c2a', margin: 0 }}>{inhalt.text}</p>
+        {inhalt.ok && zahlungToken && (status === 'ok' || status === 'ok_nomail') && (
+          <>
+            <a
+              href={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/paypal-zahlung?token=${zahlungToken}`}
+              style={{
+                display: 'inline-block', marginTop: 22, background: '#681318', color: '#fff',
+                borderRadius: 8, padding: '14px 28px', fontSize: 15, fontWeight: 'bold', textDecoration: 'none',
+              }}
+            >
+              {PP_TXT[lang].btn}
+            </a>
+            <p style={{ fontSize: 13, color: '#666', marginTop: 10 }}>{PP_TXT[lang].hinweis}</p>
+          </>
+        )}
         <p style={{ marginTop: 24, fontSize: 13, color: '#888' }}>
           Ferienhaus Mantinia Hills · <a href="https://mantinia-hills.com" style={{ color: '#681318' }}>www.mantinia-hills.com</a>
         </p>

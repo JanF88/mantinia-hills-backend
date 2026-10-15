@@ -352,11 +352,11 @@ ${zahlungBlockHtml(buchung.zahlung_token, sprache)}
         }
       } catch (err) {
         console.error("Mailversand fehlgeschlagen:", err instanceof Error ? err.message : String(err));
-        return json(200, { status: "ok_nomail" });
+        return json(200, { status: "ok_nomail", zahlung_token: buchung.zahlung_token });
       }
     }
 
-    return json(200, { status: "ok", betrag, gesamt });
+    return json(200, { status: "ok", betrag, gesamt, zahlung_token: buchung.zahlung_token });
   } catch (err) {
     console.error("direkt-buchen Fehler:", err instanceof Error ? err.message : String(err));
     return json(500, { status: "fehler" });
