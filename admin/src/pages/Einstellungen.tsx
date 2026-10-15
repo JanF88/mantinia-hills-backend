@@ -4,6 +4,7 @@ import { saisonPreiseFuer } from '../lib/preisberechnung'
 import { heuteISO } from '../lib/format'
 import { MAIL_VORLAGEN_INFO, MAIL_SPRACHEN } from '../lib/mailVorlagen'
 import PasswortAendern from '../components/PasswortAendern'
+import MailTest from '../components/MailTest'
 import Benutzer from './Benutzer'
 import type { Einstellungen as EinstellungenTyp } from '../lib/types'
 import type { MailVorlagen } from '../lib/mailVorlagen'
@@ -114,17 +115,16 @@ export default function Einstellungen() {
 
   const ibanFehlt = !e.anbieter.iban
 
+  // Index der aktuell gültigen Preisperiode (größtes „ab" <= heute)
+  const heuteStr = new Date().toISOString().slice(0, 10)
+  const aktivePeriode = e.preis_perioden.reduce((best, per, i) =>
+    per.ab && per.ab <= heuteStr && (best === -1 || per.ab >= e.preis_perioden[best].ab) ? i : best, -1)
+
   return (
     <>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, gap: 10, flexWrap: 'wrap' }}>
-        <h2 style={{ margin: 0 }}>Einstellungen</h2>
-        <button className="btn-primary" onClick={speichern} disabled={laedt}>
-          {laedt ? 'Wird gespeichert …' : 'Alle Einstellungen speichern'}
-        </button>
-      </div>
-      {meldung && <p style={{ color: 'var(--gruen)', fontWeight: 600 }}>{meldung}</p>}
-      {fehler && <p className="fehler">{fehler}</p>}
+      <h2 style={{ marginTop: 0 }}>Einstellungen</h2>
 
+      <h3 className="gruppe-titel">Preise &amp; Konditionen</h3>
       <details className="card akkordeon">
         <summary>Saisonpreise (€ pro Person und Nacht)</summary>
         <p style={{ fontSize: 13, color: 'var(--grau)', marginTop: 0 }}>
@@ -145,6 +145,7 @@ export default function Einstellungen() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 10 }}>
               <label style={{ margin: 0 }}>Gültig ab</label>
               <input type="date" style={{ maxWidth: 175 }} value={periode.ab} onChange={(ev) => periodeDatumAendern(pi, ev.target.value)} />
+              {pi === aktivePeriode && <span className="badge-aktuell">gilt aktuell</span>}
               {e.preis_perioden.length > 1 && (
                 <button className="btn-klein" onClick={() => periodeEntfernen(pi)}>Periode entfernen</button>
               )}
@@ -229,6 +230,45 @@ export default function Einstellungen() {
         </p>
       </details>
 
+      <h3 className="gruppe-titel">E-Mail-Texte</h3>
+      <details className="card akkordeon">
+        <summary>E-Mail-Texte</summary>
+        <p style={{ fontSize: 13, color: 'var(--grau)', marginTop: 0 }}>
+          Platzhalter in geschweiften Klammern werden beim Versand automatisch ersetzt.
+          <strong> **Text**</strong> wird fett dargestellt, eine Leerzeile beginnt einen neuen Absatz.
+          Anrede und Grußformel gehören mit in den Text; die Signatur (Logo &amp; Kontaktdaten) wird automatisch angehängt.
+          Jede Anfrage erhält die Mails in ihrer Sprache — unten die Sprache wählen und die Texte pflegen.
+        </p>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+          {MAIL_SPRACHEN.map((sp) => (
+            <button
+              key={sp.code}
+              className={mailSprache === sp.code ? 'btn-primary btn-klein' : 'btn-klein'}
+              onClick={() => setMailSprache(sp.code)}
+            >
+              {sp.label}
+            </button>
+          ))}
+        </div>
+        {(Object.keys(MAIL_VORLAGEN_INFO) as (keyof MailVorlagen)[]).map((key) => {
+          const info = MAIL_VORLAGEN_INFO[key]
+          const vorlage = e.mail_vorlagen[mailSprache][key]
+          return (
+            <details key={key + mailSprache} className="unter-akkordeon">
+              <summary>{info.label}</summary>
+              <p style={{ fontSize: 12.5, color: 'var(--grau)', margin: '8px 0' }}>
+                Wird versendet {info.wann}. Platzhalter: {info.platzhalter.map((p) => `{${p}}`).join(' · ')}
+              </p>
+              <label>Betreff</label>
+              <input value={vorlage.betreff} onChange={(ev) => vorlageAendern(key, 'betreff', ev.target.value)} />
+              <label style={{ marginTop: 8 }}>Text</label>
+              <textarea rows={9} value={vorlage.text} onChange={(ev) => vorlageAendern(key, 'text', ev.target.value)} />
+            </details>
+          )
+        })}
+      </details>
+
+      <h3 className="gruppe-titel">Konto &amp; Technik</h3>
       <details className="card akkordeon">
         <summary>Anbieterdaten (erscheinen auf allen PDFs){ibanFehlt ? ' — ⚠ IBAN fehlt' : ''}</summary>
         {ibanFehlt && (
@@ -295,43 +335,6 @@ export default function Einstellungen() {
       </details>
 
       <details className="card akkordeon">
-        <summary>E-Mail-Texte</summary>
-        <p style={{ fontSize: 13, color: 'var(--grau)', marginTop: 0 }}>
-          Platzhalter in geschweiften Klammern werden beim Versand automatisch ersetzt.
-          <strong> **Text**</strong> wird fett dargestellt, eine Leerzeile beginnt einen neuen Absatz.
-          Anrede und Grußformel gehören mit in den Text; die Signatur (Logo &amp; Kontaktdaten) wird automatisch angehängt.
-          Jede Anfrage erhält die Mails in ihrer Sprache — unten die Sprache wählen und die Texte pflegen.
-        </p>
-        <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-          {MAIL_SPRACHEN.map((sp) => (
-            <button
-              key={sp.code}
-              className={mailSprache === sp.code ? 'btn-primary btn-klein' : 'btn-klein'}
-              onClick={() => setMailSprache(sp.code)}
-            >
-              {sp.label}
-            </button>
-          ))}
-        </div>
-        {(Object.keys(MAIL_VORLAGEN_INFO) as (keyof MailVorlagen)[]).map((key) => {
-          const info = MAIL_VORLAGEN_INFO[key]
-          const vorlage = e.mail_vorlagen[mailSprache][key]
-          return (
-            <details key={key + mailSprache} className="unter-akkordeon">
-              <summary>{info.label}</summary>
-              <p style={{ fontSize: 12.5, color: 'var(--grau)', margin: '8px 0' }}>
-                Wird versendet {info.wann}. Platzhalter: {info.platzhalter.map((p) => `{${p}}`).join(' · ')}
-              </p>
-              <label>Betreff</label>
-              <input value={vorlage.betreff} onChange={(ev) => vorlageAendern(key, 'betreff', ev.target.value)} />
-              <label style={{ marginTop: 8 }}>Text</label>
-              <textarea rows={9} value={vorlage.text} onChange={(ev) => vorlageAendern(key, 'text', ev.target.value)} />
-            </details>
-          )
-        })}
-      </details>
-
-      <details className="card akkordeon">
         <summary>Benutzerverwaltung</summary>
         <Benutzer />
       </details>
@@ -340,6 +343,20 @@ export default function Einstellungen() {
         <summary>Passwort ändern</summary>
         <PasswortAendern />
       </details>
+
+      <details className="card akkordeon">
+        <summary>E-Mail-Versand testen</summary>
+        <MailTest einstellungen={e} />
+      </details>
+
+      <div className="sticky-speichern">
+        <button className="btn-primary" onClick={speichern} disabled={laedt}>
+          {laedt ? 'Wird gespeichert …' : 'Alle Einstellungen speichern'}
+        </button>
+        {meldung && <span style={{ color: 'var(--gruen)', fontWeight: 600 }}>{meldung}</span>}
+        {fehler && <span className="fehler" style={{ margin: 0 }}>{fehler}</span>}
+        <span className="text-klein">Benutzer, Passwort und Kalender-Sync speichern sofort.</span>
+      </div>
     </>
   )
 }

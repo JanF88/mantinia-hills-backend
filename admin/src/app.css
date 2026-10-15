@@ -9,7 +9,16 @@
   --gruen: #2e7d32;
   --rot: #c62828;
   --orange: #b26a00;
+  /* Typo-Stufen: xs Fußnoten · s Hinweise · m Fließtext · l Zwischentitel · xl Seitentitel */
+  --fs-xs: 12px;
+  --fs-s: 13px;
+  --fs-m: 15px;
+  --fs-l: 17px;
+  --fs-xl: 24px;
 }
+
+.text-klein { font-size: var(--fs-xs); color: var(--grau); }
+.text-hinweis { font-size: var(--fs-s); color: var(--grau); line-height: 1.5; }
 
 * { box-sizing: border-box; }
 
@@ -97,7 +106,7 @@ tr.klickbar { cursor: pointer; }
 tr.klickbar:hover { background: var(--beige); }
 td.rechts, th.rechts { text-align: right; }
 th.sortierbar { cursor: pointer; user-select: none; white-space: nowrap; }
-th.sortierbar:hover { color: var(--rot, #681318); }
+th.sortierbar:hover { color: var(--brand); }
 
 /* Status-Badges */
 .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
@@ -107,7 +116,7 @@ th.sortierbar:hover { color: var(--rot, #681318); }
 .badge-angezahlt { background: #d7ecd9; color: #1b5e20; }
 .badge-bezahlt { background: #c8e6c9; color: #124116; }
 .badge-abgeschlossen { background: #eceff1; color: #455a64; }
-.badge-storniert { background: #fdecea; color: var(--rot); }
+.badge-storniert { background: #eceae7; color: #6d675f; }
 .badge-abgelehnt { background: #f5f5f5; color: #757575; }
 
 /* Filter-Tabs */
@@ -243,3 +252,71 @@ details.unter-akkordeon > *:last-child { margin-bottom: 14px; }
 .login-card { width: 100%; max-width: 380px; }
 .login-card h1 { color: var(--brand); font-size: 20px; margin: 0 0 4px; }
 .login-card p { color: var(--grau); font-size: 13px; margin: 0 0 18px; }
+
+/* ===== Steve-Jobs-Pass: Schrittleiste, Mehr-Menü, fällige Zeilen, Sticky-Speichern ===== */
+
+.schrittleiste {
+  list-style: none; display: flex; gap: 4px; padding: 0; margin: 0 0 16px;
+  flex-wrap: nowrap; overflow-x: auto;
+}
+.schritt { display: flex; align-items: center; gap: 6px; color: #b5afa6; font-size: var(--fs-s); white-space: nowrap; }
+.schritt:not(:last-child)::after { content: ''; width: 18px; height: 2px; background: var(--linie); margin: 0 2px; }
+.schritt-punkt {
+  width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--beige); border: 1.5px solid var(--linie); font-size: var(--fs-xs); flex: none;
+}
+.schritt.erledigt { color: var(--grau); }
+.schritt.erledigt .schritt-punkt { background: #e7efe7; border-color: var(--gruen); color: var(--gruen); }
+.schritt.aktiv { color: var(--brand); font-weight: 600; }
+.schritt.aktiv .schritt-punkt { background: var(--brand); border-color: var(--brand); color: #fff; }
+@media (max-width: 680px) {
+  .schritt .schritt-label { display: none; }
+  .schritt.aktiv .schritt-label { display: inline; }
+}
+.schritt-endbanner {
+  background: #eceae7; color: #6d675f; border-radius: 8px; padding: 10px 14px;
+  font-size: var(--fs-s); margin-bottom: 16px;
+}
+
+.mehr-menue { position: relative; }
+.mehr-menue > summary {
+  list-style: none; cursor: pointer; font-size: var(--fs-s); color: var(--grau);
+  padding: 8px 12px; border: 1px solid var(--linie); border-radius: 8px; background: var(--weiss);
+  user-select: none;
+}
+.mehr-menue > summary::-webkit-details-marker { display: none; }
+.mehr-menue[open] > summary { border-color: var(--brand); color: var(--brand); }
+.mehr-menue-liste {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 30;
+  background: var(--weiss); border: 1px solid var(--linie); border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.12); min-width: 220px; padding: 6px; display: flex; flex-direction: column;
+}
+.mehr-eintrag {
+  text-align: left; background: none; border: none; padding: 10px 12px; border-radius: 7px;
+  font-size: var(--fs-m); cursor: pointer; color: var(--text);
+}
+.mehr-eintrag:hover { background: var(--beige); }
+.mehr-eintrag.gefahr { color: var(--rot); }
+.mehr-eintrag:disabled { color: #b5afa6; cursor: default; }
+
+tr.zeile-faellig td { background: #fdf6ec; }
+tr.zeile-faellig td:first-child { box-shadow: inset 3px 0 0 var(--orange); }
+
+.sticky-speichern {
+  position: sticky; bottom: 0; z-index: 20; margin-top: 18px;
+  background: var(--weiss); border-top: 1px solid var(--linie);
+  padding: 12px 16px; display: flex; align-items: center; gap: 14px;
+  box-shadow: 0 -6px 18px rgba(0,0,0,.06);
+}
+
+.gruppe-titel { margin: 26px 0 10px; font-size: var(--fs-s); text-transform: uppercase; letter-spacing: .06em; color: var(--grau); }
+.badge-aktuell { background: #e7efe7; color: var(--gruen); border-radius: 999px; padding: 2px 10px; font-size: var(--fs-xs); font-weight: 600; }
+
+.heute-zeile {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  padding: 10px 2px; border-bottom: 1px solid var(--linie); text-decoration: none; color: var(--text);
+}
+.heute-zeile:last-child { border-bottom: none; }
+.heute-zeile:hover { background: var(--beige); }
+.heute-gast { display: flex; flex-direction: column; gap: 2px; }
+.heute-rechts { display: flex; align-items: center; gap: 12px; text-align: right; flex-wrap: wrap; justify-content: flex-end; }

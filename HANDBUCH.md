@@ -19,14 +19,15 @@ Die Verwaltung erreichen Sie im Browser unter:
 
 ---
 
-## 2. Die vier Bereiche (Menü oben)
+## 2. Die fünf Bereiche (Menü oben)
 
 | Bereich | Wofür |
 |---|---|
-| **Anfragen** | Alle Buchungsanfragen, hier spielt sich der Alltag ab |
+| **Heute** | Die Startseite: Was braucht mich jetzt? (Jetzt handeln · Wartet auf Gast · Nächste Anreisen) |
+| **Anfragen** | Alle Buchungsanfragen im Detail |
 | **Kalender** | Belegungsübersicht Monat für Monat |
-| **Auswertung** | Einnahmen und Auslastung pro Monat |
-| **Einstellungen** | Preise, Bankdaten, Storno-Regeln, E-Mail-Texte, Benutzer |
+| **Auswertung** | Einnahmen, Auslastung, Kampagnen-Herkunft, Absagegründe, Feedback |
+| **Einstellungen** | Preise, Bankdaten, Storno-Regeln, E-Mail-Texte, Benutzer, E-Mail-Test |
 
 Am Handy öffnen Sie das Menü über das ☰-Symbol.
 
@@ -96,10 +97,9 @@ Zahlungsziel wird automatisch aus den Einstellungen berechnet.
 - **Spam-Ordner:** Gerade bei der ersten Mail an einen neuen Empfänger kann die
   Nachricht im **Spam-/Junk-Ordner** landen. Bitte Gäste im Zweifel darauf
   hinweisen, dort nachzusehen.
-- **Funktioniert der Versand?** In jeder Anfrage finden Sie unten in den
-  **Aktionen** die Schaltfläche **„✉ E-Mail-Versand testen"**. Ein Klick schickt
-  eine Test-Mail an Ihre eigene Adresse. Kommt sie an, ist alles in Ordnung;
-  andernfalls wird direkt die Fehlermeldung angezeigt.
+- **Funktioniert der Versand?** Unter **Einstellungen → E-Mail-Versand testen**
+  schickt ein Klick eine Test-Mail an Ihre eigene Adresse. Kommt sie an, ist
+  alles in Ordnung; andernfalls wird direkt die Fehlermeldung angezeigt.
 
 > Hinweis: Wenn beim Erstellen einer Rechnung der Versand einmal fehlschlägt,
 > wird das deutlich angezeigt — das PDF ist dann trotzdem erzeugt und kann

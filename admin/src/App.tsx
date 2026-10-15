@@ -8,6 +8,7 @@ import AngebotAngenommen from './pages/AngebotAngenommen'
 import AngebotBestaetigen from './pages/AngebotBestaetigen'
 import FeedbackSeite from './pages/FeedbackSeite'
 import ZahlungStatus from './pages/ZahlungStatus'
+import Heute from './pages/Heute'
 import AnfragenListe from './pages/AnfragenListe'
 import AnfrageNeu from './pages/AnfrageNeu'
 import AnfrageDetail from './pages/AnfrageDetail'
@@ -43,7 +44,7 @@ export default function App() {
 
   if (laedt) return null
   if (passwortReset) {
-    return <PasswortNeu onFertig={() => { setPasswortReset(false); navigate('/anfragen') }} />
+    return <PasswortNeu onFertig={() => { setPasswortReset(false); navigate('/heute') }} />
   }
   if (!session) return <Login />
 
@@ -65,6 +66,9 @@ export default function App() {
           {menuOffen ? '✕' : '☰'}
         </button>
         <nav className={menuOffen ? 'offen' : ''}>
+          <NavLink to="/heute" onClick={() => setMenuOffen(false)} className={({ isActive }) => (isActive ? 'aktiv' : '')}>
+            Heute
+          </NavLink>
           <NavLink to="/anfragen" onClick={() => setMenuOffen(false)} className={({ isActive }) => (isActive ? 'aktiv' : '')}>
             Anfragen
           </NavLink>
@@ -82,14 +86,15 @@ export default function App() {
       </header>
       <main className="container">
         <Routes>
-          <Route path="/" element={<Navigate to="/anfragen" replace />} />
+          <Route path="/" element={<Navigate to="/heute" replace />} />
+          <Route path="/heute" element={<Heute />} />
           <Route path="/anfragen" element={<AnfragenListe />} />
           <Route path="/anfragen/neu" element={<AnfrageNeu />} />
           <Route path="/anfragen/:id" element={<AnfrageDetail />} />
           <Route path="/kalender" element={<Kalender />} />
           <Route path="/auswertung" element={<Auswertung />} />
           <Route path="/einstellungen" element={<Einstellungen />} />
-          <Route path="*" element={<Navigate to="/anfragen" replace />} />
+          <Route path="*" element={<Navigate to="/heute" replace />} />
         </Routes>
       </main>
     </>

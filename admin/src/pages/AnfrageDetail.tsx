@@ -7,9 +7,9 @@ import { sendeAngebotErneut } from '../lib/angebotMail'
 import { belegungsKonflikt, restzahlungFaellig } from '../lib/statistik'
 import { datumDE, eur, zeitpunktDE } from '../lib/format'
 import type { Buchung, Dokument, Einstellungen, Feedback, Sprache } from '../lib/types'
-import { ABLEHNUNGSGRUND_LABEL, SPRACHE_LABEL, QUELLE_LABEL } from '../lib/types'
-import StatusBadge from '../components/StatusBadge'
-import MailTest from '../components/MailTest'
+import { SPRACHE_LABEL, QUELLE_LABEL } from '../lib/types'
+import StatusSchrittleiste from '../components/StatusSchrittleiste'
+import WeitereAktionen, { type AktionsEintrag } from '../components/WeitereAktionen'
 import AngebotDialog from '../components/AngebotDialog'
 import AnzahlungDialog from '../components/AnzahlungDialog'
 import AbschlussDialog from '../components/AbschlussDialog'
@@ -29,9 +29,8 @@ export default function AnfrageDetail() {
   const [buchung, setBuchung] = useState<Buchung | null>(null)
   const [dokumente, setDokumente] = useState<Dokument[]>([])
   const [einstellungen, setEinstellungen] = useState<Einstellungen | null>(null)
-  const [dialog, setDialog] = useState<'angebot' | 'anzahlung' | 'abschluss' | 'storno' | 'absage' | null>(null)
+  const [dialog, setDialog] = useState<'angebot' | 'anzahlung' | 'abschluss' | 'storno' | 'absage' | 'loeschen' | null>(null)
   const [fehler, setFehler] = useState<string | null>(null)
-  const [loeschBestaetigung, setLoeschBestaetigung] = useState(false)
   const [loescht, setLoescht] = useState(false)
   const [angebotSenden, setAngebotSenden] = useState<'idle' | 'laedt' | 'ok' | 'fehler'>('idle')
   const [angebotSendenMeldung, setAngebotSendenMeldung] = useState('')
@@ -91,6 +90,7 @@ export default function AnfrageDetail() {
     } catch (err) {
       setFehler('Löschen fehlgeschlagen: ' + (err instanceof Error ? err.message : String(err)))
       setLoescht(false)
+      setDialog(null)
     }
   }
 
@@ -122,6 +122,54 @@ export default function AnfrageDetail() {
   const kannRestzahlung = s === 'angezahlt' && juengsteAbschluss != null
   const kannStorno = (s === 'bestaetigt' || s === 'angezahlt' || s === 'bezahlt') && juengstesAngebot != null && einstellungen != null
   const kannAbschliessen = s === 'bezahlt'
+  const faellig = restzahlungFaellig(buchung, einstellungen?.abschlussrechnung_tage_vorher)
+
+  // --- „Nächster Schritt": genau EINE Primäraktion + ein erklärender Satz ---
+  let primaer: { label: string; onClick: () => void } | null = null
+  let kontext = ''
+  if (kannAngebot) {
+    primaer = { label: 'Angebot erstellen', onClick: () => setDialog('angebot') }
+    kontext = 'Neue Anfrage — erstellen und senden Sie jetzt das Angebot.'
+  } else if (kannAnnehmen) {
+    primaer = { label: 'Annahme bestätigen', onClick: () => statusSetzen({ status: 'bestaetigt', angenommen_am: new Date().toISOString() }) }
+    kontext = buchung.annahme_token
+      ? `Angebot ${juengstesAngebot!.nummer} ist beim Gast — die Annahme läuft normalerweise automatisch über den Link in der E-Mail. Nur bei telefonischer Zusage hier manuell bestätigen.`
+      : `Angebot ${juengstesAngebot!.nummer} liegt vor; der Annahme-Link wurde bereits verwendet oder entfernt — Annahme hier manuell bestätigen.`
+  } else if (kannAnzahlungsRechnung) {
+    primaer = { label: 'Anzahlungsrechnung erstellen', onClick: () => setDialog('anzahlung') }
+    kontext = 'Das Angebot wurde angenommen — jetzt die Anzahlungsrechnung erstellen und senden.'
+  } else if (kannAnzahlungEingang) {
+    primaer = { label: 'Anzahlung eingegangen', onClick: () => statusSetzen({ status: 'angezahlt', anzahlung_eingegangen_am: new Date().toISOString() }) }
+    kontext = `Rechnung ${juengsteAnzahlung!.nummer} ist beim Gast. Erst klicken, wenn die Zahlung tatsächlich auf dem Konto ist — PayPal-Zahlungen buchen sich automatisch.`
+  } else if (kannAbschlussrechnung) {
+    primaer = { label: 'Abschlussrechnung erstellen', onClick: () => setDialog('abschluss') }
+    kontext = faellig
+      ? `Die Anreise (${datumDE(buchung.anreise)}) rückt näher — jetzt die Abschlussrechnung erstellen und senden.`
+      : 'Anzahlung ist da. Die Abschlussrechnung wird vor der Anreise fällig — sie kann jederzeit erstellt werden.'
+  } else if (kannRestzahlung) {
+    primaer = { label: 'Restzahlung eingegangen', onClick: () => statusSetzen({ status: 'bezahlt', restzahlung_eingegangen_am: new Date().toISOString() }) }
+    kontext = `Rechnung ${juengsteAbschluss!.nummer} ist beim Gast. Erst klicken, wenn der Restbetrag tatsächlich auf dem Konto ist.`
+  } else if (kannAbschliessen) {
+    primaer = { label: 'Abschließen', onClick: () => statusSetzen({ status: 'abgeschlossen' }) }
+    kontext = 'Komplett bezahlt. Nach der Abreise wird der Vorgang automatisch abgeschlossen — oder hier manuell.'
+  } else if (s === 'abgeschlossen' || s === 'storniert' || s === 'abgelehnt') {
+    kontext = 'Vorgang abgeschlossen — keine weiteren Aktionen.'
+  } else {
+    kontext = 'Keine Aktion möglich — Einstellungen oder Angebot fehlen noch.'
+  }
+
+  // --- Nebenaktionen ins Aufklappmenü ---
+  const nebenaktionen: AktionsEintrag[] = []
+  if (kannAngebotSenden) {
+    nebenaktionen.push({
+      label: angebotSenden === 'laedt' ? 'Wird gesendet …' : 'Angebot erneut senden',
+      onClick: angebotErneutSenden,
+      disabled: angebotSenden === 'laedt',
+    })
+  }
+  if (kannAblehnen && einstellungen) nebenaktionen.push({ label: 'Ablehnen …', onClick: () => setDialog('absage'), gefahr: true })
+  if (kannStorno) nebenaktionen.push({ label: 'Stornieren …', onClick: () => setDialog('storno'), gefahr: true })
+  nebenaktionen.push({ label: 'Anfrage löschen …', onClick: () => setDialog('loeschen'), gefahr: true })
 
   return (
     <>
@@ -131,101 +179,95 @@ export default function AnfrageDetail() {
       </p>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
         <h2 style={{ margin: 0 }}>{buchung.vorname} {buchung.nachname}</h2>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {s === 'abgelehnt' && buchung.ablehnungsgrund && (
-            <span style={{ fontSize: 13, color: 'var(--grau)' }}>
-              Grund: {ABLEHNUNGSGRUND_LABEL[buchung.ablehnungsgrund] ?? buchung.ablehnungsgrund}
-            </span>
-          )}
-          <StatusBadge status={s} />
-        </span>
+        <WeitereAktionen eintraege={nebenaktionen} />
       </div>
 
-      {konflikt && (
-        <div className="warnung">
-          <strong>⚠ Zeitraum belegt:</strong> {datumDE(buchung.anreise)} – {datumDE(buchung.abreise)} kollidiert
-          mit einer festen Buchung oder einer Booking/Airbnb-Sperre (inkl. 1 Puffertag).
-          {s === 'angebot_erstellt'
-            ? ' Der Annahme-Link ist automatisch gesperrt — der Gast sieht bei Klick eine Konflikt-Seite. Empfehlung: ablehnen oder Alternativtermin anbieten.'
-            : ' Empfehlung: ablehnen oder dem Gast einen Alternativtermin anbieten.'}
-        </div>
-      )}
-
-      {restzahlungFaellig(buchung, einstellungen?.abschlussrechnung_tage_vorher) && (
-        <div className="warnung">
-          <strong>Abschlussrechnung / Restzahlung fällig:</strong> Die Anreise ({datumDE(buchung.anreise)}) rückt näher.
-          {s === 'angezahlt'
-            ? ' Bitte jetzt die Abschlussrechnung erstellen & senden. Sobald der Restbetrag da ist: „Restzahlung eingegangen" klicken.'
-            : s === 'bestaetigt'
-              ? ' Die Anzahlung ist noch nicht als eingegangen markiert — bitte prüfen.'
-              : ''}
-        </div>
-      )}
+      {/* „Nächster Schritt" — die Seite beantwortet zuerst: Was ist jetzt zu tun? */}
+      <div className="card">
+        <StatusSchrittleiste buchung={buchung} />
+        {konflikt && (
+          <div className="warnung">
+            <strong>⚠ Zeitraum belegt:</strong> {datumDE(buchung.anreise)} – {datumDE(buchung.abreise)} kollidiert
+            mit einer festen Buchung oder Booking/Airbnb-Sperre.
+            {s === 'angebot_erstellt' && ' Der Annahme-Link ist automatisch gesperrt.'}
+            {' '}Empfehlung: ablehnen oder Alternativtermin anbieten.
+          </div>
+        )}
+        {faellig && s === 'bestaetigt' && (
+          <div className="warnung">
+            Die Anreise ({datumDE(buchung.anreise)}) rückt näher, aber die Anzahlung ist noch nicht als eingegangen markiert — bitte prüfen.
+          </div>
+        )}
+        <p className="text-hinweis" style={{ margin: '0 0 14px' }}>{kontext}</p>
+        {primaer && (
+          <button className="btn-primary" style={{ fontSize: 'var(--fs-m)', padding: '12px 26px' }} onClick={primaer.onClick}>
+            {primaer.label}
+          </button>
+        )}
+        {angebotSenden === 'ok' && (
+          <p className="hinweis" style={{ marginBottom: 0 }}>✓ {angebotSendenMeldung} Bitte den Gast ggf. auf den Spam-Ordner hinweisen.</p>
+        )}
+        {angebotSenden === 'fehler' && (
+          <p className="fehler" style={{ marginBottom: 0 }}>✗ Versand fehlgeschlagen: {angebotSendenMeldung}</p>
+        )}
+        {fehler && <p className="fehler" style={{ marginBottom: 0 }}>{fehler}</p>}
+      </div>
 
       <div className="card">
-        <h2>Anfrage</h2>
+        <h2>Buchung</h2>
         <dl className="meta-grid">
           <div><dt>Zeitraum</dt><dd>{datumDE(buchung.anreise)} – {datumDE(buchung.abreise)}</dd></div>
           <div><dt>Nächte</dt><dd>{buchung.naechte}</dd></div>
           <div><dt>Personen</dt><dd>{buchung.personen}</dd></div>
+          <div><dt>Gesamt</dt><dd className="summe-gross">{buchung.gesamtpreis_eur != null ? eur(buchung.gesamtpreis_eur) : '–'}</dd></div>
           <div><dt>E-Mail</dt><dd><a href={`mailto:${buchung.email}`}>{buchung.email}</a></dd></div>
           {buchung.telefon && <div><dt>Telefon</dt><dd>{buchung.telefon}</dd></div>}
-          <div><dt>Quelle</dt><dd>{QUELLE_LABEL[buchung.quelle] ?? buchung.quelle}</dd></div>
           <div>
             <dt>Sprache</dt>
             <dd>
               <select
                 value={buchung.sprache}
                 onChange={(ev) => statusSetzen({ sprache: ev.target.value as Sprache })}
-                style={{ padding: '2px 6px', fontSize: 13 }}
+                style={{ padding: '2px 6px', fontSize: 'var(--fs-s)' }}
                 title="Sprache für E-Mails, PDFs und Bestätigungsseiten"
               >
-                {(Object.keys(SPRACHE_LABEL) as Sprache[]).map((s) => (
-                  <option key={s} value={s}>{SPRACHE_LABEL[s]}</option>
+                {(Object.keys(SPRACHE_LABEL) as Sprache[]).map((sp) => (
+                  <option key={sp} value={sp}>{SPRACHE_LABEL[sp]}</option>
                 ))}
               </select>
             </dd>
           </div>
-          <div><dt>Eingang</dt><dd>{zeitpunktDE(buchung.anfrage_zeitpunkt ?? buchung.created_at)}</dd></div>
-          <div><dt>Transfer</dt><dd>{buchung.transfer_option ?? '–'}{buchung.transfer_eur ? ` (${eur(buchung.transfer_eur)})` : ''}</dd></div>
-          <div><dt>Fahrzeug/Tour</dt><dd>{buchung.fahrzeug_interesse ?? '–'}</dd></div>
+          <div><dt>Quelle</dt><dd>{QUELLE_LABEL[buchung.quelle] ?? buchung.quelle}</dd></div>
         </dl>
 
-        <h3>Preis laut Anfrage</h3>
-        <dl className="meta-grid">
-          <div><dt>Übernachtung</dt><dd>{buchung.uebernachtung_eur != null ? eur(buchung.uebernachtung_eur) : '–'}</dd></div>
-          <div><dt>Endreinigung</dt><dd>{buchung.endreinigung_eur != null ? eur(buchung.endreinigung_eur) : '–'}</dd></div>
-          <div><dt>Transfer</dt><dd>{buchung.transfer_eur != null ? eur(buchung.transfer_eur) : '–'}</dd></div>
-          <div><dt>Gesamt</dt><dd className="summe-gross">{buchung.gesamtpreis_eur != null ? eur(buchung.gesamtpreis_eur) : '–'}</dd></div>
-        </dl>
-        {buchung.saison_aufschluesselung && (
-          <p style={{ fontSize: 13, color: 'var(--grau)', marginBottom: 0 }}>
-            Saisons: {buchung.saison_aufschluesselung}
-          </p>
-        )}
-
-        {(buchung.angenommen_am || buchung.anzahlung_eingegangen_am || buchung.restzahlung_eingegangen_am || buchung.storniert_am || buchung.feedback_angefragt_am || buchung.angebot_erinnert_am) && (
-          <>
-            <h3>Verlauf</h3>
-            <dl className="meta-grid">
-              {buchung.angebot_erinnert_am && <div><dt>Erinnerung 1 gesendet</dt><dd>{zeitpunktDE(buchung.angebot_erinnert_am)}</dd></div>}
-              {buchung.angebot_erinnert2_am && <div><dt>Erinnerung 2 gesendet (letzte Chance)</dt><dd>{zeitpunktDE(buchung.angebot_erinnert2_am)}</dd></div>}
-              {buchung.angenommen_am && <div><dt>Angebot angenommen</dt><dd>{zeitpunktDE(buchung.angenommen_am)}</dd></div>}
-              {buchung.anzahlung_eingegangen_am && (
-                <div>
-                  <dt>Anzahlung eingegangen</dt>
-                  <dd>
-                    {zeitpunktDE(buchung.anzahlung_eingegangen_am)}
-                    {buchung.zahlung_referenz && <span style={{ color: 'var(--grau)' }}> · {buchung.zahlung_referenz}</span>}
-                  </dd>
-                </div>
-              )}
-              {buchung.restzahlung_eingegangen_am && <div><dt>Restzahlung eingegangen</dt><dd>{zeitpunktDE(buchung.restzahlung_eingegangen_am)}</dd></div>}
-              {buchung.storniert_am && <div><dt>Storniert</dt><dd>{zeitpunktDE(buchung.storniert_am)}</dd></div>}
-              {buchung.feedback_angefragt_am && <div><dt>Feedback angefragt</dt><dd>{zeitpunktDE(buchung.feedback_angefragt_am)}</dd></div>}
-            </dl>
-          </>
-        )}
+        <details style={{ marginTop: 12 }}>
+          <summary className="text-hinweis" style={{ cursor: 'pointer' }}>Details &amp; Verlauf</summary>
+          <dl className="meta-grid" style={{ marginTop: 10 }}>
+            <div><dt>Eingang</dt><dd>{zeitpunktDE(buchung.anfrage_zeitpunkt ?? buchung.created_at)}</dd></div>
+            <div><dt>Übernachtung</dt><dd>{buchung.uebernachtung_eur != null ? eur(buchung.uebernachtung_eur) : '–'}</dd></div>
+            <div><dt>Endreinigung</dt><dd>{buchung.endreinigung_eur != null ? eur(buchung.endreinigung_eur) : '–'}</dd></div>
+            <div><dt>Transfer</dt><dd>{buchung.transfer_option ?? '–'}{buchung.transfer_eur ? ` (${eur(buchung.transfer_eur)})` : ''}</dd></div>
+            <div><dt>Fahrzeug/Tour</dt><dd>{buchung.fahrzeug_interesse ?? '–'}</dd></div>
+            {buchung.angebot_erinnert_am && <div><dt>Erinnerung 1 gesendet</dt><dd>{zeitpunktDE(buchung.angebot_erinnert_am)}</dd></div>}
+            {buchung.angebot_erinnert2_am && <div><dt>Erinnerung 2 gesendet</dt><dd>{zeitpunktDE(buchung.angebot_erinnert2_am)}</dd></div>}
+            {buchung.angenommen_am && <div><dt>Angebot angenommen</dt><dd>{zeitpunktDE(buchung.angenommen_am)}</dd></div>}
+            {buchung.anzahlung_eingegangen_am && (
+              <div>
+                <dt>Anzahlung eingegangen</dt>
+                <dd>
+                  {zeitpunktDE(buchung.anzahlung_eingegangen_am)}
+                  {buchung.zahlung_referenz && <span style={{ color: 'var(--grau)' }}> · {buchung.zahlung_referenz}</span>}
+                </dd>
+              </div>
+            )}
+            {buchung.restzahlung_eingegangen_am && <div><dt>Restzahlung eingegangen</dt><dd>{zeitpunktDE(buchung.restzahlung_eingegangen_am)}</dd></div>}
+            {buchung.storniert_am && <div><dt>Storniert</dt><dd>{zeitpunktDE(buchung.storniert_am)}</dd></div>}
+            {buchung.feedback_angefragt_am && <div><dt>Feedback angefragt</dt><dd>{zeitpunktDE(buchung.feedback_angefragt_am)}{feedback ? ' (beantwortet)' : ''}</dd></div>}
+          </dl>
+          {buchung.saison_aufschluesselung && (
+            <p className="text-hinweis" style={{ marginBottom: 0 }}>Saisons: {buchung.saison_aufschluesselung}</p>
+          )}
+        </details>
       </div>
 
       {feedback && (
@@ -237,8 +279,8 @@ export default function AnfrageDetail() {
               {feedback.sterne}/5 · {zeitpunktDE(feedback.erstellt_am)}
             </span>
           </div>
-          {feedback.text && <p style={{ fontSize: 15, lineHeight: 1.6, whiteSpace: 'pre-wrap', margin: '8px 0 0' }}>{feedback.text}</p>}
-          <p style={{ fontSize: 12.5, color: 'var(--grau)', marginTop: 10, marginBottom: 0 }}>
+          {feedback.text && <p style={{ fontSize: 'var(--fs-m)', lineHeight: 1.6, whiteSpace: 'pre-wrap', margin: '8px 0 0' }}>{feedback.text}</p>}
+          <p className="text-klein" style={{ marginTop: 10, marginBottom: 0 }}>
             {feedback.veroeffentlichung_ok
               ? '✓ Veröffentlichung als Referenz erlaubt'
               : 'Keine Einwilligung zur Veröffentlichung — nur intern verwenden'}
@@ -246,114 +288,37 @@ export default function AnfrageDetail() {
         </div>
       )}
 
-      <div className="card">
-        <h2>Aktionen</h2>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          {kannAngebot && (
-            <button className="btn-primary" onClick={() => setDialog('angebot')}>
-              Angebot erstellen
-            </button>
-          )}
-          {kannAnnehmen && (
-            <button className="btn-primary" onClick={() => statusSetzen({ status: 'bestaetigt', angenommen_am: new Date().toISOString() })}>
-              Annahme bestätigen
-            </button>
-          )}
-          {kannAngebotSenden && (
-            <button onClick={angebotErneutSenden} disabled={angebotSenden === 'laedt'}>
-              {angebotSenden === 'laedt' ? 'Wird gesendet …' : 'Angebot erneut senden'}
-            </button>
-          )}
-          {kannAnzahlungsRechnung && (
-            <button className="btn-primary" onClick={() => setDialog('anzahlung')}>
-              Anzahlungsrechnung erstellen
-            </button>
-          )}
-          {kannAnzahlungEingang && (
-            <button className="btn-primary" onClick={() => statusSetzen({ status: 'angezahlt', anzahlung_eingegangen_am: new Date().toISOString() })}>
-              Anzahlung eingegangen
-            </button>
-          )}
-          {kannAbschlussrechnung && (
-            <button className="btn-primary" onClick={() => setDialog('abschluss')}>
-              Abschlussrechnung erstellen
-            </button>
-          )}
-          {kannRestzahlung && (
-            <button className="btn-primary" onClick={() => statusSetzen({ status: 'bezahlt', restzahlung_eingegangen_am: new Date().toISOString() })}>
-              Restzahlung eingegangen
-            </button>
-          )}
-          {kannAbschliessen && (
-            <button className="btn-primary" onClick={() => statusSetzen({ status: 'abgeschlossen' })}>Abschließen</button>
-          )}
-          {kannStorno && (
-            <button className="btn-gefahr" onClick={() => setDialog('storno')}>Stornieren</button>
-          )}
-          {kannAblehnen && einstellungen && (
-            <button className="btn-gefahr" onClick={() => setDialog('absage')}>Ablehnen</button>
-          )}
-          {s === 'abgeschlossen' || s === 'storniert' || s === 'abgelehnt' ? (
-            <span style={{ color: 'var(--grau)', alignSelf: 'center', fontSize: 13 }}>
-              Vorgang abgeschlossen — keine weiteren Aktionen.
-            </span>
-          ) : null}
-        </div>
-        {kannAnzahlungEingang && (
-          <p style={{ fontSize: 13, color: 'var(--grau)', marginBottom: 0 }}>
-            „Anzahlung eingegangen" erst klicken, wenn die Zahlung zu {juengsteAnzahlung!.nummer} tatsächlich auf dem Konto ist.
-          </p>
-        )}
-        {kannRestzahlung && (
-          <p style={{ fontSize: 13, color: 'var(--grau)', marginBottom: 0 }}>
-            „Restzahlung eingegangen" erst klicken, wenn die Zahlung zu {juengsteAbschluss!.nummer} tatsächlich auf dem Konto ist.
-          </p>
-        )}
-        {angebotSenden === 'ok' && (
-          <p className="hinweis" style={{ marginBottom: 0 }}>✓ {angebotSendenMeldung} Bitte den Gast ggf. auf den Spam-Ordner hinweisen.</p>
-        )}
-        {angebotSenden === 'fehler' && (
-          <p className="fehler" style={{ marginBottom: 0 }}>✗ Versand fehlgeschlagen: {angebotSendenMeldung}</p>
-        )}
-        {fehler && <p className="fehler">{fehler}</p>}
-        {einstellungen && <MailTest einstellungen={einstellungen} />}
-      </div>
-
-      <div className="card">
-        <h2>Dokumente</h2>
-        {dokumente.length === 0 && !buchung.feedback_angefragt_am ? (
-          <p className="leer" style={{ padding: '12px 0' }}>Noch keine Dokumente erstellt.</p>
-        ) : (
+      {(dokumente.length > 0 || buchung.feedback_angefragt_am) && (
+        <div className="card">
+          <h2>Dokumente</h2>
           <table>
             <thead>
-              <tr><th>Nummer</th><th>Typ</th><th>Datum</th><th className="rechts">Betrag</th><th>Versand</th><th /></tr>
+              <tr><th>Dokument</th><th>Datum</th><th className="rechts">Betrag</th><th>Versand</th><th /></tr>
             </thead>
             <tbody>
               {dokumente.map((d) => (
                 <tr key={d.id}>
-                  <td><strong>{d.nummer}</strong></td>
-                  <td>{TYP_LABEL[d.typ]}</td>
+                  <td><strong>{d.nummer}</strong><div className="text-klein">{TYP_LABEL[d.typ]}</div></td>
                   <td>{datumDE(d.datum)}</td>
                   <td className="rechts">{eur(Number(d.gesamt))}</td>
-                  <td style={{ fontSize: 13 }}>
+                  <td style={{ fontSize: 'var(--fs-s)' }}>
                     {d.versendet_am
                       ? <span style={{ color: 'var(--gruen, #1a7f37)' }}>✓ {datumDE(d.versendet_am)}</span>
                       : <span style={{ color: 'var(--grau)' }}>— nicht gesendet</span>}
                   </td>
                   <td className="rechts">
                     <button className="btn-klein" onClick={() => downloadArchiviertesPdf(d).catch((e) => setFehler(String(e)))}>
-                      PDF herunterladen
+                      PDF
                     </button>
                   </td>
                 </tr>
               ))}
               {buchung.feedback_angefragt_am && (
                 <tr>
-                  <td style={{ color: 'var(--grau)' }}>—</td>
-                  <td>Feedback-Anfrage{feedback ? ' (beantwortet)' : ''}</td>
+                  <td><strong style={{ color: 'var(--grau)' }}>—</strong><div className="text-klein">Feedback-Anfrage{feedback ? ' (beantwortet)' : ''}</div></td>
                   <td>{datumDE(buchung.feedback_angefragt_am)}</td>
                   <td className="rechts">–</td>
-                  <td style={{ fontSize: 13 }}>
+                  <td style={{ fontSize: 'var(--fs-s)' }}>
                     <span style={{ color: 'var(--gruen, #1a7f37)' }}>✓ {datumDE(buchung.feedback_angefragt_am)}</span>
                   </td>
                   <td />
@@ -361,34 +326,27 @@ export default function AnfrageDetail() {
               )}
             </tbody>
           </table>
-        )}
-      </div>
+        </div>
+      )}
 
-      <div className="card" style={{ borderColor: '#f0d6d8' }}>
-        <h2>Anfrage löschen</h2>
-        {!loeschBestaetigung ? (
-          <>
-            <p style={{ fontSize: 13, color: 'var(--grau)', marginTop: 0 }}>
-              Löscht diese Anfrage samt aller erstellten Dokumente unwiderruflich. Zum Entfernen von Testdaten gedacht.
-            </p>
-            <button className="btn-gefahr" onClick={() => setLoeschBestaetigung(true)}>Anfrage löschen</button>
-          </>
-        ) : (
-          <>
+      {dialog === 'loeschen' && (
+        <div className="dialog-hintergrund">
+          <div className="dialog" style={{ maxWidth: 480 }}>
+            <h2>Anfrage löschen</h2>
             <div className="warnung">
               Wirklich <strong>{buchung.vorname} {buchung.nachname}</strong>
               {dokumente.length > 0 && <> samt {dokumente.length} {dokumente.length === 1 ? 'Dokument' : 'Dokumenten'}</>}
-              {' '}endgültig löschen? Das kann nicht rückgängig gemacht werden.
+              {' '}endgültig löschen? Das kann nicht rückgängig gemacht werden. Zum Entfernen von Testdaten gedacht.
             </div>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setLoeschBestaetigung(false)} disabled={loescht}>Abbrechen</button>
+            <div className="dialog-aktionen">
+              <button onClick={() => setDialog(null)} disabled={loescht}>Abbrechen</button>
               <button className="btn-gefahr" onClick={anfrageLoeschen} disabled={loescht}>
                 {loescht ? 'Wird gelöscht …' : 'Ja, endgültig löschen'}
               </button>
             </div>
-          </>
-        )}
-      </div>
+          </div>
+        </div>
+      )}
 
       {dialog === 'angebot' && einstellungen && (
         <AngebotDialog

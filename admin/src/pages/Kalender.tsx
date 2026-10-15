@@ -173,8 +173,8 @@ export default function Kalender() {
           <span><span className="kal-legende kal-gebucht" /> Gebucht (Anzahlung getätigt)</span>
           <span><span className="kal-legende kal-reserviert" /> Reserviert (Angebot versendet)</span>
           <span><span className="kal-legende kal-anfrage" /> Anfrage</span>
-          <span><span className="kal-legende kal-extern" /> Extern (Booking/Airbnb) — „gesperrt" = dort geschlossen, keine Buchung</span>
-          <span>▸ = Anreisetag · Abreisetag zählt nicht als belegt</span>
+          <span><span className="kal-legende kal-extern" /> Booking/Airbnb</span>
+          <span>▸ Anreisetag · Abreisetag zählt nicht</span>
         </div>
 
         {imMonat.length > 0 && (

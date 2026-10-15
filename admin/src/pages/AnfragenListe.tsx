@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { ladeEinstellungen } from '../lib/einstellungen'
+import { autoAbschluss } from '../lib/autoAbschluss'
 import { datumDE, eur, zeitpunktDE } from '../lib/format'
 import { belegungsKonflikt, restzahlungFaellig } from '../lib/statistik'
 import type { Buchung, BuchungStatus, IcalBlockierung } from '../lib/types'
-import { QUELLE_LABEL } from '../lib/types'
 import StatusBadge, { STATUS_LABEL } from '../components/StatusBadge'
 
 type FilterWert = BuchungStatus | 'alle' | 'aktiv'
@@ -44,21 +44,13 @@ export default function AnfragenListe() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Selbstpflegendes Archiv: komplett bezahlte Buchungen mit Abreise in der
-    // Vergangenheit automatisch abschließen, dann laden.
-    const heute = new Date()
-    const heuteISO = `${heute.getFullYear()}-${String(heute.getMonth() + 1).padStart(2, '0')}-${String(heute.getDate()).padStart(2, '0')}`
-    supabase
-      .from('buchungen')
-      .update({ status: 'abgeschlossen' })
-      .eq('status', 'bezahlt')
-      .lt('abreise', heuteISO)
-      .then(() => {
-        supabase.from('buchungen').select('*').then(({ data }) => {
-          setAlle((data as Buchung[]) ?? [])
-          setLaedt(false)
-        })
+    // Selbstpflegendes Archiv (lib/autoAbschluss), dann laden.
+    autoAbschluss().then(() => {
+      supabase.from('buchungen').select('*').then(({ data }) => {
+        setAlle((data as Buchung[]) ?? [])
+        setLaedt(false)
       })
+    })
     ladeEinstellungen()
       .then((e) => setTageVorher(e.abschlussrechnung_tage_vorher))
       .catch(() => { /* Fallback: Standard 14 Tage */ })
@@ -112,11 +104,10 @@ export default function AnfragenListe() {
       </div>
 
       {faellig.length > 0 && (
-        <div className="warnung">
-          <strong>Abschlussrechnung / Restzahlung fällig</strong> — bei {faellig.length} {faellig.length === 1 ? 'Buchung' : 'Buchungen'} ist
-          die Anreise in 14 Tagen oder weniger und der Restbetrag noch nicht als bezahlt markiert:{' '}
-          {faellig.map((b) => `${b.nachname} (${datumDE(b.anreise)})`).join(', ')}.
-        </div>
+        <p className="text-hinweis" style={{ margin: '0 0 12px' }}>
+          <span style={{ color: 'var(--orange)', fontWeight: 600 }}>●</span>{' '}
+          {faellig.length === 1 ? 'Eine markierte Buchung braucht' : `${faellig.length} markierte Buchungen brauchen`} vor der Anreise noch Rechnung oder Zahlungseingang.
+        </p>
       )}
 
       <div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
@@ -127,21 +118,26 @@ export default function AnfragenListe() {
           onChange={(e) => setSuche(e.target.value)}
           style={{ flex: 1, minWidth: 220 }}
         />
-        <select value={sortierung} onChange={(e) => setSortierung(e.target.value as Sortierung)} style={{ maxWidth: 220 }}>
-          <option value="eingang">Sortieren: Eingang (neueste)</option>
-          <option value="anreise">Sortieren: Anreisedatum</option>
-          <option value="preis">Sortieren: Preis (höchster)</option>
-          <option value="name">Sortieren: Nachname (A–Z)</option>
-        </select>
       </div>
 
-      <div className="tabs">
-        {FILTER.map((f) => (
+      <div className="tabs" style={{ alignItems: 'center' }}>
+        {(['aktiv', 'alle'] as FilterWert[]).map((f) => (
           <button key={f} className={filter === f ? 'aktiv' : ''} onClick={() => setFilter(f)}>
-            {f === 'aktiv' ? 'Aktiv' : f === 'alle' ? 'Alle' : STATUS_LABEL[f]}
+            {f === 'aktiv' ? 'Aktiv' : 'Alle'}
             {anzahl[f] ? <span style={{ opacity: 0.6 }}> ({anzahl[f]})</span> : null}
           </button>
         ))}
+        <select
+          value={filter === 'aktiv' || filter === 'alle' ? '' : filter}
+          onChange={(e) => setFilter((e.target.value || 'aktiv') as FilterWert)}
+          style={{ maxWidth: 230, padding: '6px 10px' }}
+          title="Nach einzelnem Status filtern"
+        >
+          <option value="">Status filtern …</option>
+          {FILTER.filter((f) => f !== 'aktiv' && f !== 'alle').map((f) => (
+            <option key={f} value={f}>{STATUS_LABEL[f as BuchungStatus]}{anzahl[f] ? ` (${anzahl[f]})` : ''}</option>
+          ))}
+        </select>
       </div>
 
       <div className="card" style={{ padding: 0 }}>
@@ -153,13 +149,12 @@ export default function AnfragenListe() {
               <th className="rechts">Pers.</th>
               <th className="rechts sortierbar" onClick={() => setSortierung('preis')}>Gesamtpreis{sortierung === 'preis' ? ' ▾' : ''}</th>
               <th className="sortierbar" onClick={() => setSortierung('status')}>Status{sortierung === 'status' ? ' ▾' : ''}</th>
-              <th className="nur-desktop">Quelle</th>
               <th className="nur-desktop sortierbar" onClick={() => setSortierung('eingang')}>Eingang{sortierung === 'eingang' ? ' ▾' : ''}</th>
             </tr>
           </thead>
           <tbody>
             {buchungen.map((b) => (
-              <tr key={b.id} className="klickbar" onClick={() => navigate(`/anfragen/${b.id}`)}>
+              <tr key={b.id} className={`klickbar${restzahlungFaellig(b, tageVorher) ? ' zeile-faellig' : ''}`} onClick={() => navigate(`/anfragen/${b.id}`)}>
                 <td>
                   <strong>{b.vorname} {b.nachname}</strong>
                   <div style={{ fontSize: 12, color: 'var(--grau)' }}>{b.email}</div>
@@ -182,12 +177,11 @@ export default function AnfragenListe() {
                     <div style={{ fontSize: 11, color: 'var(--rot)', fontWeight: 600, marginTop: 4 }}>⚠ Abschlussrechnung fällig</div>
                   )}
                 </td>
-                <td className="nur-desktop" style={{ fontSize: 13, color: 'var(--grau)' }}>{QUELLE_LABEL[b.quelle] ?? b.quelle}</td>
                 <td className="nur-desktop" style={{ fontSize: 13, color: 'var(--grau)' }}>{zeitpunktDE(b.created_at)}</td>
               </tr>
             ))}
             {!laedt && buchungen.length === 0 && (
-              <tr><td colSpan={7} className="leer">Keine Anfragen gefunden.</td></tr>
+              <tr><td colSpan={6} className="leer">Keine Anfragen gefunden.</td></tr>
             )}
           </tbody>
         </table>
