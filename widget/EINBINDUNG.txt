@@ -1,0 +1,20 @@
+WIDGET-EINBINDUNG BEI ONE.COM (Loader-Schnipsel)
+=================================================
+Den bisherigen (langen) Widget-Code im HTML-Element der Seite KOMPLETT ersetzen
+durch die zwei Zeilen der jeweiligen Sprache. Danach aktualisieren sich die
+Widgets automatisch mit jedem Deploy — nie wieder neu einbinden.
+
+Deutsche Seite (mantinia-hills.com):
+<div id="fa-slot"></div>
+<script src="https://clients.mantinia-hills.com/widget/de.js" defer></script>
+
+Englische Seite (/en):
+<div id="fa-slot"></div>
+<script src="https://clients.mantinia-hills.com/widget/en.js" defer></script>
+
+Griechische Seite (/gr):
+<div id="fa-slot"></div>
+<script src="https://clients.mantinia-hills.com/widget/gr.js" defer></script>
+
+Hinweis: Die Loader-Dateien werden bei jedem Deploy automatisch aus
+widget/Mantinia-XX-neu.html erzeugt (deploy/widget-build.mjs).
